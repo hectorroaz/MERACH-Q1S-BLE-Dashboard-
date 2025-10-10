@@ -4,17 +4,16 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard</title>
-<meta name="description" content="Dashboard FTMS vía Web Bluetooth para Merach Q1S (con fallback propietario), con métricas en vivo y exportación CSV." />
+<meta name="description" content="Dashboard Web Bluetooth: FTMS (remo) + Heart Rate BLE (sensor externo).">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  :root{
-    --bg:#0b0d13; --card:#121826; --ink:#e8edf3; --muted:#9aa4b2;
-    --ok:#48e09c; --warn:#ffc45b; --err:#ff5c5c;
-  }
-  html,body{background:var(--bg); color:var(--ink);}
-  .card{background:var(--card);}
-  .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+  :root{--bg:#0b0d13;--card:#121826;--ink:#e8edf3}
+  html,body{background:var(--bg);color:var(--ink)}
+  .card{background:var(--card)}
+  .mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .badge{border-radius:999px;padding:2px 10px;font-size:.85rem}
+  .ghost{background:rgba(15,23,42,.6);border:1px solid rgba(71,85,105,.6);color:#e5e7eb}
+  .ghost:hover{background:rgba(15,23,42,.8)}
 </style>
 </head>
 <body class="min-h-screen">
@@ -22,73 +21,75 @@
   <header class="border-b border-slate-800/80">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
       <h1 class="text-lg font-semibold">MERACH Q1S – Web Bluetooth FTMS + HR Dashboard</h1>
-      <div class="text-sm text-slate-400">Funciona mejor en <span class="font-semibold text-slate-200">Chrome Android</span> bajo <span class="font-semibold text-slate-200">HTTPS</span>.</div>
+      <div class="text-sm text-slate-400">Chrome Android • HTTPS recomendado</div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
-    <!-- Controls -->
+    <!-- Controles -->
     <section class="card rounded-2xl p-4 border border-slate-800/80">
       <div class="flex flex-wrap items-center gap-3">
-        <button id="btnConnect" class="px-4 py-2 rounded-xl font-semibold bg-gradient-to-tr from-sky-500 to-cyan-400 text-slate-900 hover:opacity-95 transition">
-          Conectar por Bluetooth
+        <button id="btnConnectRower" class="px-4 py-2 rounded-xl font-semibold bg-gradient-to-tr from-sky-500 to-cyan-400 text-slate-900 hover:opacity-95 transition">
+          Conectar Remo (FTMS)
         </button>
-        <button id="btnDisconnect" class="px-4 py-2 rounded-xl font-semibold bg-slate-800/80 text-slate-200 border border-slate-700 hover:bg-slate-800 transition" disabled>
+        <button id="btnConnectHR" class="px-4 py-2 rounded-xl font-semibold ghost transition">
+          Conectar Sensor HR
+        </button>
+        <button id="btnDisconnectAll" class="px-4 py-2 rounded-xl font-semibold ghost transition">
           Desconectar
         </button>
-        <button id="btnWake" class="px-4 py-2 rounded-xl font-semibold bg-slate-800/80 text-slate-200 border border-slate-700 hover:bg-slate-800 transition">
+        <button id="btnWake" class="px-4 py-2 rounded-xl font-semibold ghost transition">
           Mantener pantalla activa
         </button>
-        <button id="btnExport" class="px-4 py-2 rounded-xl font-semibold bg-slate-800/80 text-slate-200 border border-slate-700 hover:bg-slate-800 transition">
+        <button id="btnExport" class="px-4 py-2 rounded-xl font-semibold ghost transition">
           Exportar CSV
         </button>
 
-        <div class="ml-auto flex items-center gap-3">
-          <span id="state" class="badge bg-amber-500/20 text-amber-300 border border-amber-500/30">Desconectado</span>
-          <span id="deviceInfo" class="text-slate-400 text-sm">—</span>
+        <div class="ml-auto flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span id="stateRower" class="badge bg-amber-500/20 text-amber-300 border border-amber-500/30">Remo: Desconectado</span>
+            <span id="infoRower" class="text-slate-400 text-sm">—</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="stateHR" class="badge bg-amber-500/20 text-amber-300 border border-amber-500/30">HR: Desconectado</span>
+            <span id="infoHR" class="text-slate-400 text-sm">—</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- KPI Grid -->
+    <!-- KPIs -->
     <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-      <!-- SPM -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">SPM</div>
         <div id="k-spm" class="mt-1 text-3xl font-bold mono">—</div>
         <div class="text-slate-500 text-xs">Brazadas/min</div>
       </div>
-      <!-- Strokes -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">Strokes</div>
         <div id="k-strokes" class="mt-1 text-3xl font-bold mono">—</div>
         <div class="text-slate-500 text-xs">Acumuladas</div>
       </div>
-      <!-- Distancia -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">Distancia</div>
         <div class="mt-1 text-3xl font-bold mono"><span id="k-dist-km">—</span><span class="text-base font-semibold ml-1">km</span></div>
         <div class="text-slate-500 text-xs"><span id="k-dist-m">—</span> m</div>
       </div>
-      <!-- Pace -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">Pace</div>
         <div id="k-pace" class="mt-1 text-3xl font-bold mono">—</div>
         <div class="text-slate-500 text-xs">mm:ss/500m</div>
       </div>
-      <!-- Power -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">Power</div>
         <div class="mt-1 text-3xl font-bold mono"><span id="k-power">—</span><span class="text-base font-semibold ml-1">W</span></div>
         <div class="text-slate-500 text-xs">Potencia</div>
       </div>
-      <!-- HR -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">Heart Rate</div>
         <div class="mt-1 text-3xl font-bold mono"><span id="k-hr">—</span><span class="text-base font-semibold ml-1">bpm</span></div>
-        <div class="text-slate-500 text-xs">Desde FTMS (si disponible)</div>
+        <div class="text-slate-500 text-xs">Externo (0x180D) o FTMS</div>
       </div>
-      <!-- Tiempo -->
       <div class="card rounded-2xl p-4 border border-slate-800/80">
         <div class="text-slate-400 text-xs uppercase tracking-wide">Tiempo</div>
         <div id="k-time" class="mt-1 text-3xl font-bold mono">—</div>
@@ -96,11 +97,11 @@
       </div>
     </section>
 
-    <!-- Tabla Detalle -->
+    <!-- Tabla detalle -->
     <section class="card rounded-2xl p-4 border border-slate-800/80">
       <div class="flex items-center justify-between">
         <h3 class="font-semibold">Métricas en vivo</h3>
-        <div class="text-xs text-slate-500">FTMS 0x1826 / Rowing Data 0x2AD1</div>
+        <div class="text-xs text-slate-500">FTMS 0x1826 / Rower Data 0x2AD1 • HR 0x180D/0x2A37</div>
       </div>
       <div class="overflow-x-auto mt-2">
         <table class="w-full text-sm">
@@ -122,120 +123,47 @@
       <pre id="log" class="mono text-sm bg-slate-900/70 border border-slate-800/80 rounded-xl p-3 max-h-64 overflow-auto">—</pre>
     </section>
 
-    <footer class="text-xs text-slate-500">
-      FTMS UUID: 0x1826 | Rowing Machine Data: 0x2AD1 | Fallback propietario: 0000ffe0-0000-1000-8000-00805f9b34fb
-    </footer>
+    <footer class="text-xs text-slate-500">Requiere permisos de ubicación/Bluetooth activos en Android. Cierra apps que ya estén conectadas al Q1S.</footer>
   </main>
 
 <script>
-/* UUIDs */
+/* ====== Constantes BLE ====== */
 const FTMS_SERVICE = 0x1826;
 const ROWING_MACHINE_DATA = 0x2AD1;
-const FALLBACK_SERVICE = '0000ffe0-0000-1000-8000-00805f9b34fb'; // Service propietario común en Merach
+const HRS_SERVICE = 0x180D;
+const HRS_MEAS = 0x2A37;
 
-/* Estado */
-let device, server, service, rowingChar, reconnectTimer, wakeLock;
-let sessionData = []; // para CSV
+/* ====== Estado ====== */
+let rowerDevice, rowerServer, rowerService, rowerChar, rowerReconnectTimer;
+let hrDevice, hrServer, hrService, hrChar, hrReconnectTimer;
+let wakeLock;
+let sessionData = [];
 
-/* Helpers UI */
-const $ = (id) => document.getElementById(id);
-const log = (msg) => {
+const $ = (id)=>document.getElementById(id);
+
+/* ====== UI Helpers ====== */
+function log(msg){
   const t = new Date().toLocaleTimeString();
   const pre = $("log");
   pre.textContent = (pre.textContent === "—" ? "" : pre.textContent) + `[${t}] ${msg}\n`;
   pre.scrollTop = pre.scrollHeight;
   console.log(msg);
-};
-const setState = (text, kind="warn") => {
-  const el = $("state");
+}
+function setBadge(id, text, kind="warn"){
+  const el = $(id);
   el.textContent = text;
   el.className = "badge " + (
-    kind === "ok"   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" :
-    kind === "err"  ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" :
-                      "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+    kind==="ok"  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" :
+    kind==="err" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" :
+                   "bg-amber-500/20 text-amber-300 border border-amber-500/30"
   );
-};
-
-/* Wake Lock */
-async function keepAwake(){
-  try{
-    if(!("wakeLock" in navigator)){ log("Wake Lock no soportado"); return; }
-    wakeLock = await navigator.wakeLock.request('screen');
-    $("btnWake").textContent = "Wake Lock activo";
-    $("btnWake").classList.add("ring-1","ring-emerald-400/40");
-    log("Wake Lock activado");
-    wakeLock.addEventListener('release', () => {
-      $("btnWake").textContent = "Mantener pantalla activa";
-      $("btnWake").classList.remove("ring-1","ring-emerald-400/40");
-    });
-  }catch(e){
-    log("Wake Lock error: " + e.message);
-  }
 }
-
-/* FTMS Parser: Rowing Machine Data (spec)
-   flags: 16 bits; campos condicionales
-   Stroke Rate: uint8 (0.5 spm) -> value/2
-   Stroke Count: uint16
-   Total Distance: 24 bits, unidad = 0.1 m  -> metros = raw/10
-   Pace: uint16, unidad = 0.1 s por 500m
-   Power: int16 (W)
-   Heart Rate: uint8 (bpm)
-   Elapsed Time: uint16, unidad = 1 s
-*/
-function parseFTMS(dv){
-  let o=0;
-  const flags = dv.getUint16(o,true); o+=2;
-  const has = (bit)=> (flags & (1<<bit)) !== 0;
-
-  const strokeRate = dv.getUint8(o)/2; o+=1;             // 0.5 spm
-  const strokeCount = dv.getUint16(o,true); o+=2;
-
-  let distRaw=null, distM=null;
-  if(has(2)){ // Total Distance present
-    distRaw = (dv.getUint8(o)) | (dv.getUint8(o+1)<<8) | (dv.getUint8(o+2)<<16);
-    o+=3;
-    // FTMS: distancia en décimas de metro => metros = raw/10
-    distM = distRaw/10;
-  }
-
-  let paceRaw=null;
-  if(has(3)){ paceRaw = dv.getUint16(o,true); o+=2; }     // 0.1 s/500m
-
-  let power=null;
-  if(has(5)){ power = dv.getInt16(o,true); o+=2; }
-
-  let hr=null;
-  if(has(9)){ hr = dv.getUint8(o); o+=1; }
-
-  let elapsed=null;
-  if(has(11)){ elapsed = dv.getUint16(o,true); o+=2; }    // segundos
-
-  return { strokeRate, strokeCount, distM, paceRaw, power, hr, elapsed };
-}
-
-/* Formatos */
-function fmtTime(s){
-  if(s==null) return "—";
-  const m = Math.floor(s/60);
-  const ss = (s%60).toString().padStart(2,"0");
-  return `${m}:${ss}`;
-}
-function fmtPace(pRaw){
-  if(pRaw==null) return "—";
-  const totalSec = pRaw/10; // 0.1 s -> s
-  const m = Math.floor(totalSec/60);
-  const s = Math.floor(totalSec%60).toString().padStart(2,"0");
-  return `${m}:${s}/500m`;
-}
-function smartKm(distM){
-  if(distM==null) return ["—","—"];
-  const km = distM/1000;
-  return [ km.toFixed(km>=10 ? 1 : 2), Math.round(distM).toString() ];
-}
-
-/* Render KPIs + tabla */
 function setKPI(id, val){ $(id).textContent = val; }
+function fmtTime(s){ if(s==null) return "—"; const m=Math.floor(s/60); const ss=(s%60).toString().padStart(2,"0"); return `${m}:${ss}`; }
+function fmtPace(pRaw){ if(pRaw==null) return "—"; const totalSec=pRaw/10; const m=Math.floor(totalSec/60); const s=Math.floor(totalSec%60).toString().padStart(2,"0"); return `${m}:${s}/500m`; }
+function smartKm(distM){ if(distM==null) return ["—","—"]; const km=distM/1000; return [ km.toFixed(km>=10?1:2), Math.round(distM).toString() ]; }
+
+/* ====== Render ====== */
 function ensureRow(key, label, desc){
   const tbody = $("metricsBody");
   let row = tbody.querySelector(`[data-k="${key}"]`);
@@ -245,138 +173,216 @@ function ensureRow(key, label, desc){
     row.innerHTML = `
       <td class="py-2 pr-3">${label}</td>
       <td class="py-2 pr-3 mono" id="val-${key}">—</td>
-      <td class="py-2 text-slate-400">${desc}</td>
-    `;
+      <td class="py-2 text-slate-400">${desc}</td>`;
     tbody.appendChild(row);
   }
   return row.querySelector(`#val-${key}`);
 }
-
-function render(data){
+const DESCS = {
+  "Stroke Rate":"Brazadas/min (spm)",
+  "Stroke Count":"Total de brazadas",
+  "Distance":"Distancia total (km / m)",
+  "Pace":"Ritmo (mm:ss/500m)",
+  "Power":"Potencia (W)",
+  "Heart Rate":"Frecuencia cardiaca (bpm)",
+  "Elapsed":"Tiempo transcurrido (mm:ss)"
+};
+function renderFTMS(d){
   // KPIs
-  setKPI("k-spm", data.strokeRate?.toFixed(1) ?? "—");
-  setKPI("k-strokes", data.strokeCount ?? "—");
-  const [kmTxt, mTxt] = smartKm(data.distM);
-  setKPI("k-dist-km", kmTxt);
-  setKPI("k-dist-m", mTxt);
-  setKPI("k-pace", fmtPace(data.paceRaw));
-  setKPI("k-power", data.power ?? "—");
-  setKPI("k-hr", data.hr ?? "—");
-  setKPI("k-time", fmtTime(data.elapsed));
+  setKPI("k-spm", d.strokeRate?.toFixed(1) ?? "—");
+  setKPI("k-strokes", d.strokeCount ?? "—");
+  const [kmTxt,mTxt] = smartKm(d.distM);
+  setKPI("k-dist-km", kmTxt); setKPI("k-dist-m", mTxt);
+  setKPI("k-pace", fmtPace(d.paceRaw));
+  setKPI("k-power", d.power ?? "—");
+  // HR mostrado: externo si hay, si no FTMS
+  const hrDisplay = latestHRExternal ?? d.hr ?? null;
+  setKPI("k-hr", hrDisplay ?? "—");
+  setKPI("k-time", fmtTime(d.elapsed));
 
   // Tabla
-  const upd = (k, v)=> { ensureRow(k, k, descs[k]).textContent = v; };
-  const descs = {
-    "Stroke Rate":"Brazadas/min (spm)",
-    "Stroke Count":"Total de brazadas",
-    "Distance":"Distancia total (km / m)",
-    "Pace":"Ritmo medio (mm:ss/500m)",
-    "Power":"Potencia (W)",
-    "Heart Rate":"Frecuencia cardíaca (bpm)",
-    "Elapsed":"Tiempo transcurrido (mm:ss)"
-  };
-  upd("Stroke Rate", (data.strokeRate?.toFixed(1) ?? "—") + " spm");
-  upd("Stroke Count", data.strokeCount ?? "—");
-  upd("Distance", (kmTxt!=="—"?kmTxt+" km":"—") + "  ·  " + (mTxt!=="—"?mTxt+" m":"—"));
-  upd("Pace", fmtPace(data.paceRaw));
-  upd("Power", data.power!=null ? (data.power+" W") : "—");
-  upd("Heart Rate", data.hr!=null ? (data.hr+" bpm") : "—");
-  upd("Elapsed", fmtTime(data.elapsed));
+  ensureRow("Stroke Rate","Stroke Rate",DESCS["Stroke Rate"]).textContent = (d.strokeRate?.toFixed(1) ?? "—")+" spm";
+  ensureRow("Stroke Count","Stroke Count",DESCS["Stroke Count"]).textContent = d.strokeCount ?? "—";
+  ensureRow("Distance","Distance",DESCS["Distance"]).textContent = (kmTxt!=="—"?kmTxt+" km":"—")+" · "+(mTxt!=="—"?mTxt+" m":"—");
+  ensureRow("Pace","Pace",DESCS["Pace"]).textContent = fmtPace(d.paceRaw);
+  ensureRow("Power","Power",DESCS["Power"]).textContent = d.power!=null ? (d.power+" W") : "—";
+  ensureRow("Heart Rate","Heart Rate",DESCS["Heart Rate"]).textContent = hrDisplay!=null ? (hrDisplay+" bpm") : "—";
+  ensureRow("Elapsed","Elapsed",DESCS["Elapsed"]).textContent = fmtTime(d.elapsed);
 }
 
-/* Notificaciones FTMS */
-function onData(ev){
-  const dv = ev.target.value;
-  const data = parseFTMS(dv);
-  render(data);
+/* ====== Parsers ====== */
+// FTMS Rowing Machine Data (0x2AD1)
+function parseFTMS(dv){
+  let o=0;
+  const flags = dv.getUint16(o,true); o+=2;
+  const has = (bit)=> (flags & (1<<bit)) !== 0;
 
-  // Guardar fila para CSV (raw y derivados útiles)
+  const strokeRate = dv.getUint8(o)/2; o+=1;         // 0.5 spm
+  const strokeCount = dv.getUint16(o,true); o+=2;
+
+  let distM=null;
+  if(has(2)){ // total distance present -> 24-bit, unit = 0.1 m
+    const raw = (dv.getUint8(o)) | (dv.getUint8(o+1)<<8) | (dv.getUint8(o+2)<<16);
+    o+=3;
+    distM = raw/10;
+  }
+
+  let paceRaw=null; if(has(3)){ paceRaw = dv.getUint16(o,true); o+=2; }  // 0.1 s/500m
+  let power=null; if(has(5)){ power = dv.getInt16(o,true); o+=2; }
+  let hr=null; if(has(9)){ hr = dv.getUint8(o); o+=1; }
+  let elapsed=null; if(has(11)){ elapsed = dv.getUint16(o,true); o+=2; }
+
+  return { strokeRate, strokeCount, distM, paceRaw, power, hr, elapsed };
+}
+
+// Heart Rate Measurement (0x2A37)
+function parseHR(dv){
+  let o=0;
+  const flags = dv.getUint8(o); o+=1;
+  const is16 = (flags & 0x01) !== 0;
+  const hr = is16 ? dv.getUint16(o,true) : dv.getUint8(o);
+  return hr;
+}
+
+/* ====== Handlers ====== */
+let latestHRExternal = null;
+
+function onFTMS(ev){
+  const dv = ev.target.value;
+  const d = parseFTMS(dv);
+  renderFTMS(d);
+
   sessionData.push({
     t: Date.now(),
-    strokeRate: data.strokeRate ?? "",
-    strokeCount: data.strokeCount ?? "",
-    distM: data.distM ?? "",
-    distKm: data.distM!=null ? (data.distM/1000).toFixed(3) : "",
-    paceRaw: data.paceRaw ?? "",
-    paceFmt: fmtPace(data.paceRaw),
-    power: data.power ?? "",
-    hr: data.hr ?? "",
-    elapsed: data.elapsed ?? ""
+    strokeRate: d.strokeRate ?? "",
+    strokeCount: d.strokeCount ?? "",
+    distM: d.distM ?? "",
+    distKm: d.distM!=null ? (d.distM/1000).toFixed(3) : "",
+    paceRaw: d.paceRaw ?? "",
+    paceFmt: fmtPace(d.paceRaw),
+    power: d.power ?? "",
+    hr_ext: latestHRExternal ?? "",
+    hr_ftms: d.hr ?? "",
+    hr_shown: (latestHRExternal ?? d.hr) ?? "",
+    elapsed: d.elapsed ?? ""
   });
 }
+function onHR(ev){
+  const dv = ev.target.value;
+  const hr = parseHR(dv);
+  // filtro anti-ruido simple
+  if(hr>20 && hr<240){ latestHRExternal = hr; setKPI("k-hr", hr); }
+}
 
-/* Conexión BLE */
-async function connect(){
+/* ====== Conexiones ====== */
+async function connectRower(){
   try{
-    setState("Buscando…","warn");
-    const options = {
-      filters: [{ namePrefix: "MRK-" }], // típico en Merach
-      optionalServices: [FTMS_SERVICE, FALLBACK_SERVICE]
-    };
-    device = await navigator.bluetooth.requestDevice(options);
-    $("deviceInfo").textContent = device.name || device.id;
-    log(`Dispositivo: ${device.name||device.id}`);
+    setBadge("stateRower","Remo: Buscando…","warn");
+    rowerDevice = await navigator.bluetooth.requestDevice({
+      // el Q1S aparece como MRK-CRYDN-XXXX y/o anuncia FTMS
+      filters: [{services:[FTMS_SERVICE]},{namePrefix:"MRK-"}],
+      optionalServices: [FTMS_SERVICE]
+    });
+    $("infoRower").textContent = rowerDevice.name || rowerDevice.id;
+    log(`Remo seleccionado: ${rowerDevice.name||rowerDevice.id}`);
 
-    device.addEventListener("gattserverdisconnected", handleDisconnect);
-    server = await device.gatt.connect();
+    rowerDevice.addEventListener("gattserverdisconnected", onRowerDisconnected);
+    rowerServer = await rowerDevice.gatt.connect();
 
-    // Intentar FTMS primero
-    try{
-      service = await server.getPrimaryService(FTMS_SERVICE);
-      log("Servicio FTMS detectado (0x1826)");
-    }catch(_){
-      log("FTMS no disponible. Probando UUID propietario…");
-      service = await server.getPrimaryService(FALLBACK_SERVICE);
-      log("Servicio propietario activo (fallback)");
-    }
+    rowerService = await rowerServer.getPrimaryService(FTMS_SERVICE);
+    log("Servicio FTMS activo (0x1826)");
 
-    // Característica de Rowing Machine Data
-    rowingChar = await service.getCharacteristic(ROWING_MACHINE_DATA);
-    await rowingChar.startNotifications();
-    rowingChar.addEventListener("characteristicvaluechanged", onData);
-    setState("Conectado","ok");
-    $("btnDisconnect").disabled = false;
+    rowerChar = await rowerService.getCharacteristic(ROWING_MACHINE_DATA);
+    await rowerChar.startNotifications();
+    rowerChar.addEventListener("characteristicvaluechanged", onFTMS);
+
+    setBadge("stateRower","Remo: Conectado","ok");
     log("Notificaciones FTMS activas");
   }catch(err){
-    setState("Error","err");
-    log("Error de conexión: " + err.message);
+    setBadge("stateRower","Remo: Error","err");
+    log("Error FTMS: "+err.message);
   }
 }
-
-function handleDisconnect(){
-  setState("Desconectado (reintentando)","warn");
-  log("Conexión perdida. Reintentando en 4 s…");
-  reconnectTimer = setTimeout(connect, 4000);
+function onRowerDisconnected(){
+  setBadge("stateRower","Remo: Desconectado (reintentando)","warn");
+  log("Remo desconectado. Reintento en 4 s…");
+  rowerReconnectTimer = setTimeout(connectRower, 4000);
 }
 
-async function disconnect(){
+async function connectHR(){
   try{
-    if(reconnectTimer) clearTimeout(reconnectTimer);
-    if(rowingChar){
-      try{ await rowingChar.stopNotifications(); }catch(_){}
-      rowingChar.removeEventListener("characteristicvaluechanged", onData);
-    }
-    if(device?.gatt?.connected) device.gatt.disconnect();
+    setBadge("stateHR","HR: Buscando…","warn");
+    hrDevice = await navigator.bluetooth.requestDevice({
+      filters: [{services:[HRS_SERVICE]}], // estándar HR
+      optionalServices: [HRS_SERVICE]
+    });
+    $("infoHR").textContent = hrDevice.name || hrDevice.id;
+    log(`HR seleccionado: ${hrDevice.name||hrDevice.id}`);
+
+    hrDevice.addEventListener("gattserverdisconnected", onHRDisconnected);
+    hrServer = await hrDevice.gatt.connect();
+
+    hrService = await hrServer.getPrimaryService(HRS_SERVICE);
+    hrChar = await hrService.getCharacteristic(HRS_MEAS);
+    await hrChar.startNotifications();
+    hrChar.addEventListener("characteristicvaluechanged", onHR);
+
+    setBadge("stateHR","HR: Conectado","ok");
+    log("Notificaciones HR activas (0x2A37)");
+  }catch(err){
+    setBadge("stateHR","HR: Error","err");
+    log("Error HR: "+err.message);
+  }
+}
+function onHRDisconnected(){
+  setBadge("stateHR","HR: Desconectado","warn");
+  log("HR desconectado.");
+}
+
+/* ====== Desconectar / utilidades ====== */
+async function disconnectAll(){
+  try{
+    if(rowerReconnectTimer) clearTimeout(rowerReconnectTimer);
+    if(rowerChar){ try{ await rowerChar.stopNotifications(); }catch(_){ } rowerChar.removeEventListener("characteristicvaluechanged", onFTMS); }
+    if(rowerDevice?.gatt?.connected) rowerDevice.gatt.disconnect();
+    setBadge("stateRower","Remo: Desconectado","warn");
+    $("infoRower").textContent = "—";
+
+    if(hrReconnectTimer) clearTimeout(hrReconnectTimer);
+    if(hrChar){ try{ await hrChar.stopNotifications(); }catch(_){ } hrChar.removeEventListener("characteristicvaluechanged", onHR); }
+    if(hrDevice?.gatt?.connected) hrDevice.gatt.disconnect();
+    setBadge("stateHR","HR: Desconectado","warn");
+    $("infoHR").textContent = "—";
   }finally{
-    $("btnDisconnect").disabled = true;
-    setState("Desconectado","warn");
-    log("Conexión finalizada");
+    log("Conexiones cerradas");
   }
 }
 
-/* Export CSV */
+async function keepAwake(){
+  try{
+    if(!("wakeLock" in navigator)){ log("Wake Lock no soportado"); return; }
+    if(!wakeLock){
+      wakeLock = await navigator.wakeLock.request("screen");
+      $("btnWake").textContent = "Wake Lock activo";
+      $("btnWake").classList.add("ring-1","ring-emerald-400/40");
+      wakeLock.addEventListener("release", ()=>{
+        $("btnWake").textContent = "Mantener pantalla activa";
+        $("btnWake").classList.remove("ring-1","ring-emerald-400/40");
+      });
+      log("Wake Lock activado");
+    }
+  }catch(e){ log("Wake Lock error: "+e.message); }
+}
+
+/* ====== CSV ====== */
 function exportCSV(){
-  if(!sessionData.length){
-    alert("No hay datos para exportar.");
-    return;
-  }
-  // Cabeceras
-  let csv = "timestamp,isoTime,strokeRate,strokeCount,distM,distKm,paceRaw_0.1s_per_500m,paceFmt,power,hr,elapsed_s\n";
+  if(!sessionData.length){ alert("No hay datos para exportar."); return; }
+  let csv = "timestamp,isoTime,strokeRate,strokeCount,distM,distKm,paceRaw_0.1s_per_500m,paceFmt,power,hr_ext,hr_ftms,hr_shown,elapsed_s\n";
   for(const r of sessionData){
     const iso = new Date(r.t).toISOString();
     csv += [
       r.t, iso, r.strokeRate, r.strokeCount, r.distM, r.distKm,
-      r.paceRaw, `"${r.paceFmt}"`, r.power, r.hr, r.elapsed
+      r.paceRaw, `"${r.paceFmt}"`, r.power, r.hr_ext, r.hr_ftms, r.hr_shown, r.elapsed
     ].join(",") + "\n";
   }
   const blob = new Blob([csv], {type:"text/csv"});
@@ -386,14 +392,16 @@ function exportCSV(){
   a.click();
 }
 
-/* Eventos UI */
-$("btnConnect").addEventListener("click", connect);
-$("btnDisconnect").addEventListener("click", disconnect);
+/* ====== Eventos ====== */
+$("btnConnectRower").addEventListener("click", connectRower);
+$("btnConnectHR").addEventListener("click", connectHR);
+$("btnDisconnectAll").addEventListener("click", disconnectAll);
 $("btnWake").addEventListener("click", keepAwake);
 $("btnExport").addEventListener("click", exportCSV);
 
 if(!("bluetooth" in navigator)){
-  setState("Bluetooth no soportado","err");
+  setBadge("stateRower","Remo: Bluetooth no soportado","err");
+  setBadge("stateHR","HR: Bluetooth no soportado","err");
   log("Este navegador no soporta Web Bluetooth.");
 }
 </script>
