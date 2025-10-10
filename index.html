@@ -101,9 +101,15 @@ document.getElementById("connectFTMS").onclick=async()=>{
   deviceFTMS=await navigator.bluetooth.requestDevice({filters:[{services:[0x1826]}]});
   const server=await deviceFTMS.gatt.connect();
   const service=await server.getPrimaryService(0x1826);
-  charFTMS=await service.getCharacteristic(0x2AD2); // Indoor Rowing Data
-  await charFTMS.startNotifications();
-  charFTMS.addEventListener("characteristicvaluechanged",handleFTMS);
+  let characteristics = await service.getCharacteristics();
+let found = characteristics.find(c =>
+  c.uuid.toLowerCase().includes("2ad2") || c.uuid.toLowerCase().includes("2ad1")
+);
+if (!found) throw new Error("No se encontró characteristic FTMS (0x2AD1 ni 0x2AD2)");
+charFTMS = found;
+await charFTMS.startNotifications();
+charFTMS.addEventListener("characteristicvaluechanged", handleFTMS);
+log(`✅ FTMS conectado (${charFTMS.uuid.includes("2ad2") ? "Indoor Rowing Data 0x2AD2" : "Fitness Machine Data 0x2AD1"})`);
   document.getElementById("status").textContent="Estado FTMS: Conectado";
   document.getElementById("disconnectFTMS").disabled=false;
   log("✅ FTMS conectado");
@@ -195,3 +201,4 @@ document.getElementById("exportCSV").onclick=()=>{
 </script>
 </body>
 </html>
+
