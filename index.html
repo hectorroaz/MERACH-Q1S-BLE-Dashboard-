@@ -3,24 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v1.6</title>
+<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v1.7</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,sans-serif}
 .card{background:#1e293b;border-radius:1rem;padding:1rem;margin-bottom:1rem}
 .btn{padding:.65rem 1rem;border-radius:.75rem;font-weight:700;transition:.2s all}
 .btn:hover{filter:brightness(1.08)}
-.metric-main{font-size:2.3rem;font-weight:800;line-height:1}
+.metric-main{font-size:2.5rem;font-weight:800;line-height:1}
 .metric-label{font-size:.8rem;color:#94a3b8;margin-top:.25rem}
 .log-box{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#0b1222;padding:.6rem;border-radius:.6rem;max-height:200px;overflow:auto;white-space:pre-wrap}
-.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-top:.8rem}
 </style>
 </head>
 <body class="min-h-screen flex flex-col items-center px-3 py-4">
 
 <header class="text-center mb-4">
   <h1 class="text-2xl font-extrabold text-blue-400">MERACH Q1S – Web Bluetooth FTMS + HR Dashboard</h1>
-  <p class="text-gray-400 text-sm mt-1">v1.6 · FTMS auto + HR BLE</p>
+  <p class="text-gray-400 text-sm mt-1">v1.7 · FTMS auto + HR BLE</p>
 </header>
 
 <!-- CONTROLES -->
@@ -45,12 +46,14 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,sans-serif}
   <div id="hrDisplay" class="metric-main text-red-400 mt-1">0 bpm</div>
 </div>
 
-<!-- HUD 5 MÉTRICAS -->
+<!-- HUD MÉTRICAS -->
 <div class="card w-full max-w-5xl text-center">
-  <div class="grid5">
+  <div class="grid3">
     <div><div id="mainSPM" class="metric-main text-blue-400">0</div><div class="metric-label">SPM</div></div>
     <div><div id="mainHR" class="metric-main text-rose-400">0</div><div class="metric-label">BPM</div></div>
     <div><div id="mainStrokes" class="metric-main text-amber-400">0</div><div class="metric-label">STROKES</div></div>
+  </div>
+  <div class="grid2">
     <div><div id="mainDist" class="metric-main text-emerald-400">0.000</div><div class="metric-label">KM</div></div>
     <div><div id="mainPace" class="metric-main text-cyan-400">0:00</div><div class="metric-label">PACE (500m)</div></div>
   </div>
@@ -76,16 +79,15 @@ let deviceFTMS,charFTMS,deviceHR,charHR,wakeLock;
 let dataLog=[],metrics={},lastVals={power:0,spm:0,pace:0,strokes:0,dist:0,avg:0,hr:0};
 const metricsBody=document.getElementById('metricsBody'),logBox=document.getElementById('log');
 function log(msg){const t=new Date().toLocaleTimeString();logBox.textContent+=`[${t}] ${msg}\n`;logBox.scrollTop=logBox.scrollHeight;}
-function formatPace(val){if(!val)return"0:00";const m=Math.floor(val/60),s=(val%60).toFixed(1).padStart(4,"0");return`${m}:${s}/500m`;}
+function formatPace(val){if(!val)return"0:00";const m=Math.floor(val/60);const s=(val%60).toFixed(1).padStart(4,"0");return`${m}:${s}/500m`;}
 
-// ---- UI ----
+// UI refresco
 function updateUI(){
   mainSPM.textContent=metrics.strokeRate??lastVals.spm;
   mainHR.textContent=metrics.heartRate??lastVals.hr;
   mainStrokes.textContent=metrics.strokeCount??lastVals.strokes;
   mainDist.textContent=(metrics.totalDistance??lastVals.dist).toFixed(3);
   mainPace.textContent=formatPace(metrics.pace??lastVals.pace);
-
   metricsBody.innerHTML="";
   const rows=[
     ["Total Distance",metrics.totalDistance?.toFixed(3)||"0","Distancia"],
@@ -120,17 +122,19 @@ async function connectFTMSDevice(){
   finally{btn.disabled=false;}
 }
 
+// parser corregido (flags de 4 bytes)
 function handleFTMS(e){
   const dv=e.target.value;
-  let i=2;const flag=dv.getUint16(0,true);
-  // Guarda últimos
+  if(dv.byteLength<6)return;
+  const flags=dv.getUint32(0,true);
+  let i=4;
   lastVals={...lastVals,...metrics};
-  if(flag&0x1){metrics.instantPower=dv.getUint16(i,true);i+=2;}else metrics.instantPower=lastVals.power;
-  if(flag&0x2){metrics.strokeRate=dv.getUint8(i++);}else metrics.strokeRate=lastVals.spm;
-  if(flag&0x4){metrics.strokeCount=dv.getUint16(i,true);i+=2;}else metrics.strokeCount=lastVals.strokes;
-  if(flag&0x8){metrics.totalDistance=dv.getUint32(i,true)/1000;i+=4;}else metrics.totalDistance=lastVals.dist;
-  if(flag&0x10){metrics.pace=dv.getUint16(i,true)/10;i+=2;}else metrics.pace=lastVals.pace;
-  if(flag&0x20){metrics.avgStrokeRate=dv.getUint8(i++);}else metrics.avgStrokeRate=lastVals.avg;
+  if(flags&0x0001){metrics.instantPower=dv.getUint16(i,true);i+=2;}else metrics.instantPower=lastVals.power;
+  if(flags&0x0002){metrics.strokeRate=dv.getUint8(i++);}else metrics.strokeRate=lastVals.spm;
+  if(flags&0x0004){metrics.strokeCount=dv.getUint16(i,true);i+=2;}else metrics.strokeCount=lastVals.strokes;
+  if(flags&0x0008){metrics.totalDistance=dv.getUint32(i,true)/1000;i+=4;}else metrics.totalDistance=lastVals.dist;
+  if(flags&0x0010){metrics.pace=dv.getUint16(i,true)/10;i+=2;}else metrics.pace=lastVals.pace;
+  if(flags&0x0020){metrics.avgStrokeRate=dv.getUint8(i++);}else metrics.avgStrokeRate=lastVals.avg;
   updateUI();
   dataLog.push({...metrics,t:Date.now()});
 }
