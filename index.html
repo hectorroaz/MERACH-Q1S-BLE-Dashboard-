@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v1.9</title>
+<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v2.0</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-serif}
@@ -21,9 +21,10 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-
 
 <header class="text-center mb-4">
   <h1 class="text-2xl font-extrabold text-blue-400">MERACH Q1S – FTMS + HR Dashboard</h1>
-  <p class="text-gray-400 text-sm mt-1">v1.9 · Basado en parser original v1.5 (SPM estable)</p>
+  <p class="text-gray-400 text-sm mt-1">v2.0 · Corrección distancia + interfaz limpia</p>
 </header>
 
+<!-- Controles -->
 <div class="card w-full max-w-5xl text-center">
   <div class="flex flex-wrap justify-center gap-2 mb-2">
     <button id="btnConnectFTMS" class="btn bg-blue-600 text-white">Conectar Rower</button>
@@ -34,6 +35,7 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-
   <p id="status" class="text-sm text-gray-300">Estado FTMS: Desconectado</p>
 </div>
 
+<!-- HR -->
 <div class="card w-full max-w-5xl text-center">
   <h2 class="text-lg font-semibold mb-2">Sensor Cardíaco BLE</h2>
   <div class="flex flex-wrap justify-center gap-2">
@@ -44,6 +46,7 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-
   <div id="hrDisplay" class="metric-main text-red-400 mt-1">0 bpm</div>
 </div>
 
+<!-- Métricas principales -->
 <div class="card w-full max-w-5xl text-center">
   <div class="grid3">
     <div><div id="mainSPM" class="metric-main text-blue-400">0</div><div class="metric-label">SPM</div></div>
@@ -51,11 +54,12 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-
     <div><div id="mainStrokes" class="metric-main text-amber-400">0</div><div class="metric-label">STROKES</div></div>
   </div>
   <div class="grid2">
-    <div><div id="mainDist" class="metric-main text-emerald-400">0.000</div><div class="metric-label">KM</div></div>
-    <div><div id="mainPace" class="metric-main text-cyan-400">0:00</div><div class="metric-label">PACE (500m)</div></div>
+    <div><div id="mainDist" class="metric-main text-emerald-400">0.00</div><div class="metric-label">KM</div></div>
+    <div><div id="mainPower" class="metric-main text-cyan-400">0</div><div class="metric-label">W</div></div>
   </div>
 </div>
 
+<!-- Métricas en vivo -->
 <div class="card w-full max-w-5xl">
   <h3 class="text-lg font-semibold mb-2">Métricas en vivo</h3>
   <table class="w-full text-sm">
@@ -64,6 +68,7 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-
   </table>
 </div>
 
+<!-- Log -->
 <div class="card w-full max-w-5xl">
   <h3 class="text-lg font-semibold mb-2">Registro</h3>
   <div id="log" class="log-box"></div>
@@ -71,24 +76,23 @@ body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-
 
 <script>
 let deviceFTMS,charFTMS,deviceHR,charHR,wakeLock;
-let dataLog=[],metrics={},lastVals={};
+let dataLog=[],metrics={};
 const logBox=document.getElementById('log');
 function log(m){const t=new Date().toLocaleTimeString();logBox.textContent+=`[${t}] ${m}\n`;logBox.scrollTop=logBox.scrollHeight;}
 
-function formatPace(v){if(!v)return"0:00";const m=Math.floor(v/60),s=(v%60).toFixed(1).padStart(4,"0");return`${m}:${s}/500m`;}
 function updateUI(){
   mainSPM.textContent=metrics.strokeRate||0;
   mainHR.textContent=metrics.heartRate||0;
   mainStrokes.textContent=metrics.strokeCount||0;
-  mainDist.textContent=(metrics.totalDistance||0).toFixed(3);
-  mainPace.textContent=formatPace(metrics.pace||0);
+  mainDist.textContent=(metrics.totalDistance||0).toFixed(2);
+  mainPower.textContent=metrics.instantPower||0;
+
   const rows=[
-    ["Total Distance",metrics.totalDistance?.toFixed(3)||"0","Distancia"],
+    ["Total Distance",(metrics.totalDistance||0).toFixed(2),"Km"],
     ["Heart Rate",metrics.heartRate||0,"Sensor BLE"],
     ["Stroke Count",metrics.strokeCount||0,"Total remadas"],
     ["Stroke Rate",metrics.strokeRate||0,"Brazadas/min"],
-    ["Instant Power",metrics.instantPower||0,"W"],
-    ["Pace",formatPace(metrics.pace||0),"s/500m"]
+    ["Instant Power",metrics.instantPower||0,"W"]
   ];
   document.getElementById('metricsBody').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class='text-right font-semibold'>${r[1]}</td><td class='text-right text-gray-400'>${r[2]}</td></tr>`).join("");
 }
@@ -123,8 +127,7 @@ function handleFTMS(event){
     if(flag&0x1){metrics.instantPower=dv.getUint16(idx,true);idx+=2;}
     if(flag&0x2){metrics.strokeRate=dv.getUint8(idx++);}
     if(flag&0x4){metrics.strokeCount=dv.getUint16(idx,true);idx+=2;}
-    if(flag&0x8){metrics.totalDistance=dv.getUint32(idx,true)/1000;idx+=4;}
-    if(flag&0x10){metrics.pace=dv.getUint16(idx,true)/10;idx+=2;}
+    if(flag&0x8){metrics.totalDistance=dv.getUint32(idx,true)/100;} // CORREGIDO: metros → km
   }catch(e){log("⚠️ Parse error: "+e);}
   updateUI();
   dataLog.push({...metrics,t:Date.now()});
@@ -152,8 +155,8 @@ document.getElementById("connectHRBtn").onclick=connectHR;
 document.getElementById("disconnectHRBtn").onclick=()=>{if(deviceHR)deviceHR.gatt.disconnect();hrStatus.textContent="Estado: Desconectado";hrDisplay.textContent="0 bpm";};
 document.getElementById("wakeLockBtn").onclick=async()=>{try{wakeLock=await navigator.wakeLock.request("screen");wakeLockBtn.textContent="Pantalla activa ✅";}catch{alert("No soportado.");}};
 document.getElementById("exportCSV").onclick=()=>{
-  let csv="time,SPM,HR,Strokes,Dist,Power,Pace\n";
-  dataLog.forEach(d=>csv+=`${d.t},${d.strokeRate||0},${d.heartRate||0},${d.strokeCount||0},${d.totalDistance||0},${d.instantPower||0},${d.pace||0}\n`);
+  let csv="time,SPM,HR,Strokes,Dist,Power\n";
+  dataLog.forEach(d=>csv+=`${d.t},${d.strokeRate||0},${d.heartRate||0},${d.strokeCount||0},${d.totalDistance||0},${d.instantPower||0}\n`);
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
   a.download="merach_q1s.csv";a.click();
