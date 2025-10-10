@@ -1,166 +1,401 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v2.0</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard</title>
+<meta name="description" content="Dashboard FTMS vía Web Bluetooth para Merach Q1S (con fallback propietario), con métricas en vivo y exportación CSV." />
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Roboto,sans-serif}
-.card{background:#1e293b;border-radius:1rem;padding:1rem;margin-bottom:1rem}
-.btn{padding:.65rem 1rem;border-radius:.75rem;font-weight:700;transition:.2s all}
-.btn:hover{filter:brightness(1.08)}
-.metric-main{font-size:2.4rem;font-weight:800;line-height:1}
-.metric-label{font-size:.8rem;color:#94a3b8;margin-top:.25rem}
-.log-box{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#0b1222;padding:.6rem;border-radius:.6rem;max-height:200px;overflow:auto;white-space:pre-wrap}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
-.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-top:.8rem}
+  :root{
+    --bg:#0b0d13; --card:#121826; --ink:#e8edf3; --muted:#9aa4b2;
+    --ok:#48e09c; --warn:#ffc45b; --err:#ff5c5c;
+  }
+  html,body{background:var(--bg); color:var(--ink);}
+  .card{background:var(--card);}
+  .mono{font-variant-numeric: tabular-nums; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+  .badge{border-radius:999px;padding:2px 10px;font-size:.85rem}
 </style>
 </head>
-<body class="min-h-screen flex flex-col items-center px-3 py-4">
+<body class="min-h-screen">
+  <!-- Header -->
+  <header class="border-b border-slate-800/80">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">MERACH Q1S – Web Bluetooth FTMS + HR Dashboard</h1>
+      <div class="text-sm text-slate-400">Funciona mejor en <span class="font-semibold text-slate-200">Chrome Android</span> bajo <span class="font-semibold text-slate-200">HTTPS</span>.</div>
+    </div>
+  </header>
 
-<header class="text-center mb-4">
-  <h1 class="text-2xl font-extrabold text-blue-400">MERACH Q1S – FTMS + HR Dashboard</h1>
-  <p class="text-gray-400 text-sm mt-1">v2.0 · Corrección distancia + interfaz limpia</p>
-</header>
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <!-- Controls -->
+    <section class="card rounded-2xl p-4 border border-slate-800/80">
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="btnConnect" class="px-4 py-2 rounded-xl font-semibold bg-gradient-to-tr from-sky-500 to-cyan-400 text-slate-900 hover:opacity-95 transition">
+          Conectar por Bluetooth
+        </button>
+        <button id="btnDisconnect" class="px-4 py-2 rounded-xl font-semibold bg-slate-800/80 text-slate-200 border border-slate-700 hover:bg-slate-800 transition" disabled>
+          Desconectar
+        </button>
+        <button id="btnWake" class="px-4 py-2 rounded-xl font-semibold bg-slate-800/80 text-slate-200 border border-slate-700 hover:bg-slate-800 transition">
+          Mantener pantalla activa
+        </button>
+        <button id="btnExport" class="px-4 py-2 rounded-xl font-semibold bg-slate-800/80 text-slate-200 border border-slate-700 hover:bg-slate-800 transition">
+          Exportar CSV
+        </button>
 
-<!-- Controles -->
-<div class="card w-full max-w-5xl text-center">
-  <div class="flex flex-wrap justify-center gap-2 mb-2">
-    <button id="btnConnectFTMS" class="btn bg-blue-600 text-white">Conectar Rower</button>
-    <button id="btnDisconnectFTMS" class="btn bg-gray-600 text-white" disabled>Desconectar</button>
-    <button id="wakeLockBtn" class="btn bg-indigo-600 text-white">Mantener pantalla activa</button>
-    <button id="exportCSV" class="btn bg-sky-600 text-white">Exportar CSV</button>
-  </div>
-  <p id="status" class="text-sm text-gray-300">Estado FTMS: Desconectado</p>
-</div>
+        <div class="ml-auto flex items-center gap-3">
+          <span id="state" class="badge bg-amber-500/20 text-amber-300 border border-amber-500/30">Desconectado</span>
+          <span id="deviceInfo" class="text-slate-400 text-sm">—</span>
+        </div>
+      </div>
+    </section>
 
-<!-- HR -->
-<div class="card w-full max-w-5xl text-center">
-  <h2 class="text-lg font-semibold mb-2">Sensor Cardíaco BLE</h2>
-  <div class="flex flex-wrap justify-center gap-2">
-    <button id="connectHRBtn" class="btn bg-red-600 text-white">❤️ Conectar HR</button>
-    <button id="disconnectHRBtn" class="btn bg-gray-700 text-white" disabled>🔌 Desconectar</button>
-  </div>
-  <p id="hrStatus" class="text-sm text-gray-300 mt-2">Estado: Desconectado</p>
-  <div id="hrDisplay" class="metric-main text-red-400 mt-1">0 bpm</div>
-</div>
+    <!-- KPI Grid -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+      <!-- SPM -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">SPM</div>
+        <div id="k-spm" class="mt-1 text-3xl font-bold mono">—</div>
+        <div class="text-slate-500 text-xs">Brazadas/min</div>
+      </div>
+      <!-- Strokes -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">Strokes</div>
+        <div id="k-strokes" class="mt-1 text-3xl font-bold mono">—</div>
+        <div class="text-slate-500 text-xs">Acumuladas</div>
+      </div>
+      <!-- Distancia -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">Distancia</div>
+        <div class="mt-1 text-3xl font-bold mono"><span id="k-dist-km">—</span><span class="text-base font-semibold ml-1">km</span></div>
+        <div class="text-slate-500 text-xs"><span id="k-dist-m">—</span> m</div>
+      </div>
+      <!-- Pace -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">Pace</div>
+        <div id="k-pace" class="mt-1 text-3xl font-bold mono">—</div>
+        <div class="text-slate-500 text-xs">mm:ss/500m</div>
+      </div>
+      <!-- Power -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">Power</div>
+        <div class="mt-1 text-3xl font-bold mono"><span id="k-power">—</span><span class="text-base font-semibold ml-1">W</span></div>
+        <div class="text-slate-500 text-xs">Potencia</div>
+      </div>
+      <!-- HR -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">Heart Rate</div>
+        <div class="mt-1 text-3xl font-bold mono"><span id="k-hr">—</span><span class="text-base font-semibold ml-1">bpm</span></div>
+        <div class="text-slate-500 text-xs">Desde FTMS (si disponible)</div>
+      </div>
+      <!-- Tiempo -->
+      <div class="card rounded-2xl p-4 border border-slate-800/80">
+        <div class="text-slate-400 text-xs uppercase tracking-wide">Tiempo</div>
+        <div id="k-time" class="mt-1 text-3xl font-bold mono">—</div>
+        <div class="text-slate-500 text-xs">Transcurrido</div>
+      </div>
+    </section>
 
-<!-- Métricas principales -->
-<div class="card w-full max-w-5xl text-center">
-  <div class="grid3">
-    <div><div id="mainSPM" class="metric-main text-blue-400">0</div><div class="metric-label">SPM</div></div>
-    <div><div id="mainHR" class="metric-main text-rose-400">0</div><div class="metric-label">BPM</div></div>
-    <div><div id="mainStrokes" class="metric-main text-amber-400">0</div><div class="metric-label">STROKES</div></div>
-  </div>
-  <div class="grid2">
-    <div><div id="mainDist" class="metric-main text-emerald-400">0.00</div><div class="metric-label">KM</div></div>
-    <div><div id="mainPower" class="metric-main text-cyan-400">0</div><div class="metric-label">W</div></div>
-  </div>
-</div>
+    <!-- Tabla Detalle -->
+    <section class="card rounded-2xl p-4 border border-slate-800/80">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold">Métricas en vivo</h3>
+        <div class="text-xs text-slate-500">FTMS 0x1826 / Rowing Data 0x2AD1</div>
+      </div>
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full text-sm">
+          <thead class="text-slate-400">
+            <tr class="border-b border-slate-800/80">
+              <th class="text-left py-2 pr-3">Parámetro</th>
+              <th class="text-left py-2 pr-3">Valor</th>
+              <th class="text-left py-2">Descripción</th>
+            </tr>
+          </thead>
+          <tbody id="metricsBody" class="divide-y divide-slate-800/60"></tbody>
+        </table>
+      </div>
+    </section>
 
-<!-- Métricas en vivo -->
-<div class="card w-full max-w-5xl">
-  <h3 class="text-lg font-semibold mb-2">Métricas en vivo</h3>
-  <table class="w-full text-sm">
-    <thead><tr><th class="text-left">Parámetro</th><th class="text-right">Valor</th><th class="text-right">Detalle</th></tr></thead>
-    <tbody id="metricsBody"></tbody>
-  </table>
-</div>
+    <!-- Log -->
+    <section class="card rounded-2xl p-4 border border-slate-800/80">
+      <h3 class="font-semibold mb-2">Registro</h3>
+      <pre id="log" class="mono text-sm bg-slate-900/70 border border-slate-800/80 rounded-xl p-3 max-h-64 overflow-auto">—</pre>
+    </section>
 
-<!-- Log -->
-<div class="card w-full max-w-5xl">
-  <h3 class="text-lg font-semibold mb-2">Registro</h3>
-  <div id="log" class="log-box"></div>
-</div>
+    <footer class="text-xs text-slate-500">
+      FTMS UUID: 0x1826 | Rowing Machine Data: 0x2AD1 | Fallback propietario: 0000ffe0-0000-1000-8000-00805f9b34fb
+    </footer>
+  </main>
 
 <script>
-let deviceFTMS,charFTMS,deviceHR,charHR,wakeLock;
-let dataLog=[],metrics={};
-const logBox=document.getElementById('log');
-function log(m){const t=new Date().toLocaleTimeString();logBox.textContent+=`[${t}] ${m}\n`;logBox.scrollTop=logBox.scrollHeight;}
+/* UUIDs */
+const FTMS_SERVICE = 0x1826;
+const ROWING_MACHINE_DATA = 0x2AD1;
+const FALLBACK_SERVICE = '0000ffe0-0000-1000-8000-00805f9b34fb'; // Service propietario común en Merach
 
-function updateUI(){
-  mainSPM.textContent=metrics.strokeRate||0;
-  mainHR.textContent=metrics.heartRate||0;
-  mainStrokes.textContent=metrics.strokeCount||0;
-  mainDist.textContent=(metrics.totalDistance||0).toFixed(2);
-  mainPower.textContent=metrics.instantPower||0;
+/* Estado */
+let device, server, service, rowingChar, reconnectTimer, wakeLock;
+let sessionData = []; // para CSV
 
-  const rows=[
-    ["Total Distance",(metrics.totalDistance||0).toFixed(2),"Km"],
-    ["Heart Rate",metrics.heartRate||0,"Sensor BLE"],
-    ["Stroke Count",metrics.strokeCount||0,"Total remadas"],
-    ["Stroke Rate",metrics.strokeRate||0,"Brazadas/min"],
-    ["Instant Power",metrics.instantPower||0,"W"]
-  ];
-  document.getElementById('metricsBody').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class='text-right font-semibold'>${r[1]}</td><td class='text-right text-gray-400'>${r[2]}</td></tr>`).join("");
-}
-
-async function connectFTMSDevice(){
-  const btn=document.getElementById("btnConnectFTMS");btn.disabled=true;
-  try{
-    deviceFTMS=await navigator.bluetooth.requestDevice({
-      filters:[{services:[0x1826]}],
-      optionalServices:[0x1826,0xF8C0,0xFFF0,0x180A]
-    });
-    const server=await deviceFTMS.gatt.connect();
-    const services=await server.getPrimaryServices();
-    let service=services.find(s=>s.uuid.includes("1826"))||services.find(s=>s.uuid.includes("f8c0"))||services.find(s=>s.uuid.includes("fff0"));
-    const chars=await service.getCharacteristics();
-    charFTMS=chars.find(c=>c.uuid.includes("2ad2"))||chars.find(c=>c.uuid.includes("2ad1"))||chars[0];
-    await charFTMS.startNotifications();
-    charFTMS.addEventListener("characteristicvaluechanged",handleFTMS);
-    document.getElementById("status").textContent="Estado FTMS: Conectado";
-    document.getElementById("btnDisconnectFTMS").disabled=false;
-    log("✅ FTMS conectado ("+service.uuid+") → Char: "+charFTMS.uuid);
-  }catch(e){log("❌ Error FTMS: "+e);}
-  finally{btn.disabled=false;}
-}
-
-function handleFTMS(event){
-  const dv=event.target.value;
-  if(dv.byteLength<6)return;
-  try{
-    const flag=dv.getUint16(0,true);
-    let idx=2;
-    if(flag&0x1){metrics.instantPower=dv.getUint16(idx,true);idx+=2;}
-    if(flag&0x2){metrics.strokeRate=dv.getUint8(idx++);}
-    if(flag&0x4){metrics.strokeCount=dv.getUint16(idx,true);idx+=2;}
-    if(flag&0x8){metrics.totalDistance=dv.getUint32(idx,true)/100;} // CORREGIDO: metros → km
-  }catch(e){log("⚠️ Parse error: "+e);}
-  updateUI();
-  dataLog.push({...metrics,t:Date.now()});
-}
-
-async function connectHR(){
-  try{
-    deviceHR=await navigator.bluetooth.requestDevice({filters:[{services:[0x180D]}]});
-    const server=await deviceHR.gatt.connect();
-    const svc=await server.getPrimaryService(0x180D);
-    charHR=await svc.getCharacteristic(0x2A37);
-    await charHR.startNotifications();
-    charHR.addEventListener("characteristicvaluechanged",ev=>{
-      const v=ev.target.value;metrics.heartRate=v.getUint8(1)||0;
-      hrDisplay.textContent=metrics.heartRate+" bpm";updateUI();
-    });
-    hrStatus.textContent="Estado: Conectado";disconnectHRBtn.disabled=false;
-    log("❤️ Sensor HR conectado");
-  }catch(e){log("❌ Error HR: "+e);}
-}
-
-document.getElementById("btnConnectFTMS").onclick=connectFTMSDevice;
-document.getElementById("btnDisconnectFTMS").onclick=()=>{if(deviceFTMS)deviceFTMS.gatt.disconnect();status.textContent="Estado FTMS: Desconectado";};
-document.getElementById("connectHRBtn").onclick=connectHR;
-document.getElementById("disconnectHRBtn").onclick=()=>{if(deviceHR)deviceHR.gatt.disconnect();hrStatus.textContent="Estado: Desconectado";hrDisplay.textContent="0 bpm";};
-document.getElementById("wakeLockBtn").onclick=async()=>{try{wakeLock=await navigator.wakeLock.request("screen");wakeLockBtn.textContent="Pantalla activa ✅";}catch{alert("No soportado.");}};
-document.getElementById("exportCSV").onclick=()=>{
-  let csv="time,SPM,HR,Strokes,Dist,Power\n";
-  dataLog.forEach(d=>csv+=`${d.t},${d.strokeRate||0},${d.heartRate||0},${d.strokeCount||0},${d.totalDistance||0},${d.instantPower||0}\n`);
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-  a.download="merach_q1s.csv";a.click();
+/* Helpers UI */
+const $ = (id) => document.getElementById(id);
+const log = (msg) => {
+  const t = new Date().toLocaleTimeString();
+  const pre = $("log");
+  pre.textContent = (pre.textContent === "—" ? "" : pre.textContent) + `[${t}] ${msg}\n`;
+  pre.scrollTop = pre.scrollHeight;
+  console.log(msg);
 };
+const setState = (text, kind="warn") => {
+  const el = $("state");
+  el.textContent = text;
+  el.className = "badge " + (
+    kind === "ok"   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" :
+    kind === "err"  ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" :
+                      "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+  );
+};
+
+/* Wake Lock */
+async function keepAwake(){
+  try{
+    if(!("wakeLock" in navigator)){ log("Wake Lock no soportado"); return; }
+    wakeLock = await navigator.wakeLock.request('screen');
+    $("btnWake").textContent = "Wake Lock activo";
+    $("btnWake").classList.add("ring-1","ring-emerald-400/40");
+    log("Wake Lock activado");
+    wakeLock.addEventListener('release', () => {
+      $("btnWake").textContent = "Mantener pantalla activa";
+      $("btnWake").classList.remove("ring-1","ring-emerald-400/40");
+    });
+  }catch(e){
+    log("Wake Lock error: " + e.message);
+  }
+}
+
+/* FTMS Parser: Rowing Machine Data (spec)
+   flags: 16 bits; campos condicionales
+   Stroke Rate: uint8 (0.5 spm) -> value/2
+   Stroke Count: uint16
+   Total Distance: 24 bits, unidad = 0.1 m  -> metros = raw/10
+   Pace: uint16, unidad = 0.1 s por 500m
+   Power: int16 (W)
+   Heart Rate: uint8 (bpm)
+   Elapsed Time: uint16, unidad = 1 s
+*/
+function parseFTMS(dv){
+  let o=0;
+  const flags = dv.getUint16(o,true); o+=2;
+  const has = (bit)=> (flags & (1<<bit)) !== 0;
+
+  const strokeRate = dv.getUint8(o)/2; o+=1;             // 0.5 spm
+  const strokeCount = dv.getUint16(o,true); o+=2;
+
+  let distRaw=null, distM=null;
+  if(has(2)){ // Total Distance present
+    distRaw = (dv.getUint8(o)) | (dv.getUint8(o+1)<<8) | (dv.getUint8(o+2)<<16);
+    o+=3;
+    // FTMS: distancia en décimas de metro => metros = raw/10
+    distM = distRaw/10;
+  }
+
+  let paceRaw=null;
+  if(has(3)){ paceRaw = dv.getUint16(o,true); o+=2; }     // 0.1 s/500m
+
+  let power=null;
+  if(has(5)){ power = dv.getInt16(o,true); o+=2; }
+
+  let hr=null;
+  if(has(9)){ hr = dv.getUint8(o); o+=1; }
+
+  let elapsed=null;
+  if(has(11)){ elapsed = dv.getUint16(o,true); o+=2; }    // segundos
+
+  return { strokeRate, strokeCount, distM, paceRaw, power, hr, elapsed };
+}
+
+/* Formatos */
+function fmtTime(s){
+  if(s==null) return "—";
+  const m = Math.floor(s/60);
+  const ss = (s%60).toString().padStart(2,"0");
+  return `${m}:${ss}`;
+}
+function fmtPace(pRaw){
+  if(pRaw==null) return "—";
+  const totalSec = pRaw/10; // 0.1 s -> s
+  const m = Math.floor(totalSec/60);
+  const s = Math.floor(totalSec%60).toString().padStart(2,"0");
+  return `${m}:${s}/500m`;
+}
+function smartKm(distM){
+  if(distM==null) return ["—","—"];
+  const km = distM/1000;
+  return [ km.toFixed(km>=10 ? 1 : 2), Math.round(distM).toString() ];
+}
+
+/* Render KPIs + tabla */
+function setKPI(id, val){ $(id).textContent = val; }
+function ensureRow(key, label, desc){
+  const tbody = $("metricsBody");
+  let row = tbody.querySelector(`[data-k="${key}"]`);
+  if(!row){
+    row = document.createElement("tr");
+    row.dataset.k = key;
+    row.innerHTML = `
+      <td class="py-2 pr-3">${label}</td>
+      <td class="py-2 pr-3 mono" id="val-${key}">—</td>
+      <td class="py-2 text-slate-400">${desc}</td>
+    `;
+    tbody.appendChild(row);
+  }
+  return row.querySelector(`#val-${key}`);
+}
+
+function render(data){
+  // KPIs
+  setKPI("k-spm", data.strokeRate?.toFixed(1) ?? "—");
+  setKPI("k-strokes", data.strokeCount ?? "—");
+  const [kmTxt, mTxt] = smartKm(data.distM);
+  setKPI("k-dist-km", kmTxt);
+  setKPI("k-dist-m", mTxt);
+  setKPI("k-pace", fmtPace(data.paceRaw));
+  setKPI("k-power", data.power ?? "—");
+  setKPI("k-hr", data.hr ?? "—");
+  setKPI("k-time", fmtTime(data.elapsed));
+
+  // Tabla
+  const upd = (k, v)=> { ensureRow(k, k, descs[k]).textContent = v; };
+  const descs = {
+    "Stroke Rate":"Brazadas/min (spm)",
+    "Stroke Count":"Total de brazadas",
+    "Distance":"Distancia total (km / m)",
+    "Pace":"Ritmo medio (mm:ss/500m)",
+    "Power":"Potencia (W)",
+    "Heart Rate":"Frecuencia cardíaca (bpm)",
+    "Elapsed":"Tiempo transcurrido (mm:ss)"
+  };
+  upd("Stroke Rate", (data.strokeRate?.toFixed(1) ?? "—") + " spm");
+  upd("Stroke Count", data.strokeCount ?? "—");
+  upd("Distance", (kmTxt!=="—"?kmTxt+" km":"—") + "  ·  " + (mTxt!=="—"?mTxt+" m":"—"));
+  upd("Pace", fmtPace(data.paceRaw));
+  upd("Power", data.power!=null ? (data.power+" W") : "—");
+  upd("Heart Rate", data.hr!=null ? (data.hr+" bpm") : "—");
+  upd("Elapsed", fmtTime(data.elapsed));
+}
+
+/* Notificaciones FTMS */
+function onData(ev){
+  const dv = ev.target.value;
+  const data = parseFTMS(dv);
+  render(data);
+
+  // Guardar fila para CSV (raw y derivados útiles)
+  sessionData.push({
+    t: Date.now(),
+    strokeRate: data.strokeRate ?? "",
+    strokeCount: data.strokeCount ?? "",
+    distM: data.distM ?? "",
+    distKm: data.distM!=null ? (data.distM/1000).toFixed(3) : "",
+    paceRaw: data.paceRaw ?? "",
+    paceFmt: fmtPace(data.paceRaw),
+    power: data.power ?? "",
+    hr: data.hr ?? "",
+    elapsed: data.elapsed ?? ""
+  });
+}
+
+/* Conexión BLE */
+async function connect(){
+  try{
+    setState("Buscando…","warn");
+    const options = {
+      filters: [{ namePrefix: "MRK-" }], // típico en Merach
+      optionalServices: [FTMS_SERVICE, FALLBACK_SERVICE]
+    };
+    device = await navigator.bluetooth.requestDevice(options);
+    $("deviceInfo").textContent = device.name || device.id;
+    log(`Dispositivo: ${device.name||device.id}`);
+
+    device.addEventListener("gattserverdisconnected", handleDisconnect);
+    server = await device.gatt.connect();
+
+    // Intentar FTMS primero
+    try{
+      service = await server.getPrimaryService(FTMS_SERVICE);
+      log("Servicio FTMS detectado (0x1826)");
+    }catch(_){
+      log("FTMS no disponible. Probando UUID propietario…");
+      service = await server.getPrimaryService(FALLBACK_SERVICE);
+      log("Servicio propietario activo (fallback)");
+    }
+
+    // Característica de Rowing Machine Data
+    rowingChar = await service.getCharacteristic(ROWING_MACHINE_DATA);
+    await rowingChar.startNotifications();
+    rowingChar.addEventListener("characteristicvaluechanged", onData);
+    setState("Conectado","ok");
+    $("btnDisconnect").disabled = false;
+    log("Notificaciones FTMS activas");
+  }catch(err){
+    setState("Error","err");
+    log("Error de conexión: " + err.message);
+  }
+}
+
+function handleDisconnect(){
+  setState("Desconectado (reintentando)","warn");
+  log("Conexión perdida. Reintentando en 4 s…");
+  reconnectTimer = setTimeout(connect, 4000);
+}
+
+async function disconnect(){
+  try{
+    if(reconnectTimer) clearTimeout(reconnectTimer);
+    if(rowingChar){
+      try{ await rowingChar.stopNotifications(); }catch(_){}
+      rowingChar.removeEventListener("characteristicvaluechanged", onData);
+    }
+    if(device?.gatt?.connected) device.gatt.disconnect();
+  }finally{
+    $("btnDisconnect").disabled = true;
+    setState("Desconectado","warn");
+    log("Conexión finalizada");
+  }
+}
+
+/* Export CSV */
+function exportCSV(){
+  if(!sessionData.length){
+    alert("No hay datos para exportar.");
+    return;
+  }
+  // Cabeceras
+  let csv = "timestamp,isoTime,strokeRate,strokeCount,distM,distKm,paceRaw_0.1s_per_500m,paceFmt,power,hr,elapsed_s\n";
+  for(const r of sessionData){
+    const iso = new Date(r.t).toISOString();
+    csv += [
+      r.t, iso, r.strokeRate, r.strokeCount, r.distM, r.distKm,
+      r.paceRaw, `"${r.paceFmt}"`, r.power, r.hr, r.elapsed
+    ].join(",") + "\n";
+  }
+  const blob = new Blob([csv], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "merach_q1s_session.csv";
+  a.click();
+}
+
+/* Eventos UI */
+$("btnConnect").addEventListener("click", connect);
+$("btnDisconnect").addEventListener("click", disconnect);
+$("btnWake").addEventListener("click", keepAwake);
+$("btnExport").addEventListener("click", exportCSV);
+
+if(!("bluetooth" in navigator)){
+  setState("Bluetooth no soportado","err");
+  log("Este navegador no soporta Web Bluetooth.");
+}
 </script>
 </body>
 </html>
