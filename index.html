@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v1.4</title>
+<title>MERACH Q1S – Web Bluetooth FTMS + HR Dashboard v1.5</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body{background:#0f172a;color:#f8fafc;font-family:'Inter',system-ui,Segoe UI,Roboto,sans-serif}
@@ -19,14 +19,14 @@
 
 <header class="text-center mb-4">
   <h1 class="text-2xl font-extrabold text-blue-400">MERACH Q1S – Web Bluetooth FTMS + HR Dashboard</h1>
-  <p class="text-gray-400 text-sm mt-1">v1.4 · FTMS + Heart Rate BLE</p>
+  <p class="text-gray-400 text-sm mt-1">v1.5 · FTMS (auto) + Heart Rate BLE</p>
 </header>
 
 <!-- CONTROLES FTMS -->
 <div class="card w-full max-w-lg text-center">
   <div class="flex flex-wrap justify-center gap-2 mb-2">
-    <button id="connectFTMS" class="btn bg-blue-600 text-white">Conectar Rower</button>
-    <button id="disconnectFTMS" class="btn bg-gray-600 text-white" disabled>Desconectar</button>
+    <button id="btnConnectFTMS" class="btn bg-blue-600 text-white">Conectar Rower</button>
+    <button id="btnDisconnectFTMS" class="btn bg-gray-600 text-white" disabled>Desconectar</button>
     <button id="wakeLockBtn" class="btn bg-indigo-600 text-white">Mantener pantalla activa</button>
     <button id="exportCSV" class="btn bg-sky-600 text-white">Exportar CSV</button>
   </div>
@@ -71,9 +71,15 @@
 <script>
 let deviceFTMS,charFTMS,deviceHR,charHR,wakeLock;
 let dataLog=[],metrics={},lastPower=0,lastSPM=0,lastPace=0,lastHR=0;
-function log(msg){const t=new Date().toLocaleTimeString();logBox.textContent+=`[${t}] ${msg}\n`;logBox.scrollTop=logBox.scrollHeight;}
 const metricsBody=document.getElementById('metricsBody');
 const logBox=document.getElementById('log');
+
+function log(msg){
+  const t=new Date().toLocaleTimeString();
+  logBox.textContent+=`[${t}] ${msg}\n`;
+  logBox.scrollTop=logBox.scrollHeight;
+}
+
 function updateUI(){
   mainSPM.textContent=metrics.strokeRate??lastSPM;
   mainW.textContent=metrics.instantPower??lastPower;
@@ -88,12 +94,20 @@ function updateUI(){
     ["Stroke Rate",metrics.strokeRate||0,"Brazadas/min"],
     ["Pace",metrics.pace?formatPace(metrics.pace):"0","s/500 m"]
   ];
-  for(const [p,v,d]of rows){
+  for(const [p,v,d]of rows)
     metricsBody.innerHTML+=`<tr><td>${p}</td><td class="text-right font-semibold">${v}</td><td class="text-right text-gray-400">${d}</td></tr>`;
-  }
 }
-function formatPace(val){const min=Math.floor(val/60),sec=(val%60).toFixed(1).padStart(4,'0');return`${min}:${sec}/500m`;}
-async function connectFTMS(){
+
+function formatPace(val){
+  const min=Math.floor(val/60);
+  const sec=(val%60).toFixed(1).padStart(4,'0');
+  return `${min}:${sec}/500m`;
+}
+
+async function connectFTMSDevice(){
+  if(!navigator.bluetooth){alert("Tu navegador no soporta Web Bluetooth.");return;}
+  const btn=document.getElementById('btnConnectFTMS');
+  btn.disabled=true;
   try{
     deviceFTMS=await navigator.bluetooth.requestDevice({
       filters:[{services:[0x1826]}],
@@ -107,16 +121,19 @@ async function connectFTMS(){
     charFTMS=chars.find(c=>c.uuid.includes("2ad2"))||chars.find(c=>c.uuid.includes("2ad1"))||chars[0];
     await charFTMS.startNotifications();
     charFTMS.addEventListener("characteristicvaluechanged",handleFTMS);
-    status.textContent="Estado FTMS: Conectado";
-    disconnectFTMS.disabled=false;
-    log("✅ FTMS conectado ("+charFTMS.uuid+")");
-  }catch(e){log("❌ Error FTMS: "+e);}
+    document.getElementById("status").textContent="Estado FTMS: Conectado";
+    document.getElementById("btnDisconnectFTMS").disabled=false;
+    log("✅ FTMS conectado ("+service.uuid+") → Char: "+charFTMS.uuid);
+  }catch(e){
+    log("❌ Error FTMS: "+e);
+  }finally{
+    btn.disabled=false;
+  }
 }
+
 function handleFTMS(event){
   const dv=event.target.value;
-  // simulación simplificada para mantener cero si no hay update
   lastSPM=metrics.strokeRate||0;lastPower=metrics.instantPower||0;lastPace=metrics.pace||0;
-  // Decodifica datos (solo si contiene bytes)
   if(dv.byteLength>4){
     const flag=dv.getUint16(0,true);
     let idx=2;
@@ -129,6 +146,7 @@ function handleFTMS(event){
   updateUI();
   dataLog.push({...metrics,t:Date.now()});
 }
+
 async function connectHR(){
   try{
     deviceHR=await navigator.bluetooth.requestDevice({filters:[{services:[0x180D]}]});
@@ -142,18 +160,29 @@ async function connectHR(){
     log("❤️ Sensor HR conectado");
   }catch(e){log("❌ Error HR: "+e);}
 }
+
 function handleHR(e){
   const v=e.target.value;
   let hr=v.getUint8(1);
   metrics.heartRate=hr;lastHR=hr;
   hrDisplay.textContent=hr+" bpm";updateUI();
 }
-disconnectFTMS.onclick=()=>{if(deviceFTMS)deviceFTMS.gatt.disconnect();status.textContent="Estado FTMS: Desconectado";};
-disconnectHRBtn.onclick=()=>{if(deviceHR)deviceHR.gatt.disconnect();hrStatus.textContent="Estado: Desconectado";hrDisplay.textContent="0 bpm";};
-connectFTMS.onclick=connectFTMS;
-connectHRBtn.onclick=connectHR;
-wakeLockBtn.onclick=async()=>{try{wakeLock=await navigator.wakeLock.request("screen");wakeLockBtn.textContent="Pantalla activa ✅";}catch(e){alert("No soportado en este navegador.");}};
-exportCSV.onclick=()=>{let csv="time,SPM,W,HR,Dist,Count,Pace\n";dataLog.forEach(d=>{csv+=`${d.t},${d.strokeRate||0},${d.instantPower||0},${d.heartRate||0},${d.totalDistance||0},${d.strokeCount||0},${d.pace||0}\n`});const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="merach_q1s.csv";a.click();};
+
+// BOTONES Y FUNCIONES
+document.getElementById("btnConnectFTMS").onclick=connectFTMSDevice;
+document.getElementById("btnDisconnectFTMS").onclick=()=>{if(deviceFTMS)deviceFTMS.gatt.disconnect();status.textContent="Estado FTMS: Desconectado";};
+document.getElementById("connectHRBtn").onclick=connectHR;
+document.getElementById("disconnectHRBtn").onclick=()=>{if(deviceHR)deviceHR.gatt.disconnect();hrStatus.textContent="Estado: Desconectado";hrDisplay.textContent="0 bpm";};
+document.getElementById("wakeLockBtn").onclick=async()=>{try{wakeLock=await navigator.wakeLock.request("screen");wakeLockBtn.textContent="Pantalla activa ✅";}catch(e){alert("No soportado en este navegador.");}};
+document.getElementById("exportCSV").onclick=()=>{
+  let csv="time,SPM,W,HR,Dist,Count,Pace\n";
+  dataLog.forEach(d=>{csv+=`${d.t},${d.strokeRate||0},${d.instantPower||0},${d.heartRate||0},${d.totalDistance||0},${d.strokeCount||0},${d.pace||0}\n`});
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="merach_q1s.csv";
+  a.click();
+};
 </script>
 </body>
 </html>
