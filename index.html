@@ -363,12 +363,12 @@
       const flags = v.getUint8(0);
       const hr = (flags & 0x01) ? v.getUint16(1, true) : v.getUint8(1);
       dom.heartRateValue.textContent = hr;
-      updateHeartRateZoneColor(hr); // <-- ¡AQUÍ ESTÁ LA MAGIA!
+      updateHeartRateZoneColor(hr);
     }
 
     function parseRowerData(d) {
       const flags = d.getUint16(0, true);
-      let o = 2;
+      let o = 2; // 'o' es el offset o desplazamiento en los bytes
       const sr = d.getUint8(o) / 2.0;
       document.getElementById('stroke-rate').textContent = Math.round(sr);
       if (sr > 0) { sessionData.totalSPM += sr; sessionData.spmReadings++; }
@@ -376,20 +376,29 @@
       const sc = d.getUint16(o, true);
       document.getElementById('total-strokes').textContent = sc;
       o += 2;
+      
+      // La bandera 0x0004 indica si el dato de "Distancia Total" está presente
       if (flags & 0x0004) {
-        const dist = d.getUint32(o, true) & 0x00FFFFFF;
+        // ----- LA CORRECCIÓN ESTÁ AQUÍ -----
+        // Leemos la distancia como un número de 3 bytes (uint24) de forma segura
+        const dist = d.getUint8(o) + (d.getUint8(o + 1) << 8) + (d.getUint8(o + 2) << 16);
         document.getElementById('distance').textContent = (dist / 1000).toFixed(2);
-        o += 3;
+        o += 3; // Avanzamos 3 bytes porque la distancia ocupa eso
       }
+
+      // La bandera 0x0008 indica si el dato de "Ritmo" está presente
       if (flags & 0x0008) {
         const paceS = d.getUint16(o, true);
         document.getElementById('pace').textContent = (paceS > 0) ? formatTime(paceS) : '0:00';
         o += 2;
       }
+      
+      // La bandera 0x0100 indica si el dato de "Calorías" está presente
       if (flags & 0x0100) {
         const cal = d.getUint16(o, true);
         document.getElementById('calories').textContent = cal;
-        o += 5;
+        // El resto de los datos de calorías no son necesarios para la UI, pero el offset debe avanzar
+        // o += 5; // Total de 5 bytes para el campo de calorías
       }
     }
 
