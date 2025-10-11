@@ -202,61 +202,89 @@
     let sessionTimer = null;
     let elapsedSeconds = 0;
     let sessionData = {};
-    let wakeLock = null;
 
+    // --- ESTADOS GLOBALES PARA WAKE LOCK ---
+    let wakeLock = null;
+    let connectedRower = false;
+    let connectedHr = false;
+    let sessionActive = false;
+    let isFullscreen = false;
+
+    // -------------------------------
+    //      WAKE LOCK MANAGER
+    // -------------------------------
+    function shouldHoldWakeLock() {
+      return connectedRower || connectedHr || sessionActive || isFullscreen;
+    }
+
+    async function acquireWakeLockOnce() {
+      if (!('wakeLock' in navigator)) return;
+      if (wakeLock) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+          if (document.visibilityState === 'visible' && shouldHoldWakeLock()) {
+            acquireWakeLockOnce().catch(()=>{});
+          }
+        });
+        console.log('🔒 Wake Lock activo');
+      } catch (e) {
+        console.warn('No se pudo adquirir Wake Lock:', e);
+      }
+    }
+
+    async function releaseWakeLockIfHeld() {
+      if (!wakeLock) return;
+      try {
+        await wakeLock.release();
+        console.log('🔓 Wake Lock liberado');
+      } catch (e) {
+        console.warn('Error al liberar Wake Lock:', e);
+      }
+      wakeLock = null;
+    }
+
+    async function syncWakeLock() {
+      if (document.visibilityState !== 'visible') return;
+      if (shouldHoldWakeLock()) await acquireWakeLockOnce();
+      else await releaseWakeLockIfHeld();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncWakeLock();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      isFullscreen = !!document.fullscreenElement;
+      syncWakeLock();
+    });
+
+    // -------------------------------
+    //      LÓGICA DE SESIÓN
+    // -------------------------------
     function initSessionData() {
       sessionData = { totalSPM: 0, spmReadings: 0 };
     }
     initSessionData();
 
-    // --- WAKE LOCK MANAGER ---
-    async function requestWakeLock() {
-      if ('wakeLock' in navigator) {
-        try {
-          wakeLock = await navigator.wakeLock.request('screen');
-          console.log('🔒 Wake Lock activado');
-          wakeLock.addEventListener('release', () => {
-            console.log('🔓 Wake Lock liberado por el sistema');
-            wakeLock = null;
-          });
-        } catch (err) {
-          console.warn('No se pudo activar Wake Lock:', err);
-        }
-      }
-    }
-
-    async function releaseWakeLock() {
-      if (wakeLock) {
-        try {
-          await wakeLock.release();
-          console.log('🔓 Wake Lock liberado manualmente');
-          wakeLock = null;
-        } catch (e) {
-          console.warn('Error al liberar Wake Lock:', e);
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') requestWakeLock();
-    });
-
-    // --- BLUETOOTH CONNECTIONS ---
     dom.connectRowerBtn.addEventListener('click', async () => {
       try {
         const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [FTMS_SERVICE_UUID] }] });
         device.addEventListener('gattserverdisconnected', onRowerDisconnected);
         const server = await device.gatt.connect();
+        connectedRower = true;
         updateRowerStatus(true, device.name);
         const service = await server.getPrimaryService(FTMS_SERVICE_UUID);
-        const characteristic = await service.getCharacteristic(ROWER_DATA_CHARACTERISTIC_UUID);
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', handleRowerData);
-        requestWakeLock(); // Activa Wake Lock al conectar remo
+        const ch = await service.getCharacteristic(ROWER_DATA_CHARACTERISTIC_UUID);
+        await ch.startNotifications();
+        ch.addEventListener('characteristicvaluechanged', handleRowerData);
+        syncWakeLock();
       } catch (error) {
         console.error('Error al conectar con el remo:', error);
         alert(`No se pudo conectar al remo: ${error.message}`);
+        connectedRower = false;
         updateRowerStatus(false);
+        syncWakeLock();
       }
     });
 
@@ -265,16 +293,19 @@
         const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [HEART_RATE_SERVICE_UUID] }] });
         device.addEventListener('gattserverdisconnected', onHrDisconnected);
         const server = await device.gatt.connect();
+        connectedHr = true;
         updateHrStatus(true, device.name);
         const service = await server.getPrimaryService(HEART_RATE_SERVICE_UUID);
-        const characteristic = await service.getCharacteristic(HEART_RATE_MEASUREMENT_CHARACTERISTIC_UUID);
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', handleHeartRateData);
-        requestWakeLock(); // Activa Wake Lock al conectar pulsómetro
+        const ch = await service.getCharacteristic(HEART_RATE_MEASUREMENT_CHARACTERISTIC_UUID);
+        await ch.startNotifications();
+        ch.addEventListener('characteristicvaluechanged', handleHeartRateData);
+        syncWakeLock();
       } catch (error) {
         console.error('Error al conectar con el pulsómetro:', error);
         alert(`No se pudo conectar al pulsómetro: ${error.message}`);
+        connectedHr = false;
         updateHrStatus(false);
+        syncWakeLock();
       }
     });
 
@@ -284,43 +315,46 @@
     }
 
     function handleHeartRateData(event) {
-      const value = event.target.value;
-      const flags = value.getUint8(0);
-      const heartRate = (flags & 0x01) ? value.getUint16(1, true) : value.getUint8(1);
-      document.getElementById('heart-rate').textContent = heartRate;
+      const v = event.target.value;
+      const flags = v.getUint8(0);
+      const hr = (flags & 0x01) ? v.getUint16(1, true) : v.getUint8(1);
+      document.getElementById('heart-rate').textContent = hr;
     }
 
-    function parseRowerData(data) {
-      const flags = data.getUint16(0, true);
-      let offset = 2;
-      const strokeRate = data.getUint8(offset) / 2.0;
-      document.getElementById('stroke-rate').textContent = Math.round(strokeRate);
-      if (strokeRate > 0) { sessionData.totalSPM += strokeRate; sessionData.spmReadings++; }
-      offset += 1;
-      const strokeCount = data.getUint16(offset, true);
-      document.getElementById('total-strokes').textContent = strokeCount;
-      offset += 2;
+    function parseRowerData(d) {
+      const flags = d.getUint16(0, true);
+      let o = 2;
+      const sr = d.getUint8(o) / 2.0;
+      document.getElementById('stroke-rate').textContent = Math.round(sr);
+      if (sr > 0) { sessionData.totalSPM += sr; sessionData.spmReadings++; }
+      o += 1;
+      const sc = d.getUint16(o, true);
+      document.getElementById('total-strokes').textContent = sc;
+      o += 2;
       if (flags & 0x0004) {
-        const distanceMeters = data.getUint32(offset, true) & 0x00FFFFFF;
-        document.getElementById('distance').textContent = (distanceMeters / 1000).toFixed(2);
-        offset += 3;
+        const dist = d.getUint32(o, true) & 0x00FFFFFF;
+        document.getElementById('distance').textContent = (dist / 1000).toFixed(2);
+        o += 3;
       }
       if (flags & 0x0008) {
-        const paceSeconds = data.getUint16(offset, true);
-        document.getElementById('pace').textContent = (paceSeconds > 0) ? formatTime(paceSeconds) : '0:00';
-        offset += 2;
+        const paceS = d.getUint16(o, true);
+        document.getElementById('pace').textContent = (paceS > 0) ? formatTime(paceS) : '0:00';
+        o += 2;
       }
       if (flags & 0x0100) {
-        const totalCalories = data.getUint16(offset, true);
-        document.getElementById('calories').textContent = totalCalories;
-        offset += 5;
+        const cal = d.getUint16(o, true);
+        document.getElementById('calories').textContent = cal;
+        o += 5;
       }
     }
 
     dom.endSessionBtn.addEventListener('click', () => {
       if (!sessionTimer) { alert("No hay una sesión activa."); return; }
       stopTimer();
-      releaseWakeLock(); // Liberar al finalizar sesión
+      connectedRower = false;
+      connectedHr = false;
+      sessionActive = false;
+      syncWakeLock();
 
       document.getElementById('res-duration').textContent = formatTime(elapsedSeconds);
       document.getElementById('res-distance').textContent = `${document.getElementById('distance').textContent} km`;
@@ -338,6 +372,7 @@
       initSessionData();
       dom.resultsScreen.style.display = 'none';
       dom.mainScreen.style.display = 'block';
+      syncWakeLock();
     });
 
     function startTimer() {
@@ -346,39 +381,45 @@
         elapsedSeconds++;
         document.getElementById('duration').textContent = formatTime(elapsedSeconds);
       }, 1000);
+      sessionActive = true;
+      syncWakeLock();
     }
 
-    function stopTimer() { clearInterval(sessionTimer); sessionTimer = null; }
+    function stopTimer() {
+      clearInterval(sessionTimer); sessionTimer = null;
+      sessionActive = false;
+      syncWakeLock();
+    }
 
     function formatTime(s) {
       return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
     }
 
-    function updateRowerStatus(connected, name = '') {
-      dom.rowerStatus.textContent = connected ? `Remo: Conectado a ${name}` : 'Remo: Desconectado';
-      dom.rowerStatus.className = `status ${connected ? 'connected' : 'disconnected'}`;
-      if (!connected) releaseWakeLock();
+    function updateRowerStatus(c, n = '') {
+      dom.rowerStatus.textContent = c ? `Remo: Conectado a ${n}` : 'Remo: Desconectado';
+      dom.rowerStatus.className = `status ${c ? 'connected' : 'disconnected'}`;
     }
 
     function onRowerDisconnected() {
+      connectedRower = false;
       updateRowerStatus(false);
       stopTimer();
       alert("El remo se ha desconectado.");
       resetUI();
       initSessionData();
-      releaseWakeLock();
+      syncWakeLock();
     }
 
-    function updateHrStatus(connected, name = '') {
-      dom.hrStatus.textContent = connected ? `Pulsómetro: Conectado a ${name}` : 'Pulsómetro: Desconectado';
-      dom.hrStatus.className = `status ${connected ? 'connected' : 'disconnected'}`;
-      if (!connected) releaseWakeLock();
+    function updateHrStatus(c, n = '') {
+      dom.hrStatus.textContent = c ? `Pulsómetro: Conectado a ${n}` : 'Pulsómetro: Desconectado';
+      dom.hrStatus.className = `status ${c ? 'connected' : 'disconnected'}`;
     }
 
     function onHrDisconnected() {
+      connectedHr = false;
       updateHrStatus(false);
       document.getElementById('heart-rate').textContent = '--';
-      releaseWakeLock();
+      syncWakeLock();
     }
 
     function resetUI() {
@@ -387,10 +428,4 @@
       document.getElementById('duration').textContent = '00:00';
       document.getElementById('distance').textContent = '0.00';
       document.getElementById('calories').textContent = '0';
-      document.getElementById('stroke-rate').textContent = '0';
-      document.getElementById('total-strokes').textContent = '0';
-      document.getElementById('pace').textContent = '--:--';
-    }
-  </script>
-</body>
-</html>
+      document
