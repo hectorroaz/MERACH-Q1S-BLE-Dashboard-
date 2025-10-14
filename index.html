@@ -164,6 +164,11 @@
           <div class="label">Distancia</div>
           <div><span class="value" id="distance">0.00</span><span class="unit">km</span></div>
         </div>
+        <!-- NUEVO: Potencia -->
+        <div class="metric-card">
+          <div class="label">Potencia</div>
+          <div><span class="value" id="power">0</span><span class="unit">W</span></div>
+        </div>
         <div class="metric-card">
           <div class="label">Duración</div>
           <div class="value" id="duration">00:00</div>
@@ -252,7 +257,6 @@
         }
         dom.heartRateValue.style.color = `var(${colorVar})`;
     }
-
 
     // -------------------------------
     //      WAKE LOCK MANAGER
@@ -366,7 +370,7 @@
       updateHeartRateZoneColor(hr);
     }
 
-    // --- FUNCIÓN DE PARSEO CORREGIDA USANDO LA LÓGICA PROPORCIONADA ---
+    // --- PARSEO DE DATOS DEL REMO (manteniendo la lógica existente y sumando Potencia) ---
     function parseRowerData(data) {
         const flags = data.getUint16(0, true);
         let offset = 2;
@@ -385,28 +389,38 @@
 
         // Campos opcionales según los flags del FTMS
         if (flags & 0x0002) { /* Average Stroke Rate */ offset += 1; }
-        if (flags & 0x0004) { /* Total Distance */
-            // ---- ¡ESTA ES LA LÍNEA CLAVE DE TU CÓDIGO FUNCIONAL! ----
+
+        if (flags & 0x0004) { /* Total Distance (24 bits, en metros) */
             const distanceMeters = data.getUint32(offset, true) & 0x00FFFFFF; 
             document.getElementById('distance').textContent = (distanceMeters / 1000).toFixed(2);
             offset += 3;
         }
-        if (flags & 0x0008) { /* Instantaneous Pace */
+
+        if (flags & 0x0008) { /* Instantaneous Pace (segundos/500m) */
             const paceSeconds = data.getUint16(offset, true);
             document.getElementById('pace').textContent = (paceSeconds > 0) ? formatTime(paceSeconds) : '0:00';
             offset += 2;
         }
+
         if (flags & 0x0010) { /* Average Pace */ offset += 2; }
-        if (flags & 0x0020) { /* Instantaneous Power */ offset += 2; }
-        if (flags & 0x0040) { /* Average Power */ offset += 2; }
+
+        // NUEVO: Potencia Instantánea (signed 16-bit, W)
+        if (flags & 0x0020) { 
+            const power = data.getInt16(offset, true);
+            document.getElementById('power').textContent = Math.max(0, power); // evitar negativos si aparecen
+            offset += 2;
+        }
+
+        if (flags & 0x0040) { /* Average Power (no usada en UI, solo avanzar) */ offset += 2; }
+
         if (flags & 0x0080) { /* Resistance Level */ offset += 2; }
+
         if (flags & 0x0100) { /* Expended Energy */
             const totalCalories = data.getUint16(offset, true);
             document.getElementById('calories').textContent = totalCalories;
             offset += 5; // Total(2), per Hour(2), per Minute(1)
         }
     }
-
 
     dom.endSessionBtn.addEventListener('click', () => {
       if (!sessionTimer) { alert("No hay una sesión activa."); return; }
@@ -492,6 +506,7 @@
       document.getElementById('stroke-rate').textContent = '0';
       document.getElementById('total-strokes').textContent = '0';
       document.getElementById('pace').textContent = '--:--';
+      document.getElementById('power').textContent = '0';
       dom.heartRateValue.textContent = '--';
       dom.heartRateValue.style.color = `var(--primary-color)`; // Restablecer color
     }
