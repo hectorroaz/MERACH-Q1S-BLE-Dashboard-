@@ -21,150 +21,73 @@
       --zone5-color: #ff4500; /* Rojo */
     }
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
-
+    html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-      box-sizing: border-box;
+      background-color: var(--bg-color); color: var(--text-color);
+      display: flex; flex-direction: column; align-items: center; padding: 10px; box-sizing: border-box;
     }
 
     .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; }
     header { text-align: center; padding: 10px 0; }
     h1 { font-size: 1.5rem; margin: 0; }
 
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 10px 0;
-      flex-wrap: wrap;
-    }
-
+    .buttons { display: flex; justify-content: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
     button {
-      padding: 10px 20px;
-      font-size: 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background-color: var(--primary-color);
-      color: var(--bg-color);
-      font-weight: bold;
-      transition: background-color 0.3s;
+      padding: 10px 20px; font-size: 14px; border: none; border-radius: 8px; cursor: pointer;
+      background-color: var(--primary-color); color: var(--bg-color); font-weight: bold; transition: background-color 0.3s;
     }
     button:hover { background-color: #33fff0; }
     button#end-session-btn { background-color: var(--accent-color); }
     button#export-btn { background-color: var(--secondary-color); }
+    button#download-report-btn { background-color: #2aa7ff; display: none; }
 
-    .status-bar {
-      display: flex;
-      justify-content: space-around;
-      background-color: var(--card-color);
-      padding: 8px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      font-size: 12px;
-      text-align: center;
-    }
-    .connected { color: var(--primary-color); }
-    .disconnected { color: var(--accent-color); }
+    .status-bar { display: flex; justify-content: space-around; background-color: var(--card-color);
+      padding: 8px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; text-align: center;}
+    .connected { color: var(--primary-color); } .disconnected { color: var(--accent-color); }
 
     .dashboard { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .metrics-row { display: flex; gap: 10px; justify-content: center; }
-    .metric-card {
-      background-color: var(--card-color);
-      padding: 15px 10px;
-      border-radius: 12px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      flex: 1;
-    }
+    .metric-card { background-color: var(--card-color); padding: 15px 10px; border-radius: 12px; text-align: center;
+      display: flex; flex-direction: column; justify-content: center; flex: 1; }
     .metric-card .label { font-size: 0.9rem; margin-bottom: 5px; color: var(--secondary-color); }
-    .metric-card .value {
-      font-size: 2.6rem;
-      font-weight: bold;
-      color: var(--primary-color);
-      line-height: 1.1;
-      transition: color 0.5s ease; /* Transición suave del color */
-    }
+    .metric-card .value { font-size: 2.6rem; font-weight: bold; color: var(--primary-color); line-height: 1.1; transition: color 0.5s ease; }
     .metric-card .unit { font-size: 0.9rem; margin-left: 5px; }
+    .subtle { font-size: 0.75rem; opacity: 0.8; margin-top: 6px; }
 
-    #results-screen {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--bg-color);
-      padding: 20px;
-      box-sizing: border-box;
-      width: 100%;
-      min-height: 100vh;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
+    #results-screen { display: none; flex-direction: column; align-items: center; justify-content: center;
+      background-color: var(--bg-color); padding: 20px; box-sizing: border-box; width: 100%; min-height: 100vh;
+      position: absolute; top: 0; left: 0; }
     #results-screen h2 { margin-top: 0; color: var(--primary-color); }
-    .results-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      width: 100%;
-      max-width: 400px;
-      margin-bottom: 30px;
-    }
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 420px; margin-bottom: 16px; }
     .result-item { text-align: center; }
     .result-item .label { font-size: 1rem; color: var(--secondary-color); }
     .result-item .value { font-size: 1.8rem; font-weight: bold; }
 
-    /* Panel de depuración opcional (plegable) */
-    details#debug {
-      margin: 10px auto 0;
-      width: 100%;
-      max-width: 900px;
-      background: var(--card-color);
-      border-radius: 8px;
-      padding: 8px 12px;
-    }
-    details#debug > summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--secondary-color);
-      outline: none;
-    }
-    #debug-pre {
-      white-space: pre-wrap;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      margin: 8px 0 0 0;
-      max-height: 240px;
-      overflow: auto;
-    }
+    details#debug { margin: 10px auto 0; width: 100%; max-width: 900px; background: var(--card-color); border-radius: 8px; padding: 8px 12px; }
+    details#debug > summary { cursor: pointer; font-weight: 600; color: var(--secondary-color); outline: none; }
+    #debug-pre { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 12px; margin: 8px 0 0 0; max-height: 240px; overflow: auto; }
+
+    /* Selector de fuente de potencia */
+    .power-controls { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 6px 0 2px; }
+    select, input[type="number"] { background: var(--card-color); color: var(--text-color); border: 1px solid #2a2a2a;
+      border-radius: 8px; padding: 6px 8px; font-size: 12px; min-width: 120px; }
+    label { font-size: 12px; opacity: 0.9; }
   </style>
 </head>
 <body>
 
   <div class="container" id="main-screen">
     <header><h1>Panel de Control de Remo</h1></header>
+
     <div class="buttons">
       <button id="connect-rower-btn">Conectar al Remo</button>
       <button id="connect-hr-btn">Conectar Pulsómetro</button>
       <button id="end-session-btn">Finalizar Sesión</button>
-      <!-- NUEVO: Exportar RAW/Parseado -->
       <button id="export-btn" title="Exporta paquetes FTMS crudos + valores parseados" disabled>Exportar RAW</button>
     </div>
+
     <div class="status-bar">
       <div id="rower-status" class="status disconnected">Remo: Desconectado</div>
       <div id="hr-status" class="status disconnected">Pulsómetro: Desconectado</div>
@@ -191,11 +114,23 @@
           <div class="label">Distancia</div>
           <div><span class="value" id="distance">0.00</span><span class="unit">km</span></div>
         </div>
-        <!-- Potencia -->
+
         <div class="metric-card">
-          <div class="label">Potencia</div>
+          <div class="label">Potencia (<span id="power-mode-label">Equivalente</span>)</div>
           <div><span class="value" id="power">0</span><span class="unit">W</span></div>
+          <div class="power-controls">
+            <label for="power-mode">Fuente:</label>
+            <select id="power-mode">
+              <option value="equiv" selected>Equivalente (recomendado)</option>
+              <option value="ble">BLE cruda</option>
+              <option value="corr">BLE corregida</option>
+            </select>
+            <label for="corr-factor" title="Se usa sólo en BLE corregida">Factor:</label>
+            <input id="corr-factor" type="number" step="0.1" min="1" value="7.2" style="width:80px" />
+          </div>
+          <div class="subtle" id="power-source">Fuente: Equivalente por pace</div>
         </div>
+
         <div class="metric-card">
           <div class="label">Duración</div>
           <div class="value" id="duration">00:00</div>
@@ -214,7 +149,6 @@
       </div>
     </div>
 
-    <!-- Panel plegable para inspección rápida del log (opcional) -->
     <details id="debug">
       <summary>Ver registro (últimos 30 eventos)</summary>
       <pre id="debug-pre"></pre>
@@ -230,7 +164,12 @@
       <div class="result-item"><div class="label">Paladas Totales</div><div class="value" id="res-strokes">0</div></div>
       <div class="result-item"><div class="label">Ritmo Promedio</div><div class="value" id="res-avg-spm">0 SPM</div></div>
     </div>
-    <button id="new-session-btn">Nuevo Entrenamiento</button>
+
+    <!-- NUEVO: botón para re-descargar el informe -->
+    <div class="buttons" style="margin-top:4px;">
+      <button id="download-report-btn">Descargar Informe</button>
+      <button id="new-session-btn">Nuevo Entrenamiento</button>
+    </div>
   </div>
 
   <script>
@@ -245,115 +184,74 @@
       endSessionBtn: document.getElementById('end-session-btn'),
       exportBtn: document.getElementById('export-btn'),
       newSessionBtn: document.getElementById('new-session-btn'),
+      downloadReportBtn: document.getElementById('download-report-btn'),
       rowerStatus: document.getElementById('rower-status'),
       hrStatus: document.getElementById('hr-status'),
       mainScreen: document.getElementById('main-screen'),
       resultsScreen: document.getElementById('results-screen'),
       heartRateValue: document.getElementById('heart-rate'),
       debugPre: document.getElementById('debug-pre'),
+      powerVal: document.getElementById('power'),
+      powerMode: document.getElementById('power-mode'),
+      corrFactor: document.getElementById('corr-factor'),
+      powerSource: document.getElementById('power-source'),
+      powerModeLabel: document.getElementById('power-mode-label'),
+      paceText: document.getElementById('pace'),
     };
 
     let sessionTimer = null;
     let elapsedSeconds = 0;
     let sessionData = {};
 
-    // --- ESTADOS GLOBALES PARA WAKE LOCK ---
+    // Wake lock
     let wakeLock = null;
     let connectedRower = false;
     let connectedHr = false;
     let sessionActive = false;
     let isFullscreen = false;
 
-    // --- BUFFER DE LOGS (RAW + PARSE) ---
-    // Guardamos objetos; al exportar, se serializa a texto legible.
-    let rawEvents = []; // {ts, hex, flags, parsed:{spm,strokes,dist_m,pace_s,power_w,cal_kcal}}
+    // Log/RAW
+    let rawEvents = []; // {ts, flags, hex, parsed:{}}
+    let lastReportBlobUrl = null; // para re-descargar informe
 
-    // ---------------------------------------------------
-    //      ZONAS DE FRECUENCIA CARDÍACA (32 años)
-    // ---------------------------------------------------
+    // Estado instantáneo
+    let lastPaceSeconds = null;   // s/500m
+    let lastPowerBle = null;      // W (del remo)
+    let lastResistance = null;    // nivel (si viene)
+    let lastCalories = null;
+
+    // Zonas FC (32 años)
     const userAge = 32;
-    const maxHR = 220 - userAge; // 188 BPM
-    const hrZones = {
-        zone1: maxHR * 0.5, // 94
-        zone2: maxHR * 0.6, // 112.8
-        zone3: maxHR * 0.7, // 131.6
-        zone4: maxHR * 0.8, // 150.4
-        zone5: maxHR * 0.9, // 169.2
-    };
+    const maxHR = 220 - userAge;
+    const hrZones = { zone1: maxHR*0.5, zone2: maxHR*0.6, zone3: maxHR*0.7, zone4: maxHR*0.8, zone5: maxHR*0.9 };
 
     function updateHeartRateZoneColor(hr) {
-        let colorVar = '--primary-color'; // Color por defecto
-        if (hr < hrZones.zone2) { // Zona 1 (hasta 60%)
-            colorVar = '--zone1-color';
-        } else if (hr < hrZones.zone3) { // Zona 2 (60-70%)
-            colorVar = '--zone2-color';
-        } else if (hr < hrZones.zone4) { // Zona 3 (70-80%)
-            colorVar = '--zone3-color';
-        } else if (hr < hrZones.zone5) { // Zona 4 (80-90%)
-            colorVar = '--zone4-color';
-        } else { // Zona 5 (90%+)
-            colorVar = '--zone5-color';
-        }
-        dom.heartRateValue.style.color = `var(${colorVar})`;
+      let c='--primary-color';
+      if (hr < hrZones.zone2) c='--zone1-color';
+      else if (hr < hrZones.zone3) c='--zone2-color';
+      else if (hr < hrZones.zone4) c='--zone3-color';
+      else if (hr < hrZones.zone5) c='--zone4-color';
+      else c='--zone5-color';
+      dom.heartRateValue.style.color = `var(${c})`;
     }
 
-    // -------------------------------
-    //      WAKE LOCK MANAGER
-    // -------------------------------
-    function shouldHoldWakeLock() {
-      return connectedRower || connectedHr || sessionActive || isFullscreen;
-    }
+    function shouldHoldWakeLock(){ return connectedRower || connectedHr || sessionActive || isFullscreen; }
+    async function acquireWakeLockOnce(){ if(!('wakeLock' in navigator)||wakeLock) return;
+      try{ wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release',()=>{ wakeLock=null; if(document.visibilityState==='visible'&&shouldHoldWakeLock()) acquireWakeLockOnce().catch(()=>{}); }); }catch(e){}}
+    async function releaseWakeLockIfHeld(){ if(!wakeLock) return; try{ await wakeLock.release(); }catch(e){} wakeLock=null; }
+    async function syncWakeLock(){ if(document.visibilityState!=='visible') return; if(shouldHoldWakeLock()) await acquireWakeLockOnce(); else await releaseWakeLockIfHeld(); }
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') syncWakeLock(); });
+    document.addEventListener('fullscreenchange',()=>{ isFullscreen=!!document.fullscreenElement; syncWakeLock(); });
 
-    async function acquireWakeLockOnce() {
-      if (!('wakeLock' in navigator)) return;
-      if (wakeLock) return;
-      try {
-        wakeLock = await navigator.wakeLock.request('screen');
-        wakeLock.addEventListener('release', () => {
-          wakeLock = null;
-          if (document.visibilityState === 'visible' && shouldHoldWakeLock()) {
-            acquireWakeLockOnce().catch(()=>{});
-          }
-        });
-        console.log('🔒 Wake Lock activo');
-      } catch (e) {
-        console.warn('No se pudo adquirir Wake Lock:', e);
-      }
-    }
-
-    async function releaseWakeLockIfHeld() {
-      if (!wakeLock) return;
-      try {
-        await wakeLock.release();
-        console.log('🔓 Wake Lock liberado');
-      } catch (e) {
-        console.warn('Error al liberar Wake Lock:', e);
-      }
-      wakeLock = null;
-    }
-
-    async function syncWakeLock() {
-      if (document.visibilityState !== 'visible') return;
-      if (shouldHoldWakeLock()) await acquireWakeLockOnce();
-      else await releaseWakeLockIfHeld();
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') syncWakeLock();
-    });
-    document.addEventListener('fullscreenchange', () => {
-      isFullscreen = !!document.fullscreenElement;
-      syncWakeLock();
-    });
-
-    // -------------------------------
-    //      LÓGICA DE SESIÓN
-    // -------------------------------
-    function initSessionData() {
-      sessionData = { totalSPM: 0, spmReadings: 0 };
+    function initSessionData(){
+      sessionData = { totalSPM:0, spmReadings:0 };
       rawEvents = [];
       updateDebugPanel();
       dom.exportBtn.disabled = true;
+      dom.downloadReportBtn.style.display = 'none';
+      if (lastReportBlobUrl) { URL.revokeObjectURL(lastReportBlobUrl); lastReportBlobUrl=null; }
+      lastPaceSeconds = lastPowerBle = lastResistance = lastCalories = null;
     }
     initSessionData();
 
@@ -370,11 +268,8 @@
         ch.addEventListener('characteristicvaluechanged', handleRowerData);
         syncWakeLock();
       } catch (error) {
-        console.error('Error al conectar con el remo:', error);
         alert(`No se pudo conectar al remo: ${error.message}`);
-        connectedRower = false;
-        updateRowerStatus(false);
-        syncWakeLock();
+        connectedRower = false; updateRowerStatus(false); syncWakeLock();
       }
     });
 
@@ -391,258 +286,274 @@
         ch.addEventListener('characteristicvaluechanged', handleHeartRateData);
         syncWakeLock();
       } catch (error) {
-        console.error('Error al conectar con el pulsómetro:', error);
         alert(`No se pudo conectar al pulsómetro: ${error.message}`);
-        connectedHr = false;
-        updateHrStatus(false);
-        syncWakeLock();
+        connectedHr = false; updateHrStatus(false); syncWakeLock();
       }
     });
 
-    function handleRowerData(event) {
-      if (!sessionTimer) startTimer();
-      parseRowerData(event.target.value);
+    dom.powerMode.addEventListener('change', applyPowerDisplay);
+    dom.corrFactor.addEventListener('input', applyPowerDisplay);
+
+    function handleRowerData(e){ if(!sessionTimer) startTimer(); parseRowerData(e.target.value); }
+    function handleHeartRateData(e){
+      const v=e.target.value, flags=v.getUint8(0);
+      const hr=(flags&0x01)? v.getUint16(1,true) : v.getUint8(1);
+      dom.heartRateValue.textContent=hr; updateHeartRateZoneColor(hr);
     }
 
-    function handleHeartRateData(event) {
-      const v = event.target.value;
-      const flags = v.getUint8(0);
-      const hr = (flags & 0x01) ? v.getUint16(1, true) : v.getUint8(1);
-      dom.heartRateValue.textContent = hr;
-      updateHeartRateZoneColor(hr);
+    // Utils
+    function toHexString(dv){ const arr=new Uint8Array(dv.buffer,dv.byteOffset,dv.byteLength);
+      return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join(' '); }
+    function nowTs(){ const d=new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${String(d.getMilliseconds()).padStart(3,'0')}`; }
+    function timestampFile(){ const d=new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}`;}
+    function formatMMSS(s){ const m=Math.floor(s/60), sec=Math.max(0,Math.round(s%60)); return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+    function v(x){ return (x===undefined||x===null)?'-':x; }
+
+    function updateDebugPanel(){
+      const tail=rawEvents.slice(-30);
+      const txt=tail.map(e=>`[${e.ts}] FTMS 0x2AD1 | flags=0x${e.flags.toString(16).padStart(4,'0')} | spm=${e.parsed.spm??'-'} strokes=${e.parsed.strokes??'-'} dist_m=${e.parsed.dist_m??'-'} pace_s=${e.parsed.pace_s??'-'} power_ble=${e.parsed.power_ble??'-'} power_c2=${e.parsed.power_c2??'-'} power_real=${e.parsed.power_real??'-'} kcal=${e.parsed.kcal??'-'} res=${e.parsed.res??'-'}\nRAW: ${e.hex}`).join('\n\n');
+      dom.debugPre.textContent=txt; dom.exportBtn.disabled = rawEvents.length===0;
     }
 
-    // --- Util: a HEX string (espaciada) ---
-    function toHexString(dataView) {
-      const arr = new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength);
-      return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join(' ');
+    // Potencia
+    function computePowerC2(paceSeconds){ if(!paceSeconds||paceSeconds<=0) return null; const t=Math.max(1,paceSeconds); return 2.8/Math.pow(t/500,3); }
+    function computePowerCorrected(bleW,factor){ if(bleW==null) return null; const f=Number(factor)>0?Number(factor):7.2; return Math.max(0,bleW*f); }
+    function pickPowerToDisplay(){
+      const mode=dom.powerMode.value, corrF=dom.corrFactor.value;
+      const pC2=computePowerC2(lastPaceSeconds), pCorr=computePowerCorrected(lastPowerBle,corrF);
+      if(mode==='equiv'){ if(pC2!=null) return {value:pC2, source:'Equivalente por pace'}; if(pCorr!=null) return {value:pCorr, source:`BLE corregida ×${Number(corrF).toFixed(1)}`}; return {value:lastPowerBle??0, source:'BLE cruda (fallback)'}; }
+      if(mode==='corr'){ if(pCorr!=null) return {value:pCorr, source:`BLE corregida ×${Number(corrF).toFixed(1)}`}; if(pC2!=null) return {value:pC2, source:'Equivalente por pace (fallback)'}; return {value:lastPowerBle??0, source:'BLE cruda (fallback)'}; }
+      return {value:lastPowerBle??0, source:'BLE cruda'};
+    }
+    function applyPowerDisplay(){ const sel=dom.powerMode.value;
+      dom.powerModeLabel.textContent=(sel==='equiv')?'Equivalente':(sel==='ble'?'BLE':'Corregida');
+      const picked=pickPowerToDisplay(); dom.powerVal.textContent=Math.round(picked.value||0); dom.powerSource.textContent=`Fuente: ${picked.source}`; }
+
+    // Parsing FTMS 0x2AD1
+    function parseRowerData(data){
+      const flags=data.getUint16(0,true); let offset=2;
+      const parsed={ spm:undefined, strokes:undefined, dist_m:undefined, pace_s:undefined, power_ble:undefined, power_c2:undefined, power_real:undefined, kcal:undefined, res:undefined };
+
+      const strokeRate=data.getUint8(offset)/2.0;
+      document.getElementById('stroke-rate').textContent=Math.round(strokeRate);
+      if(strokeRate>0){ sessionData.totalSPM+=strokeRate; sessionData.spmReadings++; }
+      parsed.spm=Math.round(strokeRate); offset+=1;
+
+      const strokeCount=data.getUint16(offset,true);
+      document.getElementById('total-strokes').textContent=strokeCount;
+      parsed.strokes=strokeCount; offset+=2;
+
+      if(flags&0x0002){ offset+=1; } // Avg stroke rate (no usamos)
+      if(flags&0x0004){ const distMeters=(data.getUint32(offset,true)&0x00FFFFFF); document.getElementById('distance').textContent=(distMeters/1000).toFixed(2); parsed.dist_m=distMeters; offset+=3; }
+      if(flags&0x0008){ const paceSeconds=data.getUint16(offset,true); lastPaceSeconds=paceSeconds; dom.paceText.textContent=paceSeconds>0?formatMMSS(paceSeconds):'0:00'; parsed.pace_s=paceSeconds; offset+=2; }
+      if(flags&0x0010){ offset+=2; } // avg pace
+      if(flags&0x0020){ const p=data.getInt16(offset,true); lastPowerBle=Math.max(0,p); parsed.power_ble=lastPowerBle; offset+=2; }
+      if(flags&0x0040){ offset+=2; } // avg power
+      if(flags&0x0080){ const resistance=data.getInt16(offset,true); lastResistance=resistance; parsed.res=resistance; offset+=2; }
+      if(flags&0x0100){ const totalCalories=data.getUint16(offset,true); document.getElementById('calories').textContent=totalCalories; lastCalories=totalCalories; parsed.kcal=totalCalories; offset+=5; }
+
+      parsed.power_c2=computePowerC2(lastPaceSeconds);
+      const corrF=dom.corrFactor.value; const pCorr=computePowerCorrected(lastPowerBle,corrF);
+      const mode=dom.powerMode.value; let powerReal=null;
+      if(mode==='equiv') powerReal=parsed.power_c2??pCorr??lastPowerBle??0;
+      else if(mode==='corr') powerReal=pCorr??parsed.power_c2??lastPowerBle??0;
+      else powerReal=lastPowerBle??0;
+      parsed.power_real=powerReal;
+
+      applyPowerDisplay();
+
+      const hex=toHexString(new DataView(data.buffer,data.byteOffset,data.byteLength));
+      rawEvents.push({ ts: nowTs(), flags, hex, parsed });
+      updateDebugPanel();
+      dom.exportBtn.disabled = rawEvents.length===0;
     }
 
-    function nowTs() {
-      const d = new Date();
-      const hh = String(d.getHours()).padStart(2,'0');
-      const mm = String(d.getMinutes()).padStart(2,'0');
-      const ss = String(d.getSeconds()).padStart(2,'0');
-      const ms = String(d.getMilliseconds()).padStart(3,'0');
-      return `${hh}:${mm}:${ss}.${ms}`;
-    }
-
-    function updateDebugPanel() {
-      const tail = rawEvents.slice(-30);
-      const text = tail.map(e =>
-        `[${e.ts}] FTMS 0x2AD1 | flags=0x${e.flags.toString(16).padStart(4,'0')} | ` +
-        `spm=${e.parsed.spm ?? '-'} strokes=${e.parsed.strokes ?? '-'} dist_m=${e.parsed.dist_m ?? '-'} ` +
-        `pace_s=${e.parsed.pace_s ?? '-'} power_w=${e.parsed.power_w ?? '-'} kcal=${e.parsed.kcal ?? '-'}\n` +
-        `RAW: ${e.hex}`
-      ).join('\n\n');
-      dom.debugPre.textContent = text;
-      dom.exportBtn.disabled = rawEvents.length === 0;
-    }
-
-    // --- PARSEO DE DATOS DEL REMO (manteniendo la lógica existente y sumando Potencia) ---
-    function parseRowerData(data) {
-        const startOffset = 0;
-        const flags = data.getUint16(0, true);
-        let offset = 2;
-
-        const parsed = {
-          spm: undefined,
-          strokes: undefined,
-          dist_m: undefined,
-          pace_s: undefined,
-          power_w: undefined,
-          kcal: undefined
-        };
-
-        const strokeRate = data.getUint8(offset) / 2.0;
-        document.getElementById('stroke-rate').textContent = Math.round(strokeRate);
-        if (strokeRate > 0) {
-            sessionData.totalSPM += strokeRate;
-            sessionData.spmReadings++;
-        }
-        parsed.spm = Math.round(strokeRate);
-        offset += 1;
-
-        const strokeCount = data.getUint16(offset, true);
-        document.getElementById('total-strokes').textContent = strokeCount;
-        parsed.strokes = strokeCount;
-        offset += 2;
-
-        // Campos opcionales según los flags del FTMS
-        if (flags & 0x0002) { /* Average Stroke Rate */ offset += 1; }
-
-        if (flags & 0x0004) { /* Total Distance (24 bits, en metros) */
-            const distanceMeters = data.getUint32(offset, true) & 0x00FFFFFF;
-            document.getElementById('distance').textContent = (distanceMeters / 1000).toFixed(2);
-            parsed.dist_m = distanceMeters;
-            offset += 3;
-        }
-
-        if (flags & 0x0008) { /* Instantaneous Pace (segundos/500m) */
-            const paceSeconds = data.getUint16(offset, true);
-            document.getElementById('pace').textContent = (paceSeconds > 0) ? formatTime(paceSeconds) : '0:00';
-            parsed.pace_s = paceSeconds;
-            offset += 2;
-        }
-
-        if (flags & 0x0010) { /* Average Pace */ offset += 2; }
-
-        // Potencia Instantánea (signed 16-bit, W)
-        if (flags & 0x0020) {
-            const power = data.getInt16(offset, true);
-            document.getElementById('power').textContent = Math.max(0, power); // evitar negativos si aparecen
-            parsed.power_w = power;
-            offset += 2;
-        }
-
-        if (flags & 0x0040) { /* Average Power (no usada en UI) */ offset += 2; }
-        if (flags & 0x0080) { /* Resistance Level */ offset += 2; }
-
-        if (flags & 0x0100) { /* Expended Energy */
-            const totalCalories = data.getUint16(offset, true);
-            document.getElementById('calories').textContent = totalCalories;
-            parsed.kcal = totalCalories;
-            offset += 5; // Total(2), per Hour(2), per Minute(1)
-        }
-
-        // --- LOG: Guardar evento crudo + parseado ---
-        const hex = toHexString(new DataView(data.buffer, data.byteOffset, data.byteLength));
-        rawEvents.push({
-          ts: nowTs(),
-          flags,
-          hex,
-          parsed
-        });
-        updateDebugPanel();
-    }
-
-    dom.endSessionBtn.addEventListener('click', () => {
+    dom.endSessionBtn.addEventListener('click', async () => {
       if (!sessionTimer) { alert("No hay una sesión activa."); return; }
       stopTimer();
-      connectedRower = false;
-      connectedHr = false;
-      sessionActive = false;
-      syncWakeLock();
+      connectedRower=false; connectedHr=false; sessionActive=false; syncWakeLock();
 
-      document.getElementById('res-duration').textContent = formatTime(elapsedSeconds);
-      document.getElementById('res-distance').textContent = `${document.getElementById('distance').textContent} km`;
-      document.getElementById('res-calories').textContent = `${document.getElementById('calories').textContent} kcal`;
-      document.getElementById('res-strokes').textContent = document.getElementById('total-strokes').textContent;
-      const avgSpm = sessionData.spmReadings > 0 ? Math.round(sessionData.totalSPM / sessionData.spmReadings) : 0;
-      document.getElementById('res-avg-spm').textContent = `${avgSpm} SPM`;
+      document.getElementById('res-duration').textContent=formatMMSS(elapsedSeconds);
+      document.getElementById('res-distance').textContent=`${document.getElementById('distance').textContent} km`;
+      document.getElementById('res-calories').textContent=`${document.getElementById('calories').textContent} kcal`;
+      document.getElementById('res-strokes').textContent=document.getElementById('total-strokes').textContent;
+      const avgSpm=sessionData.spmReadings>0? Math.round(sessionData.totalSPM/sessionData.spmReadings):0;
+      document.getElementById('res-avg-spm').textContent=`${avgSpm} SPM`;
 
-      dom.mainScreen.style.display = 'none';
-      dom.resultsScreen.style.display = 'flex';
+      dom.mainScreen.style.display='none';
+      dom.resultsScreen.style.display='flex';
+
+      // NUEVO: Generar y descargar informe final automáticamente
+      const {blobUrl} = buildAndDownloadReport(rawEvents);
+      lastReportBlobUrl = blobUrl;
+      dom.downloadReportBtn.style.display = 'inline-block';
+    });
+
+    dom.downloadReportBtn.addEventListener('click', () => {
+      if (!lastReportBlobUrl) { const r=buildAndDownloadReport(rawEvents); lastReportBlobUrl=r.blobUrl; }
+      else {
+        const a=document.createElement('a'); a.href=lastReportBlobUrl; a.download=`informe_sesion_remo_${timestampFile()}.html`;
+        document.body.appendChild(a); a.click(); a.remove();
+      }
     });
 
     dom.newSessionBtn.addEventListener('click', () => {
-      resetUI();
-      initSessionData();
-      dom.resultsScreen.style.display = 'none';
-      dom.mainScreen.style.display = 'block';
-      syncWakeLock();
+      resetUI(); initSessionData();
+      dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='block'; syncWakeLock();
     });
 
-    // --- NUEVO: Exportar RAW/Parseado ---
+    // Export RAW + parse (sin cambios de estructura)
     dom.exportBtn.addEventListener('click', () => {
       if (!rawEvents.length) return;
-
       const header =
 `MERACH Q1S – Export RAW FTMS (0x2AD1)
 Fecha: ${new Date().toISOString()}
-Campos: timestamp | flags(hex) | spm | strokes | dist_m | pace_s | power_w | kcal
---------------------------------------------------------------------------`;
-
-      const lines = rawEvents.map(e =>
-        `${e.ts} | 0x${e.flags.toString(16).padStart(4,'0')} | ${v(e.parsed.spm)} | ${v(e.parsed.strokes)} | ${v(e.parsed.dist_m)} | ${v(e.parsed.pace_s)} | ${v(e.parsed.power_w)} | ${v(e.parsed.kcal)}\nRAW: ${e.hex}`
-      );
-
-      const footer = `\n--------------------------------------------------------------------------\nTotal eventos: ${rawEvents.length}\n`;
-      const blob = new Blob([header, '\n', lines.join('\n\n'), footer], {type: 'text/plain;charset=utf-8'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `merach_ftms_raw_${timestampFile()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(a.href);
-      a.remove();
+Campos: timestamp | flags(hex) | spm | strokes | dist_m | pace_s | power_ble | power_c2 | power_real | kcal | resistance
+--------------------------------------------------------------------------------`;
+      const lines = rawEvents.map(e => `${e.ts} | 0x${e.flags.toString(16).padStart(4,'0')} | ${v(e.parsed.spm)} | ${v(e.parsed.strokes)} | ${v(e.parsed.dist_m)} | ${v(e.parsed.pace_s)} | ${v(e.parsed.power_ble)} | ${v(Math.round(e.parsed.power_c2??NaN))} | ${v(Math.round(e.parsed.power_real??NaN))} | ${v(e.parsed.kcal)} | ${v(e.parsed.res)}\nRAW: ${e.hex}`);
+      const footer = `\n--------------------------------------------------------------------------------\nTotal eventos: ${rawEvents.length}\nFuente potencia UI: ${dom.powerMode.value} (factor=${dom.corrFactor.value})\n`;
+      const blob = new Blob([header, '\n', lines.join('\n\n'), footer], {type:'text/plain;charset=utf-8'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`merach_ftms_raw_${timestampFile()}.txt`;
+      document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
     });
 
-    function v(x){ return (x===undefined || x===null) ? '-' : x; }
-    function timestampFile(){
-      const d = new Date();
-      return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}`;
+    function startTimer(){ if(sessionTimer) return; sessionTimer=setInterval(()=>{ elapsedSeconds++; document.getElementById('duration').textContent=formatMMSS(elapsedSeconds); },1000); sessionActive=true; syncWakeLock(); }
+    function stopTimer(){ clearInterval(sessionTimer); sessionTimer=null; sessionActive=false; syncWakeLock(); }
+
+    function updateRowerStatus(c,n=''){ dom.rowerStatus.textContent=c?`Remo: Conectado a ${n}`:'Remo: Desconectado'; dom.rowerStatus.className=`status ${c?'connected':'disconnected'}`; }
+    function onRowerDisconnected(){ connectedRower=false; updateRowerStatus(false); stopTimer(); alert("El remo se ha desconectado."); resetUI(); initSessionData(); syncWakeLock(); }
+    function updateHrStatus(c,n=''){ dom.hrStatus.textContent=c?`Pulsómetro: Conectado a ${n}`:'Pulsómetro: Desconectado'; dom.hrStatus.className=`status ${c?'connected':'disconnected'}`; }
+    function onHrDisconnected(){ connectedHr=false; updateHrStatus(false); dom.heartRateValue.textContent='--'; dom.heartRateValue.style.color=`var(--primary-color)`; syncWakeLock(); }
+
+    function resetUI(){
+      stopTimer(); elapsedSeconds=0; document.getElementById('duration').textContent='00:00';
+      document.getElementById('distance').textContent='0.00'; document.getElementById('calories').textContent='0';
+      document.getElementById('stroke-rate').textContent='0'; document.getElementById('total-strokes').textContent='0';
+      document.getElementById('pace').textContent='--:--'; dom.powerVal.textContent='0';
+      dom.powerSource.textContent='Fuente: Equivalente por pace'; dom.powerMode.value='equiv'; dom.powerModeLabel.textContent='Equivalente'; dom.corrFactor.value='7.2';
+      dom.heartRateValue.textContent='--'; dom.heartRateValue.style.color=`var(--primary-color)`;
+      dom.exportBtn.disabled=true; dom.downloadReportBtn.style.display='none';
+      rawEvents=[]; updateDebugPanel();
+      if (lastReportBlobUrl) { URL.revokeObjectURL(lastReportBlobUrl); lastReportBlobUrl=null; }
     }
 
-    function startTimer() {
-      if (sessionTimer) return;
-      sessionTimer = setInterval(() => {
-        elapsedSeconds++;
-        document.getElementById('duration').textContent = formatTime(elapsedSeconds);
-      }, 1000);
-      sessionActive = true;
-      syncWakeLock();
-    }
+    /* =======================
+       GENERADOR DE INFORME
+       ======================= */
+    function buildAndDownloadReport(events){
+      if (!events || !events.length){ alert('No hay datos de sesión para generar informe.'); return {}; }
 
-    function stopTimer() {
-      clearInterval(sessionTimer); sessionTimer = null;
-      sessionActive = false;
-      syncWakeLock();
-    }
+      // Mapear a estructuras simples
+      const parseTS=(s)=>{ const [h,m,rest]=s.split(':'); const [sec,ms]=rest.split('.'); const d=new Date(); d.setHours(+h, +m, +sec, +ms); return d; };
+      const rows = events.map(e=>({ ts:e.ts, date:parseTS(e.ts), spm:num(e.parsed.spm), strokes:num(e.parsed.strokes),
+        dist_m:num(e.parsed.dist_m), pace_s:num(e.parsed.pace_s), power_ble:num(e.parsed.power_ble),
+        power_c2:num(e.parsed.power_c2), power_real:num(e.parsed.power_real), kcal:num(e.parsed.kcal), res:num(e.parsed.res) }));
+      const firstIdx = rows.findIndex(r=> (r.strokes>0) || (r.pace_s>0));
+      const t0 = firstIdx>=0 ? rows[firstIdx].date : rows[0].date;
+      rows.forEach(r=> r.t_sec = (r.date - t0)/1000);
 
-    function formatTime(s) {
-      if (s >= 60000) { // por si llega pace en segundos muy altos (seguridad)
-        s = 0;
-      }
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-    }
+      // Potencia equivalente preferida
+      rows.forEach(r=>{
+        const paceValid = r.pace_s>0 && r.pace_s<=240;
+        r.power_equiv = paceValid && isNum(r.power_c2) ? r.power_c2 :
+                        isNum(r.power_real) ? r.power_real :
+                        isNum(r.power_ble) ? r.power_ble : null;
+      });
 
-    function updateRowerStatus(c, n = '') {
-      dom.rowerStatus.textContent = c ? `Remo: Conectado a ${n}` : 'Remo: Desconectado';
-      dom.rowerStatus.className = `status ${c ? 'connected' : 'disconnected'}`;
-    }
+      // KPIs
+      const duration = rows[rows.length-1].t_sec - rows[0].t_sec;
+      const totalStrokes = maxVal(rows.map(r=>r.strokes));
+      const totalDist = maxVal(rows.map(r=>r.dist_m))||0;
+      const avgSpm = avg(rows.filter(r=>isNum(r.spm)&&r.spm>0).map(r=>r.spm));
+      const paceVals = rows.filter(r=>isNum(r.pace_s)&&r.pace_s>0&&r.pace_s<=240).map(r=>r.pace_s);
+      const avgPace = avg(paceVals);
+      const powerVals = rows.filter(r=>isNum(r.power_equiv)).map(r=>r.power_equiv);
+      const avgPower = avg(powerVals);
+      const maxPower = maxVal(powerVals);
+      const minPower = minVal(powerVals.filter(x=>x>0));
 
-    function onRowerDisconnected() {
-      connectedRower = false;
-      updateRowerStatus(false);
-      stopTimer();
-      alert("El remo se ha desconectado.");
-      resetUI();
-      initSessionData();
-      syncWakeLock();
-    }
+      const p10 = percentile(powerVals,0.10), p90 = percentile(powerVals,0.90);
 
-    function updateHrStatus(c, n = '') {
-      dom.hrStatus.textContent = c ? `Pulsómetro: Conectado a ${n}` : 'Pulsómetro: Desconectado';
-      dom.hrStatus.className = `status ${c ? 'connected' : 'disconnected'}`;
-    }
+      // Segmentos >p90 y <p10 agrupados por huecos >2s
+      const high = rows.filter(r=>isNum(r.power_equiv) && r.power_equiv >= p90);
+      const low  = rows.filter(r=>isNum(r.power_equiv) && r.power_equiv <= p10);
+      const highSeg = segmentsFrom(high, 2), lowSeg = segmentsFrom(low, 2);
 
-    function onHrDisconnected() {
-      connectedHr = false;
-      updateHrStatus(false);
-      dom.heartRateValue.textContent = '--';
-      dom.heartRateValue.style.color = `var(--primary-color)`; // Restablecer color
-      syncWakeLock();
-    }
+      // Curvas suavizadas (media móvil 5)
+      const smooth = (arr,w=5)=>{
+        const out=[]; for(let i=0;i<arr.length;i++){ let s=0,c=0; for(let k=i-Math.floor(w/2);k<=i+Math.floor(w/2);k++){ if(k>=0&&k<arr.length&&isNum(arr[k])){s+=arr[k];c++;}} out.push(c? s/c : null); } return out; };
+      const t = rows.map(r=>r.t_sec);
+      const pSmooth = smooth(powerValsFromRows(rows),5);
+      const paceSeries = rows.map(r=> isNum(r.pace_s)? r.pace_s : null);
 
-    function resetUI() {
-      stopTimer();
-      elapsedSeconds = 0;
-      document.getElementById('duration').textContent = '00:00';
-      document.getElementById('distance').textContent = '0.00';
-      document.getElementById('calories').textContent = '0';
-      document.getElementById('stroke-rate').textContent = '0';
-      document.getElementById('total-strokes').textContent = '0';
-      document.getElementById('pace').textContent = '--:--';
-      document.getElementById('power').textContent = '0';
-      dom.heartRateValue.textContent = '--';
-      dom.heartRateValue.style.color = `var(--primary-color)`; // Restablecer color
-      dom.exportBtn.disabled = true;
-      rawEvents = [];
-      updateDebugPanel();
-    }
-  </script>
-</body>
-</html>
+      // SVGs inline
+      const powerSvg = lineChartSVG(t, pSmooth, 'Potencia equivalente (W)');
+      const paceSvg  = lineChartSVG(t, paceSeries, 'Pace (s / 500 m)');
+
+      // Informe HTML autocontenido
+      const html = `
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<title>Informe de Sesión – Remo</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#111;color:#eee;margin:20px;}
+h1,h2{color:#00e0d6} .card{background:#1b1b1b;border-radius:12px;padding:16px;margin:12px 0;}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi .card{text-align:center} .strong{font-size:28px;font-weight:700;color:#03dac6} .small{opacity:.8;font-size:12px}
+.badge{display:inline-block;background:#333;border-radius:999px;padding:4px 8px;margin-right:6px}
+svg{background:#0f0f0f;border-radius:10px;width:100%;height:auto}
+</style></head><body>
+<h1>Informe de la sesión</h1>
+<div class="kpi">
+  <div class="card"><div class="small">Duración</div><div class="strong">${mmss(duration)}</div></div>
+  <div class="card"><div class="small">Paladas</div><div class="strong">${intOr0(totalStrokes)}</div></div>
+  <div class="card"><div class="small">Distancia</div><div class="strong">${(totalDist/1000).toFixed(2)} km</div></div>
+  <div class="card"><div class="small">SPM promedio</div><div class="strong">${fmt1(avgSpm)}</div></div>
+  <div class="card"><div class="small">Pace promedio</div><div class="strong">${mmss(avgPace)}</div></div>
+  <div class="card"><div class="small">Potencia media (equiv)</div><div class="strong">${Math.round(avgPower||0)} W</div></div>
+  <div class="card"><div class="small">Pico de potencia</div><div class="strong">${Math.round(maxPower||0)} W</div></div>
+</div>
+<div class="card"><h2>Dinámica de la sesión</h2>
+  <p>Tramos de mayor esfuerzo (≥P90 ≈ ${Math.round(p90||0)} W): ${segList(highSeg) || '—'}<br>
+     Tramos de menor esfuerzo (≤P10 ≈ ${Math.round(p10||0)} W): ${segList(lowSeg) || '—'}</p>
+  ${powerSvg}
+</div>
+<div class="card"><h2>Ritmo (pace)</h2>${paceSvg}</div>
+<div class="card"><h2>Notas</h2>
+  <ul>
+    <li>La potencia equivalente se calcula desde el pace y refleja mejor el trabajo mecánico que la potencia BLE cruda.</li>
+    <li>Los tramos de mayor/menor esfuerzo se estiman con percentiles 90/10 y se agrupan con huecos &gt; 2 s.</li>
+  </ul>
+</div>
+</body></html>`;
+
+      const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+      const blobUrl = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=blobUrl; a.download=`informe_sesion_remo_${timestampFile()}.html`;
+      document.body.appendChild(a); a.click(); a.remove();
+      return {blob, blobUrl};
+
+      // helpers:
+      function num(x){ return (x===null||x===undefined||x==='-'||Number.isNaN(x))? null : Number(x); }
+      function isNum(x){ return typeof x==='number' && !Number.isNaN(x); }
+      function avg(arr){ if(!arr||!arr.length) return null; const valid=arr.filter(isNum); return valid.length? valid.reduce((a,b)=>a+b,0)/valid.length : null; }
+      function maxVal(arr){ const v=arr.filter(isNum); return v.length? Math.max(...v): null; }
+      function minVal(arr){ const v=arr.filter(isNum); return v.length? Math.min(...v): null; }
+      function percentile(arr,p){ const v=arr.filter(isNum).sort((a,b)=>a-b); if(!v.length) return null; const idx=Math.floor((v.length-1)*p); return v[idx]; }
+      function segmentsFrom(sub, gap){ const segs=[]; if(!sub.length) return segs; let s=sub[0].t_sec, prev=sub[0].t_sec;
+        for(let i=1;i<sub.length;i++){ const cur=sub[i].t_sec; if(cur-prev>gap){ segs.push([s, prev]); s=cur; } prev=cur; } segs.push([s, prev]); return segs; }
+      function powerValsFromRows(rws){ return rws.map(r=> isNum(r.power_equiv)? r.power_equiv : null); }
+      function mmss(s){ if(!isNum(s)) return '--:--'; s=Math.round(s); const m=Math.floor(s/60), sec=s%60; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+      function fmt1(x){ return isNum(x)? x.toFixed(1) : '-'; }
+      function intOr0(x){ return isNum(x)? Math.round(x) : 0; }
+      function segList(segs){ return segs.map(([a,b])=>`${mmss(a)}–${mmss(b)}`).join('; '); }
+      function lineChartSVG(t,y,label){
+        const w=900,h=220,pad=28;
+        const tValid=t.filter((_,i)=>isNum(y[i]));
+        const yValid=y.filter(isNum);
+        const tMin=tValid.length? Math.min(...tValid):0, tMax=tValid.length? Math.max(...tValid):1;
+        const yMin=yValid.length? Math.min(...yValid):0, yMax=yValid.length? Math.max(...yValid):1;
+        const sx=(x)=> pad + ( (x - tMin) / (tMax - tMin || 1) ) * (w-2*pad);
+        const sy=(v)=> (h-pad) - ( (v - yMin) / (yMax - yMin || 1) ) * (h-2*pad);
+        let d=""; for(let i=0;i<t.length;i++){ if(!isNum(y[i])) continue; const X=sx(t[i]), Y=sy(y[i]); d+= (d? " L":"M")+`${X.toFixed(1)} ${Y.toFixed(1)}`; }
+        const yGrid = []; for(let k=0;k<5;k++){ yGrid.push(yMin + (yMax-yMin)*k/4); }
+        const gridLines = yGrid.map(v=>`<line x1="${pad}" y1="${sy(v).toFixed(1)}" x2="${(w-pad)}" y2="${sy(v).toFixed(1)}" stroke="#222" stroke-width="1"/>`).join('');
