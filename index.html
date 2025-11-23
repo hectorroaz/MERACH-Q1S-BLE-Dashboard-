@@ -50,7 +50,7 @@
     .status-bar{display:flex; justify-content:space-between; background:var(--card-color); padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:10px; text-align:center; gap: 5px;}
     .connected{color:var(--primary-color); font-weight: bold;} .disconnected{color:var(--accent-color);}
 
-    /* === DASHBOARD DE INTERVALOS (EL PROBLEMA PRINCIPAL) === */
+    /* === DASHBOARD DE INTERVALOS === */
     #interval-dashboard {
         display: none; 
         background: var(--interval-bg);
@@ -60,7 +60,7 @@
         flex-direction: column;
         margin-bottom: 15px;
         position: relative;
-        overflow: hidden; /* Importante para contener el canvas */
+        overflow: hidden; 
         transition: border-color 0.3s ease;
     }
     
@@ -68,7 +68,6 @@
     .dash-fast { border-color: var(--guide-fast) !important; box-shadow: inset 0 0 20px rgba(244, 67, 54, 0.2); }
     .dash-good { border-color: var(--guide-good) !important; box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.2); }
 
-    /* Header dentro del Dashboard */
     .int-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; z-index: 5; position: relative;}
     .int-phase-info { display: flex; flex-direction: column; max-width: 55%; }
     .int-phase-name { font-size: 1.3rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
@@ -78,10 +77,8 @@
     .int-timer-big { font-size: 2.2rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
     .int-timer-status { font-size: 0.6rem; color: #ffd700; font-weight: bold; text-transform: uppercase;}
 
-    /* LAYOUT VISUAL (Grilla adaptable) */
     .int-main-visual { 
         display: grid; 
-        /* Por defecto PC/Vertical: Apilado o 3 columnas */
         grid-template-columns: 1fr; 
         gap: 5px;
         align-items: center; 
@@ -89,40 +86,28 @@
         z-index: 2;
     }
 
-    /* Contenedor del Canvas */
-    .center-viz-container { 
-        display: flex; flex-direction: column; align-items: center; width: 100%; position: relative;
-    }
+    .center-viz-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
+    .rower-container { position: relative; width: 100%; display: flex; justify-content: center; align-items: flex-end; }
     
-    .rower-container {
-        position: relative; 
-        width: 100%; 
-        display: flex; justify-content: center; align-items: flex-end; 
-    }
-    
-    /* EL FIX CLAVE: Canvas Responsive */
     canvas#rower-canvas {
         width: 100% !important;
         height: auto !important;
-        max-width: 500px; /* Limite máximo en vertical */
-        aspect-ratio: 450/220; /* Mantiene la forma */
+        max-width: 500px;
+        aspect-ratio: 450/220;
     }
 
-    /* Textos superpuestos al canvas */
     .rower-overlay-text { position: absolute; top: 10px; right: 10px; text-align: right; pointer-events: none; }
     .target-big { font-size: 2rem; font-weight: 900; color: white; opacity: 0.9; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
     .target-lbl { font-size: 0.6rem; color: var(--primary-color); text-transform: uppercase; font-weight: bold;}
 
-    /* Guía (Flecha) */
     .int-guidance { 
         position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
         text-align: center; display: flex; flex-direction: column; align-items: center; 
-        pointer-events: none; /* Que no bloquee clicks */
+        pointer-events: none; 
     }
     .int-arrow { font-size: 3rem; line-height: 0.8; transition: all 0.3s ease; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     .int-guidance-text { font-weight: 900; font-size: 1rem; letter-spacing: 1px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;}
 
-    /* Columna de Datos Actuales */
     .int-right-col { display: flex; flex-direction: row; justify-content: space-around; width: 100%; margin-top: 5px; align-items: center;}
     .int-actual-val { text-align: center; }
     .int-actual-num { font-size: 2.8rem; font-weight: bold; color: white; line-height: 1; }
@@ -155,100 +140,34 @@
     .card-pulse { animation: pulse-green 1s infinite; }
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
 
-    /* ==========================================================================
-       MEDIA QUERY: MODO VERTICAL (PORTRAIT) - Ajustes finos
-       ========================================================================== */
+    /* Media Queries */
     @media (orientation: portrait) {
         .int-main-visual { grid-template-rows: auto auto auto; }
         .int-guidance { position: relative; top: 0; transform: none; margin-bottom: 5px; background: rgba(255,255,255,0.05); padding: 5px 20px; border-radius: 20px; width: fit-content; margin: 0 auto; flex-direction: row; gap: 10px;}
         .int-arrow { font-size: 1.5rem; margin: 0; }
         .int-guidance-text { font-size: 0.9rem; margin: 0; background: none;}
-        
-        .metric-card { flex: 1 1 40%; } /* 2 por fila */
+        .metric-card { flex: 1 1 40%; }
     }
 
-    /* ==========================================================================
-       MEDIA QUERY: MODO HORIZONTAL (LANDSCAPE) - EL FIX CRÍTICO
-       ========================================================================== */
     @media (orientation: landscape) and (max-height: 500px) {
         body { padding: 5px; }
-        h1, header { display: none; } /* Ocultar titulo para ganar espacio */
+        h1, header { display: none; }
         .buttons { margin: 5px 0; justify-content: flex-start; }
         button { padding: 6px 10px; font-size: 11px; min-width: auto; }
         
-        /* Layout de Intervalos Lado a Lado */
         #interval-dashboard {
-            flex-direction: row; /* Cambiar a fila */
-            flex-wrap: wrap;
-            padding: 5px;
-            align-items: center;
-            justify-content: center;
-            height: 75vh; /* Ocupar casi toda la pantalla */
+            flex-direction: row; flex-wrap: wrap; padding: 5px; align-items: center; justify-content: center; height: 75vh;
         }
-
-        /* Cabecera del intervalo (Nombre y timer) a la derecha */
-        .int-header {
-            position: absolute;
-            top: 10px; right: 10px;
-            flex-direction: column;
-            align-items: flex-end;
-            width: auto;
-            text-align: right;
-        }
-        .int-phase-info { align-items: flex-end; }
-        .int-phase-name { font-size: 1.1rem; }
-        .int-timer-big { font-size: 1.8rem; }
-
-        /* Contenedor Visual Principal */
-        .int-main-visual {
-            grid-template-columns: 1.5fr 1fr; /* 60% Visual, 40% Datos */
-            width: 100%;
-            height: 100%;
-            align-items: center;
-        }
-
-        /* Lado Izquierdo: Canvas */
-        .center-viz-container {
-            height: 100%;
-            justify-content: center;
-        }
-        
-        .rower-container {
-            height: 100%; /* Llenar altura */
-            width: auto;  /* Ancho automático */
-            align-items: center;
-        }
-
-        /* FIX: Canvas limitado por altura, no por ancho */
-        canvas#rower-canvas {
-            width: auto !important;
-            height: 100% !important;
-            max-height: 70vh !important; /* Limite duro vertical */
-            aspect-ratio: 450/220;
-        }
-        
-        /* Texto Target moverlo para que no estorbe */
-        .rower-overlay-text { top: auto; bottom: 5px; right: 5px; }
-        .target-big { font-size: 1.5rem; }
-
-        /* Lado Derecho: Datos y Guía */
-        .int-right-col {
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
-            gap: 10px;
-        }
-        
-        /* Guía centrada en la derecha */
-        .int-guidance {
-            position: relative; top: auto; left: auto; transform: none;
-            margin-bottom: 10px;
-        }
-        
-        /* Ocultar barra de progreso si molesta o hacerla pequeña */
+        .int-header { position: absolute; top: 10px; right: 10px; flex-direction: column; align-items: flex-end; width: auto; text-align: right; }
+        .int-phase-info { align-items: flex-end; } .int-phase-name { font-size: 1.1rem; } .int-timer-big { font-size: 1.8rem; }
+        .int-main-visual { grid-template-columns: 1.5fr 1fr; width: 100%; height: 100%; align-items: center; }
+        .center-viz-container { height: 100%; justify-content: center; }
+        .rower-container { height: 100%; width: auto; align-items: center; }
+        canvas#rower-canvas { width: auto !important; height: 100% !important; max-height: 70vh !important; aspect-ratio: 450/220; }
+        .rower-overlay-text { top: auto; bottom: 5px; right: 5px; } .target-big { font-size: 1.5rem; }
+        .int-right-col { flex-direction: column; justify-content: center; height: 100%; gap: 10px; }
+        .int-guidance { position: relative; top: auto; left: auto; transform: none; margin-bottom: 10px; }
         .int-progress-container { position: absolute; bottom: 0; left: 0; height: 3px; margin: 0; }
-
-        /* Esconder métricas generales en modo paisaje durante intervalo para no scrollear */
         .dashboard { display: none; } 
     }
 
@@ -304,13 +223,11 @@
       </div>
 
       <div class="int-main-visual">
-        <!-- Guía (Flecha) - Posición absoluta/controlada -->
         <div class="int-guidance">
           <span class="int-arrow" id="int-arrow">−</span>
           <div class="int-guidance-text" id="int-msg">REMA</div>
         </div>
 
-        <!-- CENTRO: REMERO -->
         <div class="center-viz-container">
             <div class="rower-container">
                 <canvas id="rower-canvas" width="450" height="220"></canvas>
@@ -319,14 +236,9 @@
                     <div class="target-lbl">OBJETIVO</div>
                 </div>
             </div>
-            
-            <!-- Gauge Lineal -->
              <div class="linear-gauge-container" id="gauge-bar"></div>
-             <!-- Label oculto visualmente pero existente en lógica si se quiere -->
-             <div id="gauge-label" style="display:none"></div> 
         </div>
 
-        <!-- Columna Derecha Datos -->
         <div class="int-right-col">
             <div class="int-actual-val">
                 <span class="int-actual-num" id="int-current-spm">0</span>
@@ -344,7 +256,7 @@
       </div>
     </div>
 
-    <!-- METRICAS (Se ocultan en Landscape para dar prioridad a la animación) -->
+    <!-- METRICAS -->
     <div class="dashboard">
       <div class="metrics-row">
         <div class="metric-card"><div class="label">Ritmo</div><div><span class="value" id="stroke-rate">0</span><span class="unit">SPM</span></div></div>
@@ -385,7 +297,7 @@
     </div>
   </div>
 
-  <!-- MODAL -->
+  <!-- MODAL RUTINA -->
   <div class="modal-overlay" id="routine-modal">
     <div class="modal-content">
       <div class="modal-header"><h3 style="color:white;margin:0">Editor Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
@@ -423,30 +335,78 @@
       closeModal: document.getElementById('close-modal'), addIntervalBtn: document.getElementById('add-interval-btn'), 
       intervalsContainer: document.getElementById('intervals-container'), startRoutineBtn: document.getElementById('start-routine-btn'), 
       cancelRoutineBtn: document.getElementById('cancel-routine-btn'), canvas: document.getElementById('rower-canvas'),
-      gaugeBar: document.getElementById('gauge-bar'), gaugeLabel: document.getElementById('gauge-label')
+      gaugeBar: document.getElementById('gauge-bar')
     };
 
     let sessionTimer=null, elapsedSeconds=0, sessionActive=false, currentSpm=0;
-    let isRowing=false, rowingTimeout=null, connectedRower=false, connectedHr=false;
+    let isRowing=false, rowingTimeout=null;
     let activeRoutine=null, currentStepIndex=0, stepTimeRemaining=0, inIntervalMode=false;
     let lastPaceSeconds=null, lastPowerBle=null;
+    let rawEvents = [];
 
-    /* ----------------- WAKE LOCK (PANTALLA ENCENDIDA) ----------------- */
+    /* =========================================================================
+       WAKE LOCK MEJORADO (Adaptado del Contexto 1)
+       ========================================================================= */
     let wakeLock = null;
-    async function syncWakeLock() {
-        if (!('wakeLock' in navigator)) return;
-        if ((sessionActive || connectedRower || connectedHr) && document.visibilityState === 'visible' && !wakeLock) {
-            try {
-                wakeLock = await navigator.wakeLock.request('screen');
-                wakeLock.addEventListener('release', () => { wakeLock = null; });
-            } catch (err) { console.log(err); }
-        }
-    }
-    document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') await syncWakeLock(); });
-    // Reforzar wake lock al tocar la pantalla por si se soltó
-    document.addEventListener('touchstart', async () => { await syncWakeLock(); }, {passive: true});
+    let connectedRower = false;
+    let connectedHr = false;
+    let isFullscreen = false;
 
-    /* ----------------- GAUGE ----------------- */
+    // Condición: Mantener pantalla si hay remo conectado, HR conectado, o sesión activa
+    function shouldHoldWakeLock() {
+      return connectedRower || connectedHr || sessionActive || isFullscreen;
+    }
+
+    async function acquireWakeLockOnce() {
+      if (!('wakeLock' in navigator) || wakeLock) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+          // Re-intentar adquirir si todavía es necesario y la app es visible
+          if (document.visibilityState === 'visible' && shouldHoldWakeLock()) {
+            acquireWakeLockOnce().catch(() => {});
+          }
+        });
+        console.log("Wake Lock adquirido");
+      } catch (err) {
+        console.warn("Wake Lock fail:", err);
+      }
+    }
+
+    async function releaseWakeLockIfHeld() {
+      if (!wakeLock) return;
+      try { await wakeLock.release(); } catch (err) {}
+      wakeLock = null;
+      console.log("Wake Lock liberado");
+    }
+
+    async function syncWakeLock() {
+      if (document.visibilityState !== 'visible') return;
+      if (shouldHoldWakeLock()) {
+        await acquireWakeLockOnce();
+      } else {
+        await releaseWakeLockIfHeld();
+      }
+    }
+
+    // Event Listeners del Sistema
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncWakeLock();
+    });
+    
+    document.addEventListener('fullscreenchange', () => {
+      isFullscreen = !!document.fullscreenElement;
+      syncWakeLock();
+    });
+    
+    // Backup para navegadores móviles a veces perezosos
+    document.addEventListener('touchstart', async () => { 
+        if(shouldHoldWakeLock() && !wakeLock) await syncWakeLock(); 
+    }, {passive: true});
+
+
+    /* ----------------- GAUGE & VISUALS ----------------- */
     const SEGMENT_COUNT = 20;
     function initGauge() {
         if(!dom.gaugeBar) return;
@@ -458,7 +418,6 @@
             seg.dataset.color = color; dom.gaugeBar.appendChild(seg);
         }
     }
-    initGauge();
     function updateGauge(phase, isDrive) {
         if(!dom.gaugeBar) return;
         const segments = dom.gaugeBar.children;
@@ -467,9 +426,7 @@
             const seg = segments[i];
             if ((isDrive && i <= activeCount) || (!isDrive && i <= activeCount)) { 
                 seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; 
-            } else { 
-                seg.className = 'gauge-segment inactive'; seg.style.background = ''; 
-            }
+            } else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
         }
     }
 
@@ -486,38 +443,24 @@
 
     function drawRower(phase, isDrive = true) {
         if(!ctx) return;
-        
-        // Ajuste de nitidez para pantallas retina/HD
         const dpr = window.devicePixelRatio || 1;
         const rect = dom.canvas.getBoundingClientRect();
-        // Solo redimensionar si cambio el tamaño visual CSS
         if(dom.canvas.width !== Math.floor(rect.width * dpr) || dom.canvas.height !== Math.floor(rect.height * dpr)){
-             dom.canvas.width = rect.width * dpr;
-             dom.canvas.height = rect.height * dpr;
-             // Resetear contexto tras resize
+             dom.canvas.width = rect.width * dpr; dom.canvas.height = rect.height * dpr;
              ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
         }
-        
         ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
         
-        // Usar coordenadas logicas fijas (450x220) y escalar al tamaño real
         ctx.save();
-        const scaleX = dom.canvas.width / 450;
-        const scaleY = dom.canvas.height / 220;
-        const globalScale = Math.min(scaleX, scaleY); // Mantener aspecto
-        // Centrar
+        const globalScale = Math.min(dom.canvas.width / 450, dom.canvas.height / 220);
         const offsetX = (dom.canvas.width - (450 * globalScale)) / 2;
         const offsetY = (dom.canvas.height - (220 * globalScale)) / 2;
-        
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(globalScale, globalScale);
+        ctx.translate(offsetX, offsetY); ctx.scale(globalScale, globalScale);
 
         const colorHex = lerpColor(0x4caf50, 0xf44336, phase);
         ctx.strokeStyle = colorHex; ctx.fillStyle = colorHex;
 
-        const cx = 225; const cy = 180; 
-        const scale = 0.9; 
-        
+        const cx = 225, cy = 180, scale = 0.9; 
         const ankle = { x: cx - 140 * scale, y: cy - 20 * scale }; 
         const slideLen = 180 * scale; 
         const seatX = (ankle.x + (50 * scale)) + (slideLen * phase);
@@ -529,24 +472,19 @@
         const swingAngle = -25 + (phase * 50); 
         const rad = swingAngle * Math.PI / 180;
         const shoulder = { x: hip.x + Math.sin(rad) * torsoLen, y: hip.y - Math.cos(rad) * torsoLen };
-        const headRadius = 15 * scale; 
         const head = { x: shoulder.x + Math.sin(rad) * 25 * scale, y: shoulder.y - Math.cos(rad) * 25 * scale };
-        
         let armExtension = 1; if (phase > 0.5) armExtension = 1 - ((phase - 0.5) * 2 * 0.9);
-        const armLen = 125 * scale;
-        const hand = { x: shoulder.x - (armLen * armExtension), y: shoulder.y + 40 * scale };
+        const hand = { x: shoulder.x - (125 * scale * armExtension), y: shoulder.y + 40 * scale };
 
         ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = '#333';
         ctx.moveTo(cx - 180 * scale, cy); ctx.lineTo(cx + 180 * scale, cy); ctx.stroke(); // Riel
 
         ctx.strokeStyle = colorHex; ctx.lineWidth = 16;
-        ctx.beginPath(); ctx.moveTo(ankle.x, ankle.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(hip.x, hip.y); ctx.stroke(); // Pierna
-        ctx.beginPath(); ctx.moveTo(hip.x, hip.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke(); // Torso
-        ctx.beginPath(); ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2); ctx.fill(); // Cabeza
-        ctx.beginPath(); ctx.lineWidth = 14; ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hand.x, hand.y); ctx.stroke(); // Brazo
-        
-        ctx.beginPath(); ctx.lineWidth = 5; ctx.strokeStyle = '#e0e0e0'; 
-        ctx.moveTo(hand.x, hand.y); ctx.lineTo(cx - 200 * scale, hand.y); ctx.stroke(); // Cadena
+        ctx.beginPath(); ctx.moveTo(ankle.x, ankle.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(hip.x, hip.y); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(hip.x, hip.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke(); 
+        ctx.beginPath(); ctx.arc(head.x, head.y, 15 * scale, 0, Math.PI * 2); ctx.fill(); 
+        ctx.beginPath(); ctx.lineWidth = 14; ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hand.x, hand.y); ctx.stroke(); 
+        ctx.beginPath(); ctx.lineWidth = 5; ctx.strokeStyle = '#e0e0e0'; ctx.moveTo(hand.x, hand.y); ctx.lineTo(cx - 200 * scale, hand.y); ctx.stroke();
         
         ctx.restore();
     }
@@ -565,8 +503,7 @@
             let drivePhase = 0; let isDrive = true;
             if (progress < 0.35) { drivePhase = progress / 0.35; isDrive = true; } 
             else { const recovProgress = (progress - 0.35) / 0.65; drivePhase = 1.0 - recovProgress; isDrive = false; }
-            const p = Math.min(1, Math.max(0, drivePhase));
-            drawRower(p, isDrive); updateGauge(p, isDrive);
+            drawRower(Math.min(1, Math.max(0, drivePhase)), isDrive); updateGauge(Math.min(1, Math.max(0, drivePhase)), isDrive);
         } else { drawRower(0, true); updateGauge(0, true); }
         animFrame = requestAnimationFrame(loop);
       };
@@ -604,7 +541,9 @@
       const rows = Array.from(document.querySelectorAll('.interval-row')); if(!rows.length) return;
       const steps = rows.map(r => ({ sec: parseInt(r.querySelector('.int-dur').value)||60, spm: parseInt(r.querySelector('.int-spm').value)||20, label: r.querySelector('.int-lbl').value }));
       localStorage.setItem('lastRoutine', JSON.stringify({ name, steps }));
-      startIntervalSession({ name, steps }); dom.modal.style.display = 'none'; syncWakeLock();
+      startIntervalSession({ name, steps }); dom.modal.style.display = 'none';
+      // Sync Wake Lock al iniciar rutina
+      syncWakeLock();
     });
 
     function startIntervalSession(routine) {
@@ -629,7 +568,7 @@
       if(dom.intProgressBar) dom.intProgressBar.style.width = `${((step.sec - stepTimeRemaining) / step.sec) * 100}%`;
       updateText('int-current-spm', currentSpm);
       
-      const dash = dom.intervalDashboard; const arrow = dom.intArrow; const msg = dom.intMsg;
+      const dash = dom.intervalDashboard; const arrow = dom.intArrow; 
       if(dash) dash.className = ''; if(arrow) arrow.className = 'int-arrow';
       
       if (!isRowing) { updateText('int-arrow', "−"); updateText('int-msg', "REMA"); if(arrow) arrow.style.color = "#888"; if(dash) dash.style.borderColor = "#444"; }
@@ -649,35 +588,74 @@
                 isRowing = false; updateText('int-status', "PAUSA"); if(dom.intStatus) dom.intStatus.style.color = "#ffd700"; 
                 updateIntervalUI(); drawRower(0, true); updateGauge(0, true); 
             }, 4000);
-            syncWakeLock();
         }
     }
 
     const FTMS_UUID=0x1826; const ROWER_CHAR_UUID=0x2AD1; const HR_SERVICE_UUID=0x180D; const HR_CHAR_UUID=0x2A37;
     
+    // --- CONEXIÓN REMO CON GESTIÓN DE DESCONEXIÓN ---
     dom.connectRowerBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth API Off"); 
         const dev = await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_UUID]}], optionalServices:[FTMS_UUID]});
-        const server = await dev.gatt.connect(); connectedRower=true; updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
+        
+        // Listener de desconexión (Portado de Context 1)
+        dev.addEventListener('gattserverdisconnected', onRowerDisconnected);
+        
+        const server = await dev.gatt.connect(); 
+        connectedRower=true; 
+        updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
+        
         const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
-        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); syncWakeLock();
-      }catch(e){ showError("Err Remo: " + e.message); }
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); 
+        
+        syncWakeLock(); // Activar pantalla
+      }catch(e){ showError("Err Remo: " + e.message); connectedRower=false; syncWakeLock(); }
     });
 
+    function onRowerDisconnected() {
+        connectedRower = false;
+        updateText('rower-status', 'Remo: Desconectado');
+        if(dom.rowerStatus) dom.rowerStatus.className = 'status disconnected';
+        alert("El remo se ha desconectado.");
+        stopTimer(); 
+        syncWakeLock(); // Liberar pantalla si no hay nada más
+    }
+
+    // --- CONEXIÓN HR CON GESTIÓN DE DESCONEXIÓN ---
     dom.connectHrBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth Off");
         const dev = await navigator.bluetooth.requestDevice({ filters:[{services:[HR_SERVICE_UUID]}], optionalServices:[HR_SERVICE_UUID] });
-        const server = await dev.gatt.connect(); connectedHr=true; updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
+        
+        dev.addEventListener('gattserverdisconnected', onHrDisconnected);
+
+        const server = await dev.gatt.connect(); 
+        connectedHr=true; 
+        updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
+        
         const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
         await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', e=>{ 
             const v=e.target.value; const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
             updateText('heart-rate', val); if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
-        }); syncWakeLock();
-      }catch(e){ showError("Err HR: " + e.message); }
+        }); 
+        
+        syncWakeLock(); // Activar pantalla
+      }catch(e){ showError("Err HR: " + e.message); connectedHr=false; syncWakeLock(); }
     });
 
-    let rawEvents = [];
-    function handleRowerData(e){ if(!sessionTimer && !inIntervalMode) startTimer(); parseRowerData(e.target.value); }
+    function onHrDisconnected() {
+        connectedHr = false;
+        updateText('hr-status', 'HR: --');
+        if(dom.hrStatus) dom.hrStatus.className = 'status disconnected';
+        updateText('heart-rate', '--');
+        syncWakeLock();
+    }
+
+    function handleRowerData(e){ 
+        // Si llegan datos y no hay sesión timer, iniciar (Auto-start)
+        if(!sessionTimer && !inIntervalMode) startTimer(); 
+        parseRowerData(e.target.value); 
+    }
+
     function parseRowerData(data){
       const flags=data.getUint16(0,true); let offset=2; const parsed={};
       const sr=data.getUint8(offset)/2.0; offset+=1; currentSpm = Math.round(sr); 
@@ -702,27 +680,58 @@
     dom.powerMode.addEventListener('change', applyPowerDisplay); dom.corrFactor.addEventListener('input', applyPowerDisplay);
 
     function startTimer(){ 
-        if(sessionTimer) return; sessionActive = true; syncWakeLock(); dom.exportBtn.disabled=false; 
-        sessionTimer = setInterval(()=>{ if(isRowing) { elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); if(inIntervalMode) { stepTimeRemaining--; updateIntervalUI(); if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); } } }, 1000); 
+        if(sessionTimer) return; 
+        sessionActive = true; 
+        syncWakeLock(); // Asegurar pantalla encendida
+        dom.exportBtn.disabled=false; 
+        
+        sessionTimer = setInterval(()=>{ 
+            // La pantalla sigue activa aunque no se reme, porque sessionActive=true
+            if(isRowing) { 
+                elapsedSeconds++; 
+                updateText('duration', formatMMSS(elapsedSeconds)); 
+                if(inIntervalMode) { 
+                    stepTimeRemaining--; 
+                    updateIntervalUI(); 
+                    if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); 
+                } 
+            } 
+        }, 1000); 
     }
+
     function stopTimer(){ 
-        clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
-        dom.intervalDashboard.style.display = 'none'; if(wakeLock) wakeLock.release().catch(()=>{}); wakeLock=null; 
+        clearInterval(sessionTimer); 
+        if(animFrame) cancelAnimationFrame(animFrame); 
+        sessionTimer = null; 
+        sessionActive = false; // Importante para el Wake Lock
+        inIntervalMode = false; 
+        isRowing = false; 
+        dom.intervalDashboard.style.display = 'none'; 
+        syncWakeLock(); // Intentar liberar pantalla
     }
+
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
+    
     dom.endSessionBtn.addEventListener('click', ()=>{ 
-        if(!rawEvents.length && !sessionActive && elapsedSeconds === 0) return alert("Sin datos"); stopTimer(); 
+        if(!rawEvents.length && !sessionActive && elapsedSeconds === 0) return alert("Sin datos"); 
+        stopTimer(); 
         dom.mainScreen.style.display='none'; dom.resultsScreen.style.display='flex'; 
         updateText('res-duration', formatMMSS(elapsedSeconds)); updateText('res-distance', document.getElementById('distance').textContent + " km"); 
         updateText('res-calories', document.getElementById('calories').textContent + " kcal"); updateText('res-strokes', document.getElementById('total-strokes').textContent); 
         const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM");
         document.getElementById('download-report-btn').disabled = false;
     });
-    document.getElementById('new-session-btn').addEventListener('click', ()=>{ dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); });
+
+    document.getElementById('new-session-btn').addEventListener('click', ()=>{ 
+        dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); 
+        syncWakeLock(); // Actualizar estado de pantalla
+    });
+
     function resetUI(){ 
         elapsedSeconds=0; rawEvents=[]; ['duration','distance','calories','total-strokes','stroke-rate','power'].forEach(id=>updateText(id, '0')); updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; 
         document.getElementById('download-report-btn').disabled = true;
     }
+    
     const exportData = () => {
         if(!rawEvents.length) return alert("Sin datos");
         let csv = "Timestamp,SPM,Watts,Pace,Strokes,Dist\n";
@@ -730,6 +739,8 @@
         const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `remo_sesion_${Date.now()}.csv`; a.click();
     };
     dom.exportBtn.addEventListener('click', exportData); document.getElementById('download-report-btn').addEventListener('click', exportData);
+    
+    // Inicialización visual
     drawRower(0, true); initGauge();
   </script>
 </body>
