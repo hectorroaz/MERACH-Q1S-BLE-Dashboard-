@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel de Control de Remo - PRO Final</title>
+  <!-- Viewport esencial para Android -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Panel de Control de Remo - Android Optimized</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -11,46 +12,84 @@
       --interval-bg:#1a2639; --interval-text:#ffffff; 
       --guide-fast:#f44336; --guide-slow:#2196f3; --guide-good:#4caf50;
     }
-    html,body{height:100%;margin:0;padding:0;overflow-x:hidden;overflow-y:auto}
-    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg-color);color:var(--text-color);display:flex;flex-direction:column;align-items:center;padding:10px;box-sizing:border-box}
-    .container{width:100%;max-width:900px;display:flex;flex-direction:column;position:relative}
-    header{text-align:center;padding:10px 0}
-    h1{font-size:1.5rem;margin:0}
     
-    /* Botones */
-    .buttons{display:flex;justify-content:center;gap:10px;margin:10px 0;flex-wrap:wrap}
-    button{padding:10px 20px;font-size:14px;border:none;border-radius:8px;cursor:pointer;background:var(--primary-color);color:var(--bg-color);font-weight:bold;transition:all .2s}
-    button:hover{background:#33fff0;transform:scale(1.02)}
-    button:disabled{background:#555;cursor:not-allowed;transform:none}
-    #end-session-btn{background:var(--accent-color)}
-    #export-btn{background:var(--secondary-color)}
-    #routine-btn{background:#3f51b5;color:white}
+    html,body{height:100%; margin:0; padding:0; overflow-x:hidden; overflow-y:auto;}
+    body{
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+      background:var(--bg-color);
+      color:var(--text-color);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:10px;
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent; /* Elimina flash azul en Android al tocar */
+    }
 
-    /* Status Bar */
-    .status-bar{display:flex;justify-content:space-around;background:var(--card-color);padding:8px;border-radius:8px;margin-bottom:10px;font-size:12px;text-align:center}
-    .connected{color:var(--primary-color)}.disconnected{color:var(--accent-color)}
+    .container{width:100%; max-width:900px; display:flex; flex-direction:column; position:relative; padding-bottom: 60px;}
+    
+    header{text-align:center; padding:10px 0;}
+    h1{font-size:1.4rem; margin:0;}
+    
+    /* === BOTONES ADAPTABLES (TOUCH FRIENDLY) === */
+    .buttons{display:flex; justify-content:center; gap:8px; margin:10px 0; flex-wrap:wrap;}
+    button{
+        padding:12px 16px; 
+        font-size:14px; 
+        border:none; 
+        border-radius:8px; 
+        cursor:pointer; 
+        background:var(--primary-color); 
+        color:var(--bg-color); 
+        font-weight:bold; 
+        transition:all .2s;
+        flex: 1 1 45%; /* En móvil ocupan casi la mitad cada uno */
+        min-width: 130px;
+        touch-action: manipulation; /* Mejora respuesta táctil */
+    }
+    button:active{transform:scale(0.98);}
+    button:disabled{background:#444; color:#888; cursor:not-allowed; transform:none;}
+    
+    #end-session-btn{background:var(--accent-color); color: white;}
+    #export-btn{background:var(--secondary-color);}
+    #routine-btn{background:#3f51b5; color:white;}
 
-    /* Dashboard Standard */
-    .dashboard{display:flex;flex-direction:column;gap:10px;width:100%}
-    .metrics-row{display:flex;gap:10px;justify-content:center}
-    .metric-card{background:var(--card-color);padding:15px 10px;border-radius:12px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1;min-width: 80px; transition: background 0.3s;}
-    .metric-card .label{font-size:.9rem;margin-bottom:5px;color:var(--secondary-color)}
-    .metric-card .value{font-size:2.4rem;font-weight:bold;color:var(--primary-color);line-height:1.1;}
-    .metric-card .unit{font-size:.9rem;margin-left:5px}
-    .subtle{font-size:.75rem;opacity:.8;margin-top:6px}
+    /* === STATUS BAR === */
+    .status-bar{display:flex; justify-content:space-around; background:var(--card-color); padding:10px; border-radius:8px; margin-bottom:15px; font-size:11px; text-align:center; gap: 10px;}
+    .connected{color:var(--primary-color); font-weight: bold;} .disconnected{color:var(--accent-color);}
+
+    /* === DASHBOARD DE MÉTRICAS (GRID RESPONSIVO) === */
+    .dashboard{display:flex; flex-direction:column; gap:10px; width:100%}
+    
+    .metrics-row{
+        display:flex; 
+        gap:10px; 
+        justify-content:center; 
+        flex-wrap: wrap; /* Clave para que bajen en pantallas pequeñas */
+    }
+    
+    .metric-card{
+        background:var(--card-color); padding:15px 5px; border-radius:12px; text-align:center;
+        display:flex; flex-direction:column; justify-content:center;
+        flex: 1 1 30%; /* Base: 3 por fila en PC, se ajusta abajo para móvil */
+        min-width: 90px;
+    }
+    .metric-card .label{font-size:.75rem; margin-bottom:4px; color:var(--secondary-color); text-transform: uppercase;}
+    .metric-card .value{font-size:1.8rem; font-weight:bold; color:var(--primary-color); line-height:1;}
+    .metric-card .unit{font-size:.75rem; margin-left:3px; color: #888;}
     
     .card-pulse { animation: pulse-green 1s infinite; }
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
 
     #power-card .label, #power-card .power-controls, #power-card .subtle { display: none !important; }
 
-    /* ===== INTERVAL DASHBOARD ===== */
+    /* === INTERVAL DASHBOARD (MODO ENTRENAMIENTO) === */
     #interval-dashboard {
         display: none; 
         background: var(--interval-bg);
         border: 2px solid #444;
         border-radius: 12px;
-        padding: 20px;
+        padding: 15px;
         flex-direction: column;
         margin-bottom: 20px;
         position: relative;
@@ -62,126 +101,117 @@
     .dash-fast { border-color: var(--guide-fast) !important; box-shadow: 0 0 15px rgba(244, 67, 54, 0.3) !important; }
     .dash-good { border-color: var(--guide-good) !important; box-shadow: 0 0 15px rgba(76, 175, 80, 0.3) !important; }
 
-    /* Header */
-    .int-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative; z-index: 5;}
-    .int-phase-info { display: flex; flex-direction: column; }
-    .int-phase-name { font-size: 2rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
-    .int-step-count { background: #0f1724; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; margin-left: 0; vertical-align: middle; color: #aaa; font-weight: bold; display: inline-block; margin-top: 5px; width: fit-content; }
+    /* Header Intervalos */
+    .int-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; z-index: 5;}
+    .int-phase-info { display: flex; flex-direction: column; max-width: 60%; }
+    .int-phase-name { font-size: 1.4rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+    .int-step-count { background: #0f1724; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; color: #aaa; font-weight: bold; margin-top: 5px; width: fit-content; }
     
     .int-timer-block { text-align: right; }
-    .int-timer-big { font-size: 4rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
-    .int-timer-label { font-size: 0.8rem; color: #aaa; letter-spacing: 2px; margin-top: 4px; font-weight: bold;}
-    .int-timer-status { font-size: 0.7rem; color: #ffd700; font-weight: bold; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px;}
+    .int-timer-big { font-size: 2.5rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
+    .int-timer-label { font-size: 0.7rem; color: #aaa; letter-spacing: 1px; font-weight: bold;}
+    .int-timer-status { font-size: 0.6rem; color: #ffd700; font-weight: bold; margin-top: 2px; text-transform: uppercase;}
 
-    /* Main Visual Layout */
+    /* LAYOUT PRINCIPAL DEL VISUALIZADOR */
     .int-main-visual { 
         display: grid; 
-        grid-template-columns: 1fr 2.5fr 1fr; 
+        grid-template-columns: 1fr 2.5fr 1fr; /* PC Layout */
         align-items: center; 
         margin: 10px 0; 
-        position: relative; 
         z-index: 2;
-        height: 300px; 
     }
     
     .int-guidance { text-align: center; justify-self: center; }
-    .int-arrow { font-size: 4rem; display: block; line-height: 1; transition: all 0.3s ease; }
-    .int-guidance-text { font-weight: 900; font-size: 1.2rem; letter-spacing: 1px; margin-top: 5px;}
+    .int-arrow { font-size: 3.5rem; display: block; line-height: 1; transition: all 0.3s ease; }
+    .int-guidance-text { font-weight: 900; font-size: 1rem; letter-spacing: 1px;}
 
-    /* CENTRAL CONTAINER */
-    .center-viz-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        height: 100%;
-    }
+    .center-viz-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
 
-    /* CANVAS CONTAINER */
+    /* CANVAS RESPONSIVO */
     .rower-container {
         position: relative; width: 100%; flex: 1;
         display: flex; justify-content: center; align-items: flex-end; 
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
     
     canvas#rower-canvas {
-        width: 100%;
-        height: 100%;
-        max-width: 450px; 
-        max-height: 220px;
+        width: 100% !important; /* Fuerza el ajuste al ancho del contenedor */
+        height: auto !important; /* Mantiene la proporción */
+        aspect-ratio: 450/220;   /* Reserva el espacio vertical correcto */
+        max-width: 450px;
     }
     
-    /* GAUGE LINEAL */
-    .linear-gauge-container {
-        width: 90%;
-        max-width: 400px;
-        height: 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 5px;
-    }
-    
-    .gauge-label {
-        font-size: 0.75rem;
-        color: #888;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 4px;
-        font-weight: bold;
-        height: 1rem;
-    }
-
-    .gauge-bar {
-        display: flex;
-        width: 100%;
-        height: 12px;
-        gap: 3px; 
-    }
-
-    .gauge-segment {
-        flex: 1;
-        background: #333; 
-        border-radius: 2px;
-        transition: background 0.05s linear;
-    }
-    
+    .linear-gauge-container { width: 95%; max-width: 350px; height: 35px; display: flex; flex-direction: column; align-items: center; margin-top: 5px; }
+    .gauge-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; font-weight: bold; }
+    .gauge-bar { display: flex; width: 100%; height: 10px; gap: 2px; }
+    .gauge-segment { flex: 1; background: #333; border-radius: 2px; }
     .gauge-segment.active { opacity: 1; box-shadow: 0 0 5px currentColor; }
     .gauge-segment.inactive { background: #2a2a2a !important; box-shadow: none !important; }
 
-    /* Texto Objetivo Superpuesto */
-    .rower-overlay-text {
-        position: absolute; top: 0; right: 10px;
-        text-align: right; pointer-events: none;
-    }
-    .target-big { font-size: 3rem; font-weight: 900; color: white; line-height: 1; opacity: 0.8;}
-    .target-lbl { font-size: 0.8rem; color: var(--primary-color); text-transform: uppercase; letter-spacing: 1px;}
+    /* Textos Superpuestos */
+    .rower-overlay-text { position: absolute; top: 0; right: 0; text-align: right; pointer-events: none; }
+    .target-big { font-size: 2.2rem; font-weight: 900; color: white; opacity: 0.8; line-height: 1;}
+    .target-lbl { font-size: 0.6rem; color: var(--primary-color); text-transform: uppercase;}
 
-    /* ============================================================ */
+    /* Columna Derecha */
+    .int-right-col { display: flex; flex-direction: column; align-items: center; gap: 15px; justify-self: center; }
+    .int-actual-num { font-size: 3rem; font-weight: bold; color: white; line-height: 1; }
+    .int-actual-lbl { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
-    .int-right-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; justify-self: center; }
-    .int-actual-val { text-align: center; }
-    .int-actual-num { font-size: 4rem; font-weight: bold; color: white; line-height: 1; }
-    .int-actual-lbl { font-size: 0.8rem; color: #888; display: block; text-transform: uppercase; }
+    .next-interval-box { background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; border-left: 3px solid #555; text-align: left; min-width: 100px; }
+    .next-lbl { font-size: 0.6rem; color: #aaa; text-transform: uppercase; display: block;}
+    .next-val { font-size: 0.9rem; color: white; font-weight: bold;}
 
-    .next-interval-box { background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; border-left: 4px solid #555; text-align: left; min-width: 120px; }
-    .next-lbl { font-size: 0.7rem; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 2px;}
-    .next-val { font-size: 1rem; color: white; font-weight: bold; display: block;}
-
-    .int-progress-container { width: 100%; height: 8px; background: #0f1724; border-radius: 4px; margin-top: 10px; overflow: hidden; z-index: 5; position: relative;}
+    .int-progress-container { width: 100%; height: 6px; background: #0f1724; border-radius: 4px; margin-top: 15px; overflow: hidden;}
     .int-progress-bar { height: 100%; background: #2aa7ff; width: 100%; transition: width 1s linear; }
 
     .guide-up { color: var(--guide-slow); } .guide-down { color: var(--guide-fast); } .guide-ok { color: var(--guide-good); } 
+
+    /* === MEDIA QUERIES PARA CELULARES (PORTRAIT) === */
+    @media (max-width: 768px) {
+        .container { padding-bottom: 80px; }
+        
+        /* 1. Dashboard de Intervalos Vertical */
+        .int-main-visual {
+            grid-template-columns: 1fr; /* Una sola columna */
+            grid-template-rows: auto auto auto;
+            gap: 15px;
+        }
+
+        /* Guía arriba y horizontal */
+        .int-guidance { 
+            grid-row: 1; display: flex; align-items: center; justify-content: center; gap: 15px;
+            background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 20px; width: fit-content; margin: 0 auto;
+        }
+        .int-arrow { font-size: 1.8rem; margin: 0; }
+        .int-guidance-text { font-size: 1rem; margin: 0; }
+
+        /* Remero al centro */
+        .center-viz-container { grid-row: 2; }
+        
+        /* Datos abajo en fila */
+        .int-right-col { 
+            grid-row: 3; flex-direction: row; width: 100%; justify-content: space-around; 
+        }
+        
+        /* 2. Métricas Generales en 2 columnas */
+        .metric-card { flex: 1 1 45%; min-width: 45%; padding: 12px 5px; }
+        .metric-card .value { font-size: 1.6rem; }
+    }
+
+    /* Modales */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
     .modal-content { background: #1a1a2e; border: 1px solid #333; width: 95%; max-width: 600px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; }
-    .modal-header { padding: 15px 20px; background: #16213e; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
-    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
-    .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 40px; gap: 8px; align-items: center; background: #222; padding: 10px; border-radius: 6px; margin-bottom: 8px;}
-    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; }
+    .modal-header { padding: 15px; background: #16213e; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
+    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+    .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 40px; gap: 5px; align-items: center; background: #222; padding: 10px; border-radius: 6px; margin-bottom: 8px;}
+    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box;}
+    
     #results-screen{display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-color);padding:20px;box-sizing:border-box;width:100%;min-height:100vh;position:absolute;top:0;left:0;z-index:200}
-    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:420px;margin-bottom:16px}
-    .result-item{text-align:center}.result-item .label{font-size:1rem;color:var(--secondary-color)}.result-item .value{font-size:1.8rem;font-weight:bold}
-    #err-banner{position:fixed;left:12px;right:12px;bottom:12px;background:#2b1b1b;color:#ffd1d1;border:1px solid #7a2c2c;padding:10px;border-radius:10px;display:none;z-index:9999;font-size:12px}
+    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:420px;margin-bottom:20px}
+    .result-item{text-align:center; background: var(--card-color); padding: 10px; border-radius: 8px;}
+    
+    #err-banner{position:fixed; left:10px; right:10px; bottom:20px; background:#332020; color:#ffd1d1; border:1px solid #7a2c2c; padding:15px; border-radius:10px; display:none; z-index:9999; font-size:14px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
   </style>
 </head>
 <body>
@@ -189,19 +219,19 @@
   <div id="err-banner"></div>
 
   <div class="container" id="main-screen">
-    <header><h1>Panel de Control de Remo</h1></header>
+    <header><h1>Panel Remo PRO</h1></header>
 
     <div class="buttons">
-      <button id="connect-rower-btn">Conectar Remo</button>
-      <button id="connect-hr-btn">Conectar HR</button>
-      <button id="routine-btn">⚡ Editor de Rutina</button>
-      <button id="end-session-btn">Finalizar Sesión</button>
-      <button id="export-btn" disabled>Exportar RAW</button>
+      <button id="connect-rower-btn">🔗 Remo</button>
+      <button id="connect-hr-btn">❤️ HR</button>
+      <button id="routine-btn">⚡ Rutina</button>
+      <button id="end-session-btn">⏹ Finalizar</button>
+      <button id="export-btn" disabled>⬇ CSV</button>
     </div>
 
     <div class="status-bar">
-      <div id="rower-status" class="status disconnected">Remo: Desconectado</div>
-      <div id="hr-status" class="status disconnected">Pulsómetro: Desconectado</div>
+      <div id="rower-status" class="status disconnected">Remo: Off</div>
+      <div id="hr-status" class="status disconnected">HR: Off</div>
     </div>
 
     <!-- INTERVAL DASHBOARD -->
@@ -213,8 +243,7 @@
         </div>
         <div class="int-timer-block">
           <div class="int-timer-big" id="int-timer">00:00</div>
-          <div class="int-timer-label">RESTANTE</div>
-          <div class="int-timer-status" id="int-status">ESPERANDO INICIO...</div>
+          <div class="int-timer-status" id="int-status">ESPERANDO</div>
         </div>
       </div>
 
@@ -229,20 +258,19 @@
         <div class="center-viz-container">
             <!-- REMERO CANVAS -->
             <div class="rower-container">
+                <!-- Se mantiene width/height internos para la lógica de dibujo, CSS controla el tamaño visual -->
                 <canvas id="rower-canvas" width="450" height="220"></canvas>
                 
                 <div class="rower-overlay-text">
                     <div class="target-big" id="int-target-spm">20</div>
-                    <div class="target-lbl">OBJETIVO SPM</div>
+                    <div class="target-lbl">OBJETIVO</div>
                 </div>
             </div>
 
             <!-- GAUGE LINEAL -->
             <div class="linear-gauge-container">
                 <div class="gauge-label" id="gauge-label">Fase</div>
-                <div class="gauge-bar" id="gauge-bar">
-                    <!-- Se generan 20 segmentos via JS -->
-                </div>
+                <div class="gauge-bar" id="gauge-bar"></div>
             </div>
         </div>
 
@@ -254,7 +282,7 @@
             </div>
             <div class="next-interval-box" id="next-interval-box" style="display:none;">
                 <span class="next-lbl">PRÓXIMO</span>
-                <span class="next-val" id="next-interval-val">Sprint @ 28</span>
+                <span class="next-val" id="next-interval-val">--</span>
             </div>
         </div>
       </div>
@@ -268,11 +296,8 @@
     <div class="dashboard">
       <div class="metrics-row">
         <div class="metric-card"><div class="label">Ritmo</div><div><span class="value" id="stroke-rate">0</span><span class="unit">SPM</span></div></div>
-        <div class="metric-card" id="hr-card"><div class="label">Frecuencia Cardíaca</div><div><span class="value" id="heart-rate">--</span><span class="unit">BPM</span></div></div>
+        <div class="metric-card" id="hr-card"><div class="label">Pulso</div><div><span class="value" id="heart-rate">--</span><span class="unit">BPM</span></div></div>
         <div class="metric-card"><div class="label">Paladas</div><div class="value" id="total-strokes">0</div></div>
-      </div>
-
-      <div class="metrics-row">
         <div class="metric-card"><div class="label">Distancia</div><div><span class="value" id="distance">0.00</span><span class="unit">km</span></div></div>
         <div class="metric-card" id="power-card">
           <div class="label" style="display:block!important">Potencia</div>
@@ -283,42 +308,39 @@
           </div>
           <div class="subtle" id="power-source" style="display:block!important">Fuente: Equiv</div>
         </div>
-        <div class="metric-card"><div class="label">Duración Total</div><div class="value" id="duration">00:00</div></div>
-      </div>
-
-      <div class="metrics-row">
+        <div class="metric-card"><div class="label">Tiempo</div><div class="value" id="duration">00:00</div></div>
         <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
-        <div class="metric-card"><div class="label">Ritmo / 500m</div><div class="value" id="pace">--:--</div></div>
+        <div class="metric-card"><div class="label">Pace/500m</div><div class="value" id="pace">--:--</div></div>
       </div>
     </div>
   </div>
 
   <!-- RESULTS -->
   <div id="results-screen">
-    <h2>Resumen de la Sesión</h2>
+    <h2>Resumen Sesión</h2>
     <div class="results-grid">
-      <div class="result-item"><div class="label">Duración Total</div><div class="value" id="res-duration">00:00</div></div>
-      <div class="result-item"><div class="label">Distancia Total</div><div class="value" id="res-distance">0.00 km</div></div>
-      <div class="result-item"><div class="label">Calorías Totales</div><div class="value" id="res-calories">0 kcal</div></div>
-      <div class="result-item"><div class="label">Paladas Totales</div><div class="value" id="res-strokes">0</div></div>
-      <div class="result-item"><div class="label">Ritmo Promedio</div><div class="value" id="res-avg-spm">0 SPM</div></div>
+      <div class="result-item"><div class="label">Tiempo</div><div class="value" id="res-duration">00:00</div></div>
+      <div class="result-item"><div class="label">Distancia</div><div class="value" id="res-distance">0.00 km</div></div>
+      <div class="result-item"><div class="label">Calorías</div><div class="value" id="res-calories">0 kcal</div></div>
+      <div class="result-item"><div class="label">Paladas</div><div class="value" id="res-strokes">0</div></div>
+      <div class="result-item"><div class="label">Ritmo Med</div><div class="value" id="res-avg-spm">0 SPM</div></div>
     </div>
     <div class="buttons">
-      <button id="download-report-btn">Descargar Informe</button>
-      <button id="new-session-btn">Nuevo Entrenamiento</button>
+      <button id="download-report-btn" disabled>Guardar Datos</button>
+      <button id="new-session-btn">Nueva Sesión</button>
     </div>
   </div>
 
   <!-- MODAL -->
   <div class="modal-overlay" id="routine-modal">
     <div class="modal-content">
-      <div class="modal-header"><h3 style="color:white;margin:0">Editor de Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
+      <div class="modal-header"><h3 style="color:white;margin:0">Editor Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
       <div class="modal-body">
-        <div style="margin-bottom:15px"><label style="color:#aaa;font-size:11px">NOMBRE DE LA RUTINA</label><input type="text" id="routine-name" style="width:100%;box-sizing:border-box;background:#333;border:none;color:white;padding:10px;border-radius:6px" placeholder="Ej: Tabata 20/10"></div>
-        <div style="margin-bottom:10px"><label style="color:#aaa;font-size:11px">INTERVALOS</label><div id="intervals-container" style="display:flex;flex-direction:column;gap:10px;margin-top:5px"></div></div>
-        <button id="add-interval-btn" style="width:100%;background:#3498db;color:white;padding:10px;border:none;border-radius:6px;cursor:pointer">+ Agregar Intervalo</button>
+        <div style="margin-bottom:15px"><label style="color:#aaa;font-size:11px">NOMBRE</label><input type="text" id="routine-name" style="width:100%;box-sizing:border-box;background:#333;border:none;color:white;padding:10px;border-radius:6px" placeholder="Ej: Tabata"></div>
+        <div style="margin-bottom:10px"><label style="color:#aaa;font-size:11px">INTERVALOS (Seg / SPM / Tipo)</label><div id="intervals-container" style="display:flex;flex-direction:column;gap:10px;margin-top:5px"></div></div>
+        <button id="add-interval-btn" style="width:100%;background:#3498db;color:white;padding:12px;border:none;border-radius:6px;cursor:pointer">+ Agregar Paso</button>
       </div>
-      <div style="padding:15px;border-top:1px solid #333;display:flex;justify-content:space-between"><button id="cancel-routine-btn" style="background:transparent;border:1px solid #555;color:#aaa">Cancelar</button><button id="start-routine-btn" style="background:#2ecc71;color:white">GUARDAR Y USAR</button></div>
+      <div style="padding:15px;border-top:1px solid #333;display:flex;justify-content:space-between"><button id="cancel-routine-btn" style="background:transparent;border:1px solid #555;color:#aaa">Cancelar</button><button id="start-routine-btn" style="background:#2ecc71;color:white">INICIAR</button></div>
     </div>
   </div>
 
@@ -329,10 +351,8 @@
     const nowTs=()=>{const d=new Date();return `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;}
     
     function updateText(elOrId, text) {
-        let el = elOrId;
-        if (typeof elOrId === 'string') el = document.getElementById(elOrId);
+        let el = (typeof elOrId === 'string') ? document.getElementById(elOrId) : elOrId;
         if (el) el.textContent = text;
-        else console.warn('Elemento no encontrado para actualizar texto:', elOrId);
     }
     
     const dom = {
@@ -376,11 +396,42 @@
     };
 
     let sessionTimer=null, elapsedSeconds=0, sessionActive=false, currentSpm=0;
-    let isRowing=false, rowingTimeout=null, wakeLock=null, connectedRower=false, connectedHr=false;
+    let isRowing=false, rowingTimeout=null, connectedRower=false, connectedHr=false;
     let activeRoutine=null, currentStepIndex=0, stepTimeRemaining=0, inIntervalMode=false;
     let lastPaceSeconds=null, lastPowerBle=null;
 
-    /* ----------------- INICIALIZAR GAUGE ----------------- */
+    /* ----------------- WAKE LOCK MEJORADO PARA ANDROID ----------------- */
+    let wakeLock = null;
+
+    async function requestWakeLock() {
+        if (!('wakeLock' in navigator)) return;
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => {
+                console.log('Wake Lock soltado');
+                wakeLock = null;
+            });
+            console.log('Wake Lock activado');
+        } catch (err) {
+            console.warn(`Error Wake Lock: ${err.name}, ${err.message}`);
+        }
+    }
+
+    async function syncWakeLock() {
+        // Solo solicitar si hay actividad y estamos visibles
+        if ((sessionActive || connectedRower || connectedHr) && document.visibilityState === 'visible') {
+            if (!wakeLock) await requestWakeLock();
+        }
+    }
+
+    // Re-adquirir cuando la app vuelve a primer plano
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible') {
+            await syncWakeLock();
+        }
+    });
+
+    /* ----------------- GAUGE ----------------- */
     const SEGMENT_COUNT = 20;
     function initGauge() {
         if(!dom.gaugeBar) return;
@@ -388,12 +439,10 @@
         for (let i = 0; i < SEGMENT_COUNT; i++) {
             const seg = document.createElement('div');
             seg.className = 'gauge-segment inactive';
-            
             let color = '#4caf50'; 
             if (i >= 5) color = '#ffeb3b'; 
             if (i >= 10) color = '#ff9800'; 
             if (i >= 15) color = '#f44336'; 
-            
             seg.style.color = color; 
             seg.dataset.color = color; 
             dom.gaugeBar.appendChild(seg);
@@ -405,43 +454,28 @@
         if(!dom.gaugeBar || !dom.gaugeLabel) return;
         const segments = dom.gaugeBar.children;
         const label = dom.gaugeLabel;
-        
-        // En ambos casos (Drive y Recovery) la dirección visual es Izq->Der para coherencia
-        // pero el significado cambia.
         if (isDrive) {
-            updateText(label, "DRIVE (EMPUJE)");
+            updateText(label, "DRIVE");
             label.style.color = "#03dac6"; 
             const activeCount = Math.floor(phase * SEGMENT_COUNT);
             for (let i = 0; i < SEGMENT_COUNT; i++) {
                 const seg = segments[i];
-                if (i <= activeCount) {
-                    seg.className = 'gauge-segment active';
-                    seg.style.background = seg.dataset.color;
-                } else {
-                    seg.className = 'gauge-segment inactive';
-                    seg.style.background = '';
-                }
+                if (i <= activeCount) { seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; } 
+                else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
             }
         } else {
             updateText(label, "RECOVERY");
             label.style.color = "#bb86fc"; 
-            // En recovery, la barra se "vacía" (el humanoide vuelve a la izquierda)
-            // phase va de 1 -> 0, así que visualmente retrocede
             const activeCount = Math.floor(phase * SEGMENT_COUNT);
              for (let i = 0; i < SEGMENT_COUNT; i++) {
                 const seg = segments[i];
-                if (i <= activeCount) {
-                     seg.className = 'gauge-segment active';
-                     seg.style.background = seg.dataset.color;
-                } else {
-                    seg.className = 'gauge-segment inactive';
-                    seg.style.background = '';
-                }
+                if (i <= activeCount) { seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; } 
+                else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
             }
         }
     }
 
-    /* ----------------- RENDERIZADO CANVAS HUMANOIDE V3 (MIRANDO A LA IZQUIERDA) ----------------- */
+    /* ----------------- CANVAS HUMANOIDE ----------------- */
     const ctx = dom.canvas.getContext('2d');
     let animFrame = null;
     let lastBeepTime = 0;
@@ -449,10 +483,7 @@
     function lerpColor(a, b, amount) {
         const ar = a >> 16, ag = a >> 8 & 0xff, ab = a & 0xff;
         const br = b >> 16, bg = b >> 8 & 0xff, bb = b & 0xff;
-        const rr = ar + amount * (br - ar);
-        const rg = ag + amount * (bg - ag);
-        const rb = ab + amount * (bb - ab);
-        return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + (rb | 0)).toString(16).slice(1);
+        return '#' + ((1 << 24) + ((ar + amount * (br - ar)) << 16) + ((ag + amount * (bg - ag)) << 8) + ((ab + amount * (bb - ab)) | 0)).toString(16).slice(1);
     }
 
     function drawRower(phase, isDrive = true) {
@@ -460,82 +491,45 @@
         ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
         ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
 
-        // Colores: Verde -> Rojo
-        const colorStart = 0x4caf50; 
-        const colorEnd = 0xf44336;   
-        let colorHex = lerpColor(colorStart, colorEnd, phase);
-        
+        const colorHex = lerpColor(0x4caf50, 0xf44336, phase);
         ctx.strokeStyle = colorHex; ctx.fillStyle = colorHex;
 
+        // Coordenadas baseadas en 450x220 (interno del canvas)
         const cx = dom.canvas.width / 2; const cy = dom.canvas.height - 40; 
         const scale = 0.9; 
 
-        // --- AHORA EL REMERO MIRA A LA IZQUIERDA ---
-        // Tobillos fijos a la IZQUIERDA
+        // Humanoide mirando a IZQUIERDA
         const ankle = { x: cx - 140 * scale, y: cy - 20 * scale }; 
-        
         const slideLen = 180 * scale; 
-        
-        // EL ASIENTO SE MUEVE DE IZQUIERDA (Cerca tobillos) -> DERECHA (Lejos tobillos)
-        // Esto es "Extensión" o "Empuje"
         const seatX = (ankle.x + (50 * scale)) + (slideLen * phase);
         const hip = { x: seatX, y: cy - 30 * scale };
-
-        // Rodillas: Promedio entre cadera y tobillo
-        // Altura: Si phase=0 (Cerca), rodilla ALTA (flexionada). Si phase=1 (Lejos), rodilla BAJA (extendida).
         const kneeX = (hip.x + ankle.x) / 2;
         const kneeY = hip.y - (60 * scale) * (1 - phase); 
         const knee = { x: kneeX, y: kneeY };
-
         const torsoLen = 120 * scale; 
-        
-        // Angulo Torso:
-        // Mirando a la izquierda: 
-        // Catch (Phase 0) = Inclinado adelante (hacia la izquierda) -> Angulo Negativo? 
-        // Finish (Phase 1) = Inclinado atrás (hacia la derecha) -> Angulo Positivo?
-        // Ajustamos: -25 (Izquierda) a +25 (Derecha)
         const swingAngle = -25 + (phase * 50); 
         const rad = swingAngle * Math.PI / 180;
-        
-        // Hombro: Si angulo es negativo (izq), sin es negativo, x reduce (izq). Correcto.
         const shoulder = { x: hip.x + Math.sin(rad) * torsoLen, y: hip.y - Math.cos(rad) * torsoLen };
-
         const headRadius = 15 * scale; 
-        // Cabeza sigue linea de torso
         const head = { x: shoulder.x + Math.sin(rad) * 25 * scale, y: shoulder.y - Math.cos(rad) * 25 * scale };
-
-        // Brazos:
-        // Catch (0): Extendidos hacia la izquierda (lejos del cuerpo).
-        // Finish (1): Flexionados hacia el cuerpo (cerca del hombro).
-        let armExtension = 1;
-        if (phase > 0.5) {
-            // De 0.5 a 1.0, flexionamos brazos
-            armExtension = 1 - ((phase - 0.5) * 2 * 0.9); // Termina en 0.1 de extension
-        }
         
+        let armExtension = 1;
+        if (phase > 0.5) { armExtension = 1 - ((phase - 0.5) * 2 * 0.9); }
         const armLen = 125 * scale;
-        const handleY = shoulder.y + 40 * scale; // A la altura del pecho aprox
-        // Mano a la IZQUIERDA del hombro
+        const handleY = shoulder.y + 40 * scale; 
         const handX = shoulder.x - (armLen * armExtension);
         const hand = { x: handX, y: handleY };
 
         // Riel
         ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = '#333';
         ctx.moveTo(cx - 180 * scale, cy); ctx.lineTo(cx + 180 * scale, cy); ctx.stroke();
-
-        // Humanoide
+        // Cuerpo
         ctx.strokeStyle = colorHex; ctx.lineWidth = 16;
-
-        // Piernas
         ctx.beginPath(); ctx.moveTo(ankle.x, ankle.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(hip.x, hip.y); ctx.stroke();
-        // Torso
         ctx.beginPath(); ctx.moveTo(hip.x, hip.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke();
-        // Cabeza
         ctx.beginPath(); ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2); ctx.fill();
-        // Brazos
         ctx.beginPath(); ctx.lineWidth = 14; ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hand.x, hand.y); ctx.stroke();
-        
-        // Cadena (hacia la "polea" a la izquierda)
+        // Cadena
         const flywheelX = cx - 200 * scale;
         ctx.beginPath(); ctx.lineWidth = 5; ctx.strokeStyle = '#e0e0e0'; 
         ctx.moveTo(hand.x, hand.y); ctx.lineTo(flywheelX, hand.y); ctx.stroke();
@@ -543,9 +537,8 @@
 
     function startMetronomeLoop() {
       if(animFrame) cancelAnimationFrame(animFrame);
-      const loop = (timestamp) => {
+      const loop = () => {
         if(!inIntervalMode || !activeRoutine) return;
-        
         if(isRowing) {
             const step = activeRoutine.steps[currentStepIndex];
             const targetSpm = step.spm > 0 ? step.spm : 20; 
@@ -555,20 +548,14 @@
             
             const progress = (now - lastBeepTime) / cycleMs; 
             let drivePhase = 0; let isDrive = true;
-            
             if (progress < 0.35) {
-                // DRIVE: 0 a 1
                 drivePhase = progress / 0.35; isDrive = true;
             } else {
-                // RECOVERY: 1 a 0
                 const recovProgress = (progress - 0.35) / 0.65;
                 drivePhase = 1.0 - recovProgress; isDrive = false;
             }
-            // Clampear entre 0 y 1 por seguridad
             const p = Math.min(1, Math.max(0, drivePhase));
-            drawRower(p, isDrive);
-            updateGauge(p, isDrive);
-
+            drawRower(p, isDrive); updateGauge(p, isDrive);
         } else {
              drawRower(0, true); updateGauge(0, true); 
         }
@@ -590,10 +577,7 @@
       osc.stop(audioCtx.currentTime + dur);
     }
 
-    /* ----------------- Logic & UI ----------------- */
-    async function acquireWakeLockOnce(){if(!('wakeLock'in navigator)||wakeLock) return; try{wakeLock=await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release',()=>{wakeLock=null;if(document.visibilityState==='visible'&&sessionActive) acquireWakeLockOnce().catch(()=>{});});}catch{}}
-    async function syncWakeLock(){if(sessionActive||connectedRower||connectedHr) await acquireWakeLockOnce();}
-
+    /* ----------------- Logica UI ----------------- */
     dom.routineBtn.addEventListener('click', () => { dom.modal.style.display = 'flex'; loadRoutineForm(); });
     dom.closeModal.addEventListener('click', () => dom.modal.style.display = 'none');
     dom.cancelRoutineBtn.addEventListener('click', () => dom.modal.style.display = 'none');
@@ -616,6 +600,7 @@
       const steps = rows.map(r => ({ sec: parseInt(r.querySelector('.int-dur').value)||60, spm: parseInt(r.querySelector('.int-spm').value)||20, label: r.querySelector('.int-lbl').value }));
       localStorage.setItem('lastRoutine', JSON.stringify({ name, steps }));
       startIntervalSession({ name, steps }); dom.modal.style.display = 'none';
+      syncWakeLock(); // Intentar activar pantalla al iniciar rutina
     });
 
     function startIntervalSession(routine) {
@@ -633,7 +618,7 @@
       const nextStep = activeRoutine.steps[idx+1];
       if(nextStep && dom.nextBox) { 
           dom.nextBox.style.display = 'block'; 
-          updateText(dom.nextVal, `${nextStep.label} @ ${nextStep.spm} SPM`); 
+          updateText(dom.nextVal, `${nextStep.label} @ ${nextStep.spm}`); 
       } 
       else if(dom.nextBox) { dom.nextBox.style.display = 'none'; }
       updateIntervalUI();
@@ -656,13 +641,13 @@
         const diff = currentSpm - step.spm;
         if (diff < -2) { updateText(arrow, "▲"); updateText(msg, "ACELERA"); arrow.classList.add('guide-up'); dash.classList.add('dash-slow'); }
         else if (diff > 2) { updateText(arrow, "▼"); updateText(msg, "BAJA"); arrow.classList.add('guide-down'); dash.classList.add('dash-fast'); }
-        else { updateText(arrow, "●"); updateText(msg, "MANTÉN"); arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); }
+        else { updateText(arrow, "●"); updateText(msg, "BIEN"); arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); }
       }
     }
     function checkRowingStatus(spm) {
         if (spm > 0) {
             isRowing = true; 
-            updateText(dom.intStatus, "EN PROGRESO"); 
+            updateText(dom.intStatus, "REMA"); 
             if(dom.intStatus) dom.intStatus.style.color = "#4caf50";
             if(rowingTimeout) clearTimeout(rowingTimeout);
             rowingTimeout = setTimeout(() => { 
@@ -671,6 +656,7 @@
                 if(dom.intStatus) dom.intStatus.style.color = "#ffd700"; 
                 updateIntervalUI(); drawRower(0, true); updateGauge(0, true); 
             }, 4000);
+            syncWakeLock(); // Asegurar pantalla encendida mientras rema
         }
     }
 
@@ -680,12 +666,13 @@
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth API no disponible"); 
         const dev = await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_UUID]}], optionalServices:[FTMS_UUID]});
         const server = await dev.gatt.connect(); connectedRower=true; 
-        updateText(dom.rowerStatus, `Conectado: ${dev.name}`); 
+        updateText(dom.rowerStatus, `${dev.name}`); 
         if(dom.rowerStatus) dom.rowerStatus.className='status connected';
         
         const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
-        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); syncWakeLock();
-      }catch(e){ showError("Error conectando Remo: " + e.message); connectedRower=false; }
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); 
+        syncWakeLock();
+      }catch(e){ showError("Err Remo: " + e.message); connectedRower=false; }
     });
 
     dom.connectHrBtn.addEventListener('click', async ()=>{
@@ -693,7 +680,7 @@
         if(!navigator.bluetooth) throw new Error("Bluetooth no soportado");
         const dev = await navigator.bluetooth.requestDevice({ filters:[{services:[HR_SERVICE_UUID]}], optionalServices:[HR_SERVICE_UUID] });
         const server = await dev.gatt.connect(); connectedHr=true; 
-        updateText(dom.hrStatus, `Conectado: ${dev.name}`); 
+        updateText(dom.hrStatus, `${dev.name}`); 
         if(dom.hrStatus) dom.hrStatus.className='status connected';
         const svc = await server.getPrimaryService(HR_SERVICE_UUID); 
         const ch = await svc.getCharacteristic(HR_CHAR_UUID);
@@ -704,8 +691,9 @@
             const val = (flags & 1) ? v.getUint16(1, true) : v.getUint8(1);
             updateText(dom.hrVal, val);
             if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
-        }); syncWakeLock();
-      }catch(e){ showError("Error conectando Pulsómetro: " + e.message); connectedHr=false; updateText(dom.hrStatus, "Error Conexión"); if(dom.hrStatus) dom.hrStatus.className='status disconnected'; }
+        }); 
+        syncWakeLock();
+      }catch(e){ showError("Err HR: " + e.message); connectedHr=false; updateText(dom.hrStatus, "Error"); if(dom.hrStatus) dom.hrStatus.className='status disconnected'; }
     });
 
     let rawEvents = [];
@@ -739,12 +727,74 @@
     }
     dom.powerMode.addEventListener('change', applyPowerDisplay); dom.corrFactor.addEventListener('input', applyPowerDisplay);
 
-    function startTimer(){ if(sessionTimer) return; sessionActive = true; syncWakeLock(); sessionTimer = setInterval(()=>{ if(isRowing) { elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); if(inIntervalMode) { stepTimeRemaining--; updateIntervalUI(); if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); } } }, 1000); dom.exportBtn.disabled=false; }
-    function stopTimer(){ clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; dom.intervalDashboard.style.display = 'none'; if(wakeLock) wakeLock.release().catch(()=>{}); wakeLock=null; }
+    function startTimer(){ 
+        if(sessionTimer) return; 
+        sessionActive = true; 
+        syncWakeLock(); 
+        sessionTimer = setInterval(()=>{ 
+            if(isRowing) { 
+                elapsedSeconds++; 
+                updateText('duration', formatMMSS(elapsedSeconds)); 
+                if(inIntervalMode) { 
+                    stepTimeRemaining--; 
+                    updateIntervalUI(); 
+                    if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); 
+                } 
+            } 
+        }, 1000); 
+        dom.exportBtn.disabled=false; 
+    }
+    
+    function stopTimer(){ 
+        clearInterval(sessionTimer); 
+        if(animFrame) cancelAnimationFrame(animFrame); 
+        sessionTimer = null; 
+        sessionActive = false; 
+        inIntervalMode = false; 
+        isRowing = false; 
+        dom.intervalDashboard.style.display = 'none'; 
+        if(wakeLock) wakeLock.release().catch(()=>{}); wakeLock=null; 
+    }
+    
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
-    dom.endSessionBtn.addEventListener('click', ()=>{ if(!rawEvents.length && !sessionActive) return alert("No hay sesión"); stopTimer(); dom.mainScreen.style.display='none'; dom.resultsScreen.style.display='flex'; updateText('res-duration', formatMMSS(elapsedSeconds)); updateText('res-distance', document.getElementById('distance').textContent + " km"); updateText('res-calories', document.getElementById('calories').textContent + " kcal"); updateText('res-strokes', document.getElementById('total-strokes').textContent); const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM"); });
+    
+    dom.endSessionBtn.addEventListener('click', ()=>{ 
+        if(!rawEvents.length && !sessionActive && elapsedSeconds === 0) return alert("No hay datos de sesión"); 
+        stopTimer(); 
+        dom.mainScreen.style.display='none'; 
+        dom.resultsScreen.style.display='flex'; 
+        updateText('res-duration', formatMMSS(elapsedSeconds)); 
+        updateText('res-distance', document.getElementById('distance').textContent + " km"); 
+        updateText('res-calories', document.getElementById('calories').textContent + " kcal"); 
+        updateText('res-strokes', document.getElementById('total-strokes').textContent); 
+        const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); 
+        updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM");
+        document.getElementById('download-report-btn').disabled = false;
+    });
+
     document.getElementById('new-session-btn').addEventListener('click', ()=>{ dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); });
-    function resetUI(){ elapsedSeconds=0; rawEvents=[]; ['duration','distance','calories','total-strokes','stroke-rate','power'].forEach(id=>updateText(id, '0')); updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; }
+    
+    function resetUI(){ 
+        elapsedSeconds=0; rawEvents=[]; 
+        ['duration','distance','calories','total-strokes','stroke-rate','power'].forEach(id=>updateText(id, '0')); 
+        updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; 
+        document.getElementById('download-report-btn').disabled = true;
+    }
+
+    // Funcionalidad Exportar CSV Simple
+    const exportData = () => {
+        if(!rawEvents.length) return alert("Sin datos");
+        let csv = "Timestamp,SPM,Watts,Pace,Strokes,Dist\n";
+        rawEvents.forEach(e => {
+            csv += `${e.ts},${e.parsed.spm},${e.parsed.power_display},${e.parsed.pace_s||0},${e.parsed.strokes},${e.parsed.dist_m||0}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `remo_sesion_${Date.now()}.csv`;
+        a.click();
+    };
+    dom.exportBtn.addEventListener('click', exportData);
+    document.getElementById('download-report-btn').addEventListener('click', exportData);
     
     drawRower(0, true);
     initGauge();
