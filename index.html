@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <!-- Viewport esencial para Android -->
+  <!-- Viewport crítico para móviles -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel de Control de Remo - Android Optimized</title>
+  <title>Panel Remo - Mobile Pro</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -23,195 +23,251 @@
       align-items:center;
       padding:10px;
       box-sizing:border-box;
-      -webkit-tap-highlight-color: transparent; /* Elimina flash azul en Android al tocar */
+      -webkit-tap-highlight-color: transparent;
     }
 
+    /* Contenedor principal */
     .container{width:100%; max-width:900px; display:flex; flex-direction:column; position:relative; padding-bottom: 60px;}
     
-    header{text-align:center; padding:10px 0;}
-    h1{font-size:1.4rem; margin:0;}
+    header{text-align:center; padding:5px 0;}
+    h1{font-size:1.2rem; margin:0; opacity: 0.8;}
     
-    /* === BOTONES ADAPTABLES (TOUCH FRIENDLY) === */
-    .buttons{display:flex; justify-content:center; gap:8px; margin:10px 0; flex-wrap:wrap;}
+    /* Botones */
+    .buttons{display:flex; justify-content:center; gap:8px; margin:5px 0 10px 0; flex-wrap:wrap;}
     button{
-        padding:12px 16px; 
-        font-size:14px; 
-        border:none; 
-        border-radius:8px; 
-        cursor:pointer; 
-        background:var(--primary-color); 
-        color:var(--bg-color); 
-        font-weight:bold; 
-        transition:all .2s;
-        flex: 1 1 45%; /* En móvil ocupan casi la mitad cada uno */
-        min-width: 130px;
-        touch-action: manipulation; /* Mejora respuesta táctil */
+        padding:10px 14px; font-size:13px; border:none; border-radius:8px; 
+        cursor:pointer; background:var(--primary-color); color:var(--bg-color); 
+        font-weight:bold; transition:all .2s; flex: 1 1 auto; min-width: 100px;
+        touch-action: manipulation;
     }
-    button:active{transform:scale(0.98);}
-    button:disabled{background:#444; color:#888; cursor:not-allowed; transform:none;}
-    
+    button:active{transform:scale(0.96);}
+    button:disabled{background:#444; color:#888;}
     #end-session-btn{background:var(--accent-color); color: white;}
     #export-btn{background:var(--secondary-color);}
     #routine-btn{background:#3f51b5; color:white;}
 
-    /* === STATUS BAR === */
-    .status-bar{display:flex; justify-content:space-around; background:var(--card-color); padding:10px; border-radius:8px; margin-bottom:15px; font-size:11px; text-align:center; gap: 10px;}
+    /* Status Bar */
+    .status-bar{display:flex; justify-content:space-between; background:var(--card-color); padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:10px; text-align:center; gap: 5px;}
     .connected{color:var(--primary-color); font-weight: bold;} .disconnected{color:var(--accent-color);}
 
-    /* === DASHBOARD DE MÉTRICAS (GRID RESPONSIVO) === */
-    .dashboard{display:flex; flex-direction:column; gap:10px; width:100%}
-    
-    .metrics-row{
-        display:flex; 
-        gap:10px; 
-        justify-content:center; 
-        flex-wrap: wrap; /* Clave para que bajen en pantallas pequeñas */
-    }
-    
-    .metric-card{
-        background:var(--card-color); padding:15px 5px; border-radius:12px; text-align:center;
-        display:flex; flex-direction:column; justify-content:center;
-        flex: 1 1 30%; /* Base: 3 por fila en PC, se ajusta abajo para móvil */
-        min-width: 90px;
-    }
-    .metric-card .label{font-size:.75rem; margin-bottom:4px; color:var(--secondary-color); text-transform: uppercase;}
-    .metric-card .value{font-size:1.8rem; font-weight:bold; color:var(--primary-color); line-height:1;}
-    .metric-card .unit{font-size:.75rem; margin-left:3px; color: #888;}
-    
-    .card-pulse { animation: pulse-green 1s infinite; }
-    @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
-
-    #power-card .label, #power-card .power-controls, #power-card .subtle { display: none !important; }
-
-    /* === INTERVAL DASHBOARD (MODO ENTRENAMIENTO) === */
+    /* === DASHBOARD DE INTERVALOS (EL PROBLEMA PRINCIPAL) === */
     #interval-dashboard {
         display: none; 
         background: var(--interval-bg);
         border: 2px solid #444;
         border-radius: 12px;
-        padding: 15px;
+        padding: 10px;
         flex-direction: column;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         position: relative;
-        overflow: hidden;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden; /* Importante para contener el canvas */
+        transition: border-color 0.3s ease;
     }
     
-    .dash-slow { border-color: var(--guide-slow) !important; box-shadow: 0 0 15px rgba(33, 150, 243, 0.3) !important; }
-    .dash-fast { border-color: var(--guide-fast) !important; box-shadow: 0 0 15px rgba(244, 67, 54, 0.3) !important; }
-    .dash-good { border-color: var(--guide-good) !important; box-shadow: 0 0 15px rgba(76, 175, 80, 0.3) !important; }
+    .dash-slow { border-color: var(--guide-slow) !important; box-shadow: inset 0 0 20px rgba(33, 150, 243, 0.2); }
+    .dash-fast { border-color: var(--guide-fast) !important; box-shadow: inset 0 0 20px rgba(244, 67, 54, 0.2); }
+    .dash-good { border-color: var(--guide-good) !important; box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.2); }
 
-    /* Header Intervalos */
-    .int-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; z-index: 5;}
-    .int-phase-info { display: flex; flex-direction: column; max-width: 60%; }
-    .int-phase-name { font-size: 1.4rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; margin: 0; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
-    .int-step-count { background: #0f1724; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; color: #aaa; font-weight: bold; margin-top: 5px; width: fit-content; }
+    /* Header dentro del Dashboard */
+    .int-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; z-index: 5; position: relative;}
+    .int-phase-info { display: flex; flex-direction: column; max-width: 55%; }
+    .int-phase-name { font-size: 1.3rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+    .int-step-count { background: #0f1724; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; color: #aaa; font-weight: bold; margin-top: 4px; width: fit-content; }
     
     .int-timer-block { text-align: right; }
-    .int-timer-big { font-size: 2.5rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
-    .int-timer-label { font-size: 0.7rem; color: #aaa; letter-spacing: 1px; font-weight: bold;}
-    .int-timer-status { font-size: 0.6rem; color: #ffd700; font-weight: bold; margin-top: 2px; text-transform: uppercase;}
+    .int-timer-big { font-size: 2.2rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
+    .int-timer-status { font-size: 0.6rem; color: #ffd700; font-weight: bold; text-transform: uppercase;}
 
-    /* LAYOUT PRINCIPAL DEL VISUALIZADOR */
+    /* LAYOUT VISUAL (Grilla adaptable) */
     .int-main-visual { 
         display: grid; 
-        grid-template-columns: 1fr 2.5fr 1fr; /* PC Layout */
+        /* Por defecto PC/Vertical: Apilado o 3 columnas */
+        grid-template-columns: 1fr; 
+        gap: 5px;
         align-items: center; 
-        margin: 10px 0; 
+        position: relative; 
         z-index: 2;
     }
+
+    /* Contenedor del Canvas */
+    .center-viz-container { 
+        display: flex; flex-direction: column; align-items: center; width: 100%; position: relative;
+    }
     
-    .int-guidance { text-align: center; justify-self: center; }
-    .int-arrow { font-size: 3.5rem; display: block; line-height: 1; transition: all 0.3s ease; }
-    .int-guidance-text { font-weight: 900; font-size: 1rem; letter-spacing: 1px;}
-
-    .center-viz-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
-
-    /* CANVAS RESPONSIVO */
     .rower-container {
-        position: relative; width: 100%; flex: 1;
+        position: relative; 
+        width: 100%; 
         display: flex; justify-content: center; align-items: flex-end; 
-        margin-bottom: 5px;
     }
     
+    /* EL FIX CLAVE: Canvas Responsive */
     canvas#rower-canvas {
-        width: 100% !important; /* Fuerza el ajuste al ancho del contenedor */
-        height: auto !important; /* Mantiene la proporción */
-        aspect-ratio: 450/220;   /* Reserva el espacio vertical correcto */
-        max-width: 450px;
+        width: 100% !important;
+        height: auto !important;
+        max-width: 500px; /* Limite máximo en vertical */
+        aspect-ratio: 450/220; /* Mantiene la forma */
     }
-    
-    .linear-gauge-container { width: 95%; max-width: 350px; height: 35px; display: flex; flex-direction: column; align-items: center; margin-top: 5px; }
-    .gauge-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; font-weight: bold; }
-    .gauge-bar { display: flex; width: 100%; height: 10px; gap: 2px; }
+
+    /* Textos superpuestos al canvas */
+    .rower-overlay-text { position: absolute; top: 10px; right: 10px; text-align: right; pointer-events: none; }
+    .target-big { font-size: 2rem; font-weight: 900; color: white; opacity: 0.9; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
+    .target-lbl { font-size: 0.6rem; color: var(--primary-color); text-transform: uppercase; font-weight: bold;}
+
+    /* Guía (Flecha) */
+    .int-guidance { 
+        position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+        text-align: center; display: flex; flex-direction: column; align-items: center; 
+        pointer-events: none; /* Que no bloquee clicks */
+    }
+    .int-arrow { font-size: 3rem; line-height: 0.8; transition: all 0.3s ease; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .int-guidance-text { font-weight: 900; font-size: 1rem; letter-spacing: 1px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;}
+
+    /* Columna de Datos Actuales */
+    .int-right-col { display: flex; flex-direction: row; justify-content: space-around; width: 100%; margin-top: 5px; align-items: center;}
+    .int-actual-val { text-align: center; }
+    .int-actual-num { font-size: 2.8rem; font-weight: bold; color: white; line-height: 1; }
+    .int-actual-lbl { font-size: 0.6rem; color: #888; text-transform: uppercase; }
+
+    .next-interval-box { background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 6px; border-left: 3px solid #555; text-align: left; }
+    .next-lbl { font-size: 0.55rem; color: #aaa; text-transform: uppercase; display: block;}
+    .next-val { font-size: 0.85rem; color: white; font-weight: bold;}
+
+    .linear-gauge-container { width: 90%; height: 8px; display: flex; gap: 2px; margin-top: 5px; }
     .gauge-segment { flex: 1; background: #333; border-radius: 2px; }
     .gauge-segment.active { opacity: 1; box-shadow: 0 0 5px currentColor; }
-    .gauge-segment.inactive { background: #2a2a2a !important; box-shadow: none !important; }
-
-    /* Textos Superpuestos */
-    .rower-overlay-text { position: absolute; top: 0; right: 0; text-align: right; pointer-events: none; }
-    .target-big { font-size: 2.2rem; font-weight: 900; color: white; opacity: 0.8; line-height: 1;}
-    .target-lbl { font-size: 0.6rem; color: var(--primary-color); text-transform: uppercase;}
-
-    /* Columna Derecha */
-    .int-right-col { display: flex; flex-direction: column; align-items: center; gap: 15px; justify-self: center; }
-    .int-actual-num { font-size: 3rem; font-weight: bold; color: white; line-height: 1; }
-    .int-actual-lbl { font-size: 0.7rem; color: #888; text-transform: uppercase; }
-
-    .next-interval-box { background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; border-left: 3px solid #555; text-align: left; min-width: 100px; }
-    .next-lbl { font-size: 0.6rem; color: #aaa; text-transform: uppercase; display: block;}
-    .next-val { font-size: 0.9rem; color: white; font-weight: bold;}
-
-    .int-progress-container { width: 100%; height: 6px; background: #0f1724; border-radius: 4px; margin-top: 15px; overflow: hidden;}
+    
+    .int-progress-container { width: 100%; height: 4px; background: #0f1724; border-radius: 2px; margin-top: 10px;}
     .int-progress-bar { height: 100%; background: #2aa7ff; width: 100%; transition: width 1s linear; }
 
     .guide-up { color: var(--guide-slow); } .guide-down { color: var(--guide-fast); } .guide-ok { color: var(--guide-good); } 
 
-    /* === MEDIA QUERIES PARA CELULARES (PORTRAIT) === */
-    @media (max-width: 768px) {
-        .container { padding-bottom: 80px; }
-        
-        /* 1. Dashboard de Intervalos Vertical */
-        .int-main-visual {
-            grid-template-columns: 1fr; /* Una sola columna */
-            grid-template-rows: auto auto auto;
-            gap: 15px;
-        }
+    /* Métricas Generales */
+    .dashboard{display:flex; flex-direction:column; gap:10px; width:100%}
+    .metrics-row{display:flex; gap:8px; justify-content:center; flex-wrap: wrap;}
+    .metric-card{
+        background:var(--card-color); padding:10px; border-radius:8px; text-align:center;
+        display:flex; flex-direction:column; justify-content:center;
+        flex: 1 1 30%; min-width: 80px;
+    }
+    .metric-card .label{font-size:.65rem; color:var(--secondary-color); text-transform: uppercase;}
+    .metric-card .value{font-size:1.4rem; font-weight:bold; color:var(--primary-color);}
+    .metric-card .unit{font-size:.6rem; color: #888;}
+    .card-pulse { animation: pulse-green 1s infinite; }
+    @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
 
-        /* Guía arriba y horizontal */
-        .int-guidance { 
-            grid-row: 1; display: flex; align-items: center; justify-content: center; gap: 15px;
-            background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 20px; width: fit-content; margin: 0 auto;
-        }
-        .int-arrow { font-size: 1.8rem; margin: 0; }
-        .int-guidance-text { font-size: 1rem; margin: 0; }
-
-        /* Remero al centro */
-        .center-viz-container { grid-row: 2; }
+    /* ==========================================================================
+       MEDIA QUERY: MODO VERTICAL (PORTRAIT) - Ajustes finos
+       ========================================================================== */
+    @media (orientation: portrait) {
+        .int-main-visual { grid-template-rows: auto auto auto; }
+        .int-guidance { position: relative; top: 0; transform: none; margin-bottom: 5px; background: rgba(255,255,255,0.05); padding: 5px 20px; border-radius: 20px; width: fit-content; margin: 0 auto; flex-direction: row; gap: 10px;}
+        .int-arrow { font-size: 1.5rem; margin: 0; }
+        .int-guidance-text { font-size: 0.9rem; margin: 0; background: none;}
         
-        /* Datos abajo en fila */
-        .int-right-col { 
-            grid-row: 3; flex-direction: row; width: 100%; justify-content: space-around; 
-        }
-        
-        /* 2. Métricas Generales en 2 columnas */
-        .metric-card { flex: 1 1 45%; min-width: 45%; padding: 12px 5px; }
-        .metric-card .value { font-size: 1.6rem; }
+        .metric-card { flex: 1 1 40%; } /* 2 por fila */
     }
 
-    /* Modales */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .modal-content { background: #1a1a2e; border: 1px solid #333; width: 95%; max-width: 600px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; }
-    .modal-header { padding: 15px; background: #16213e; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
-    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
-    .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 40px; gap: 5px; align-items: center; background: #222; padding: 10px; border-radius: 6px; margin-bottom: 8px;}
-    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; box-sizing: border-box;}
+    /* ==========================================================================
+       MEDIA QUERY: MODO HORIZONTAL (LANDSCAPE) - EL FIX CRÍTICO
+       ========================================================================== */
+    @media (orientation: landscape) and (max-height: 500px) {
+        body { padding: 5px; }
+        h1, header { display: none; } /* Ocultar titulo para ganar espacio */
+        .buttons { margin: 5px 0; justify-content: flex-start; }
+        button { padding: 6px 10px; font-size: 11px; min-width: auto; }
+        
+        /* Layout de Intervalos Lado a Lado */
+        #interval-dashboard {
+            flex-direction: row; /* Cambiar a fila */
+            flex-wrap: wrap;
+            padding: 5px;
+            align-items: center;
+            justify-content: center;
+            height: 75vh; /* Ocupar casi toda la pantalla */
+        }
+
+        /* Cabecera del intervalo (Nombre y timer) a la derecha */
+        .int-header {
+            position: absolute;
+            top: 10px; right: 10px;
+            flex-direction: column;
+            align-items: flex-end;
+            width: auto;
+            text-align: right;
+        }
+        .int-phase-info { align-items: flex-end; }
+        .int-phase-name { font-size: 1.1rem; }
+        .int-timer-big { font-size: 1.8rem; }
+
+        /* Contenedor Visual Principal */
+        .int-main-visual {
+            grid-template-columns: 1.5fr 1fr; /* 60% Visual, 40% Datos */
+            width: 100%;
+            height: 100%;
+            align-items: center;
+        }
+
+        /* Lado Izquierdo: Canvas */
+        .center-viz-container {
+            height: 100%;
+            justify-content: center;
+        }
+        
+        .rower-container {
+            height: 100%; /* Llenar altura */
+            width: auto;  /* Ancho automático */
+            align-items: center;
+        }
+
+        /* FIX: Canvas limitado por altura, no por ancho */
+        canvas#rower-canvas {
+            width: auto !important;
+            height: 100% !important;
+            max-height: 70vh !important; /* Limite duro vertical */
+            aspect-ratio: 450/220;
+        }
+        
+        /* Texto Target moverlo para que no estorbe */
+        .rower-overlay-text { top: auto; bottom: 5px; right: 5px; }
+        .target-big { font-size: 1.5rem; }
+
+        /* Lado Derecho: Datos y Guía */
+        .int-right-col {
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            gap: 10px;
+        }
+        
+        /* Guía centrada en la derecha */
+        .int-guidance {
+            position: relative; top: auto; left: auto; transform: none;
+            margin-bottom: 10px;
+        }
+        
+        /* Ocultar barra de progreso si molesta o hacerla pequeña */
+        .int-progress-container { position: absolute; bottom: 0; left: 0; height: 3px; margin: 0; }
+
+        /* Esconder métricas generales en modo paisaje durante intervalo para no scrollear */
+        .dashboard { display: none; } 
+    }
+
+    /* Utiles ocultos */
+    #power-card .label, #power-card .power-controls, #power-card .subtle { display: none !important; }
     
-    #results-screen{display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-color);padding:20px;box-sizing:border-box;width:100%;min-height:100vh;position:absolute;top:0;left:0;z-index:200}
-    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:420px;margin-bottom:20px}
+    /* Modales */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
+    .modal-content { background: #1a1a2e; width: 95%; max-width: 500px; max-height: 95vh; border-radius: 12px; display: flex; flex-direction: column; border: 1px solid #444;}
+    .modal-header { padding: 10px 15px; background: #16213e; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+    .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 30px; gap: 5px; align-items: center; background: #222; padding: 8px; border-radius: 4px; margin-bottom: 5px;}
+    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; }
+
+    #results-screen{display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-color); width:100%; min-height:100vh; position:absolute; top:0; left:0; z-index:200}
+    .results-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px; margin-bottom:20px}
     .result-item{text-align:center; background: var(--card-color); padding: 10px; border-radius: 8px;}
     
-    #err-banner{position:fixed; left:10px; right:10px; bottom:20px; background:#332020; color:#ffd1d1; border:1px solid #7a2c2c; padding:15px; border-radius:10px; display:none; z-index:9999; font-size:14px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
+    #err-banner{position:fixed; left:10px; right:10px; bottom:20px; background:#332020; color:#ffd1d1; border:1px solid #7a2c2c; padding:10px; border-radius:8px; display:none; z-index:9999; font-size:12px; text-align: center;}
   </style>
 </head>
 <body>
@@ -230,58 +286,54 @@
     </div>
 
     <div class="status-bar">
-      <div id="rower-status" class="status disconnected">Remo: Off</div>
-      <div id="hr-status" class="status disconnected">HR: Off</div>
+      <div id="rower-status" class="status disconnected">Remo: Desconectado</div>
+      <div id="hr-status" class="status disconnected">HR: --</div>
     </div>
 
     <!-- INTERVAL DASHBOARD -->
     <div id="interval-dashboard">
       <div class="int-header">
         <div class="int-phase-info">
-          <h2 class="int-phase-name" id="int-phase-name">CALENTAMIENTO</h2>
-          <span class="int-step-count" id="int-step-count">1 / 5</span>
+          <div class="int-phase-name" id="int-phase-name">CALENTAMIENTO</div>
+          <span class="int-step-count" id="int-step-count">1 / 4</span>
         </div>
         <div class="int-timer-block">
           <div class="int-timer-big" id="int-timer">00:00</div>
-          <div class="int-timer-status" id="int-status">ESPERANDO</div>
+          <div class="int-timer-status" id="int-status">LISTO</div>
         </div>
       </div>
 
       <div class="int-main-visual">
-        <!-- Guía Flecha -->
+        <!-- Guía (Flecha) - Posición absoluta/controlada -->
         <div class="int-guidance">
           <span class="int-arrow" id="int-arrow">−</span>
-          <div class="int-guidance-text" id="int-msg">LISTO</div>
+          <div class="int-guidance-text" id="int-msg">REMA</div>
         </div>
 
-        <!-- CENTRO: REMERO + GAUGE -->
+        <!-- CENTRO: REMERO -->
         <div class="center-viz-container">
-            <!-- REMERO CANVAS -->
             <div class="rower-container">
-                <!-- Se mantiene width/height internos para la lógica de dibujo, CSS controla el tamaño visual -->
                 <canvas id="rower-canvas" width="450" height="220"></canvas>
-                
                 <div class="rower-overlay-text">
                     <div class="target-big" id="int-target-spm">20</div>
                     <div class="target-lbl">OBJETIVO</div>
                 </div>
             </div>
-
-            <!-- GAUGE LINEAL -->
-            <div class="linear-gauge-container">
-                <div class="gauge-label" id="gauge-label">Fase</div>
-                <div class="gauge-bar" id="gauge-bar"></div>
-            </div>
+            
+            <!-- Gauge Lineal -->
+             <div class="linear-gauge-container" id="gauge-bar"></div>
+             <!-- Label oculto visualmente pero existente en lógica si se quiere -->
+             <div id="gauge-label" style="display:none"></div> 
         </div>
 
-        <!-- Datos Derecha -->
+        <!-- Columna Derecha Datos -->
         <div class="int-right-col">
             <div class="int-actual-val">
                 <span class="int-actual-num" id="int-current-spm">0</span>
                 <span class="int-actual-lbl">ACTUAL SPM</span>
             </div>
             <div class="next-interval-box" id="next-interval-box" style="display:none;">
-                <span class="next-lbl">PRÓXIMO</span>
+                <span class="next-lbl">LUEGO:</span>
                 <span class="next-val" id="next-interval-val">--</span>
             </div>
         </div>
@@ -292,13 +344,15 @@
       </div>
     </div>
 
-    <!-- METRICAS -->
+    <!-- METRICAS (Se ocultan en Landscape para dar prioridad a la animación) -->
     <div class="dashboard">
       <div class="metrics-row">
         <div class="metric-card"><div class="label">Ritmo</div><div><span class="value" id="stroke-rate">0</span><span class="unit">SPM</span></div></div>
         <div class="metric-card" id="hr-card"><div class="label">Pulso</div><div><span class="value" id="heart-rate">--</span><span class="unit">BPM</span></div></div>
         <div class="metric-card"><div class="label">Paladas</div><div class="value" id="total-strokes">0</div></div>
         <div class="metric-card"><div class="label">Distancia</div><div><span class="value" id="distance">0.00</span><span class="unit">km</span></div></div>
+      </div>
+      <div class="metrics-row">
         <div class="metric-card" id="power-card">
           <div class="label" style="display:block!important">Potencia</div>
           <div><span class="value" id="power">0</span><span class="unit">W</span></div>
@@ -310,7 +364,7 @@
         </div>
         <div class="metric-card"><div class="label">Tiempo</div><div class="value" id="duration">00:00</div></div>
         <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
-        <div class="metric-card"><div class="label">Pace/500m</div><div class="value" id="pace">--:--</div></div>
+        <div class="metric-card"><div class="label">Pace/500</div><div class="value" id="pace">--:--</div></div>
       </div>
     </div>
   </div>
@@ -337,62 +391,39 @@
       <div class="modal-header"><h3 style="color:white;margin:0">Editor Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
       <div class="modal-body">
         <div style="margin-bottom:15px"><label style="color:#aaa;font-size:11px">NOMBRE</label><input type="text" id="routine-name" style="width:100%;box-sizing:border-box;background:#333;border:none;color:white;padding:10px;border-radius:6px" placeholder="Ej: Tabata"></div>
-        <div style="margin-bottom:10px"><label style="color:#aaa;font-size:11px">INTERVALOS (Seg / SPM / Tipo)</label><div id="intervals-container" style="display:flex;flex-direction:column;gap:10px;margin-top:5px"></div></div>
-        <button id="add-interval-btn" style="width:100%;background:#3498db;color:white;padding:12px;border:none;border-radius:6px;cursor:pointer">+ Agregar Paso</button>
+        <div style="margin-bottom:10px"><label style="color:#aaa;font-size:11px">INTERVALOS</label><div id="intervals-container" style="display:flex;flex-direction:column;gap:5px;margin-top:5px"></div></div>
+        <button id="add-interval-btn" style="width:100%;background:#3498db;color:white;padding:12px;border:none;border-radius:6px;cursor:pointer">+ Agregar</button>
       </div>
       <div style="padding:15px;border-top:1px solid #333;display:flex;justify-content:space-between"><button id="cancel-routine-btn" style="background:transparent;border:1px solid #555;color:#aaa">Cancelar</button><button id="start-routine-btn" style="background:#2ecc71;color:white">INICIAR</button></div>
     </div>
   </div>
 
   <script>
-    /* ----------------- Utilidades ----------------- */
-    const showError=(msg)=>{const b=document.getElementById('err-banner'); if(b){b.innerText=msg; b.style.display='block'; setTimeout(()=>b.style.display='none',8000);}};
+    /* ----------------- Utilidades & DOM ----------------- */
+    const showError=(msg)=>{const b=document.getElementById('err-banner'); if(b){b.innerText=msg; b.style.display='block'; setTimeout(()=>b.style.display='none',5000);}};
     const formatMMSS=(s)=>{const m=Math.floor(s/60),sec=Math.max(0,Math.round(s%60));return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
     const nowTs=()=>{const d=new Date();return `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;}
-    
-    function updateText(elOrId, text) {
-        let el = (typeof elOrId === 'string') ? document.getElementById(elOrId) : elOrId;
-        if (el) el.textContent = text;
-    }
-    
+    function updateText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
     const dom = {
-      rowerStatus: document.getElementById('rower-status'), 
-      hrStatus: document.getElementById('hr-status'),
-      hrCard: document.getElementById('hr-card'),
-      connectRowerBtn: document.getElementById('connect-rower-btn'), 
-      connectHrBtn: document.getElementById('connect-hr-btn'),
-      endSessionBtn: document.getElementById('end-session-btn'), 
-      routineBtn: document.getElementById('routine-btn'),
-      exportBtn: document.getElementById('export-btn'),
-      intervalDashboard: document.getElementById('interval-dashboard'),
-      intPhaseName: document.getElementById('int-phase-name'), 
-      intStepCount: document.getElementById('int-step-count'),
-      intTimer: document.getElementById('int-timer'), 
-      intStatus: document.getElementById('int-status'),
-      intArrow: document.getElementById('int-arrow'), 
-      intMsg: document.getElementById('int-msg'),
-      intTargetSpm: document.getElementById('int-target-spm'), 
-      intCurrentSpm: document.getElementById('int-current-spm'),
-      intProgressBar: document.getElementById('int-progress-bar'), 
-      nextBox: document.getElementById('next-interval-box'), 
-      nextVal: document.getElementById('next-interval-val'),
-      spmVal: document.getElementById('stroke-rate'), 
-      powerVal: document.getElementById('power'), 
-      hrVal: document.getElementById('heart-rate'), 
-      powerMode: document.getElementById('power-mode'), 
-      corrFactor: document.getElementById('corr-factor'), 
-      powerSource: document.getElementById('power-source'),
-      mainScreen: document.getElementById('main-screen'), 
-      resultsScreen: document.getElementById('results-screen'),
-      modal: document.getElementById('routine-modal'), 
-      closeModal: document.getElementById('close-modal'),
-      addIntervalBtn: document.getElementById('add-interval-btn'), 
-      intervalsContainer: document.getElementById('intervals-container'),
-      startRoutineBtn: document.getElementById('start-routine-btn'), 
-      cancelRoutineBtn: document.getElementById('cancel-routine-btn'),
-      canvas: document.getElementById('rower-canvas'),
-      gaugeBar: document.getElementById('gauge-bar'), 
-      gaugeLabel: document.getElementById('gauge-label')
+      rowerStatus: document.getElementById('rower-status'), hrStatus: document.getElementById('hr-status'),
+      hrCard: document.getElementById('hr-card'), connectRowerBtn: document.getElementById('connect-rower-btn'), 
+      connectHrBtn: document.getElementById('connect-hr-btn'), endSessionBtn: document.getElementById('end-session-btn'), 
+      routineBtn: document.getElementById('routine-btn'), exportBtn: document.getElementById('export-btn'),
+      intervalDashboard: document.getElementById('interval-dashboard'), intPhaseName: document.getElementById('int-phase-name'), 
+      intStepCount: document.getElementById('int-step-count'), intTimer: document.getElementById('int-timer'), 
+      intStatus: document.getElementById('int-status'), intArrow: document.getElementById('int-arrow'), 
+      intMsg: document.getElementById('int-msg'), intTargetSpm: document.getElementById('int-target-spm'), 
+      intCurrentSpm: document.getElementById('int-current-spm'), intProgressBar: document.getElementById('int-progress-bar'), 
+      nextBox: document.getElementById('next-interval-box'), nextVal: document.getElementById('next-interval-val'),
+      spmVal: document.getElementById('stroke-rate'), powerVal: document.getElementById('power'), 
+      hrVal: document.getElementById('heart-rate'), powerMode: document.getElementById('power-mode'), 
+      corrFactor: document.getElementById('corr-factor'), mainScreen: document.getElementById('main-screen'), 
+      resultsScreen: document.getElementById('results-screen'), modal: document.getElementById('routine-modal'), 
+      closeModal: document.getElementById('close-modal'), addIntervalBtn: document.getElementById('add-interval-btn'), 
+      intervalsContainer: document.getElementById('intervals-container'), startRoutineBtn: document.getElementById('start-routine-btn'), 
+      cancelRoutineBtn: document.getElementById('cancel-routine-btn'), canvas: document.getElementById('rower-canvas'),
+      gaugeBar: document.getElementById('gauge-bar'), gaugeLabel: document.getElementById('gauge-label')
     };
 
     let sessionTimer=null, elapsedSeconds=0, sessionActive=false, currentSpm=0;
@@ -400,36 +431,20 @@
     let activeRoutine=null, currentStepIndex=0, stepTimeRemaining=0, inIntervalMode=false;
     let lastPaceSeconds=null, lastPowerBle=null;
 
-    /* ----------------- WAKE LOCK MEJORADO PARA ANDROID ----------------- */
+    /* ----------------- WAKE LOCK (PANTALLA ENCENDIDA) ----------------- */
     let wakeLock = null;
-
-    async function requestWakeLock() {
-        if (!('wakeLock' in navigator)) return;
-        try {
-            wakeLock = await navigator.wakeLock.request('screen');
-            wakeLock.addEventListener('release', () => {
-                console.log('Wake Lock soltado');
-                wakeLock = null;
-            });
-            console.log('Wake Lock activado');
-        } catch (err) {
-            console.warn(`Error Wake Lock: ${err.name}, ${err.message}`);
-        }
-    }
-
     async function syncWakeLock() {
-        // Solo solicitar si hay actividad y estamos visibles
-        if ((sessionActive || connectedRower || connectedHr) && document.visibilityState === 'visible') {
-            if (!wakeLock) await requestWakeLock();
+        if (!('wakeLock' in navigator)) return;
+        if ((sessionActive || connectedRower || connectedHr) && document.visibilityState === 'visible' && !wakeLock) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => { wakeLock = null; });
+            } catch (err) { console.log(err); }
         }
     }
-
-    // Re-adquirir cuando la app vuelve a primer plano
-    document.addEventListener('visibilitychange', async () => {
-        if (document.visibilityState === 'visible') {
-            await syncWakeLock();
-        }
-    });
+    document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') await syncWakeLock(); });
+    // Reforzar wake lock al tocar la pantalla por si se soltó
+    document.addEventListener('touchstart', async () => { await syncWakeLock(); }, {passive: true});
 
     /* ----------------- GAUGE ----------------- */
     const SEGMENT_COUNT = 20;
@@ -437,45 +452,28 @@
         if(!dom.gaugeBar) return;
         dom.gaugeBar.innerHTML = '';
         for (let i = 0; i < SEGMENT_COUNT; i++) {
-            const seg = document.createElement('div');
-            seg.className = 'gauge-segment inactive';
+            const seg = document.createElement('div'); seg.className = 'gauge-segment inactive';
             let color = '#4caf50'; 
-            if (i >= 5) color = '#ffeb3b'; 
-            if (i >= 10) color = '#ff9800'; 
-            if (i >= 15) color = '#f44336'; 
-            seg.style.color = color; 
-            seg.dataset.color = color; 
-            dom.gaugeBar.appendChild(seg);
+            if (i >= 5) color = '#ffeb3b'; if (i >= 10) color = '#ff9800'; if (i >= 15) color = '#f44336'; 
+            seg.dataset.color = color; dom.gaugeBar.appendChild(seg);
         }
     }
     initGauge();
-
     function updateGauge(phase, isDrive) {
-        if(!dom.gaugeBar || !dom.gaugeLabel) return;
+        if(!dom.gaugeBar) return;
         const segments = dom.gaugeBar.children;
-        const label = dom.gaugeLabel;
-        if (isDrive) {
-            updateText(label, "DRIVE");
-            label.style.color = "#03dac6"; 
-            const activeCount = Math.floor(phase * SEGMENT_COUNT);
-            for (let i = 0; i < SEGMENT_COUNT; i++) {
-                const seg = segments[i];
-                if (i <= activeCount) { seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; } 
-                else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
-            }
-        } else {
-            updateText(label, "RECOVERY");
-            label.style.color = "#bb86fc"; 
-            const activeCount = Math.floor(phase * SEGMENT_COUNT);
-             for (let i = 0; i < SEGMENT_COUNT; i++) {
-                const seg = segments[i];
-                if (i <= activeCount) { seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; } 
-                else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
+        const activeCount = Math.floor(phase * SEGMENT_COUNT);
+        for (let i = 0; i < SEGMENT_COUNT; i++) {
+            const seg = segments[i];
+            if ((isDrive && i <= activeCount) || (!isDrive && i <= activeCount)) { 
+                seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; 
+            } else { 
+                seg.className = 'gauge-segment inactive'; seg.style.background = ''; 
             }
         }
     }
 
-    /* ----------------- CANVAS HUMANOIDE ----------------- */
+    /* ----------------- CANVAS ----------------- */
     const ctx = dom.canvas.getContext('2d');
     let animFrame = null;
     let lastBeepTime = 0;
@@ -488,17 +486,38 @@
 
     function drawRower(phase, isDrive = true) {
         if(!ctx) return;
+        
+        // Ajuste de nitidez para pantallas retina/HD
+        const dpr = window.devicePixelRatio || 1;
+        const rect = dom.canvas.getBoundingClientRect();
+        // Solo redimensionar si cambio el tamaño visual CSS
+        if(dom.canvas.width !== Math.floor(rect.width * dpr) || dom.canvas.height !== Math.floor(rect.height * dpr)){
+             dom.canvas.width = rect.width * dpr;
+             dom.canvas.height = rect.height * dpr;
+             // Resetear contexto tras resize
+             ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
+        }
+        
         ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
+        
+        // Usar coordenadas logicas fijas (450x220) y escalar al tamaño real
+        ctx.save();
+        const scaleX = dom.canvas.width / 450;
+        const scaleY = dom.canvas.height / 220;
+        const globalScale = Math.min(scaleX, scaleY); // Mantener aspecto
+        // Centrar
+        const offsetX = (dom.canvas.width - (450 * globalScale)) / 2;
+        const offsetY = (dom.canvas.height - (220 * globalScale)) / 2;
+        
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(globalScale, globalScale);
 
         const colorHex = lerpColor(0x4caf50, 0xf44336, phase);
         ctx.strokeStyle = colorHex; ctx.fillStyle = colorHex;
 
-        // Coordenadas baseadas en 450x220 (interno del canvas)
-        const cx = dom.canvas.width / 2; const cy = dom.canvas.height - 40; 
+        const cx = 225; const cy = 180; 
         const scale = 0.9; 
-
-        // Humanoide mirando a IZQUIERDA
+        
         const ankle = { x: cx - 140 * scale, y: cy - 20 * scale }; 
         const slideLen = 180 * scale; 
         const seatX = (ankle.x + (50 * scale)) + (slideLen * phase);
@@ -513,26 +532,23 @@
         const headRadius = 15 * scale; 
         const head = { x: shoulder.x + Math.sin(rad) * 25 * scale, y: shoulder.y - Math.cos(rad) * 25 * scale };
         
-        let armExtension = 1;
-        if (phase > 0.5) { armExtension = 1 - ((phase - 0.5) * 2 * 0.9); }
+        let armExtension = 1; if (phase > 0.5) armExtension = 1 - ((phase - 0.5) * 2 * 0.9);
         const armLen = 125 * scale;
-        const handleY = shoulder.y + 40 * scale; 
-        const handX = shoulder.x - (armLen * armExtension);
-        const hand = { x: handX, y: handleY };
+        const hand = { x: shoulder.x - (armLen * armExtension), y: shoulder.y + 40 * scale };
 
-        // Riel
         ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = '#333';
-        ctx.moveTo(cx - 180 * scale, cy); ctx.lineTo(cx + 180 * scale, cy); ctx.stroke();
-        // Cuerpo
+        ctx.moveTo(cx - 180 * scale, cy); ctx.lineTo(cx + 180 * scale, cy); ctx.stroke(); // Riel
+
         ctx.strokeStyle = colorHex; ctx.lineWidth = 16;
-        ctx.beginPath(); ctx.moveTo(ankle.x, ankle.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(hip.x, hip.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(hip.x, hip.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke();
-        ctx.beginPath(); ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.lineWidth = 14; ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hand.x, hand.y); ctx.stroke();
-        // Cadena
-        const flywheelX = cx - 200 * scale;
+        ctx.beginPath(); ctx.moveTo(ankle.x, ankle.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(hip.x, hip.y); ctx.stroke(); // Pierna
+        ctx.beginPath(); ctx.moveTo(hip.x, hip.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke(); // Torso
+        ctx.beginPath(); ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2); ctx.fill(); // Cabeza
+        ctx.beginPath(); ctx.lineWidth = 14; ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hand.x, hand.y); ctx.stroke(); // Brazo
+        
         ctx.beginPath(); ctx.lineWidth = 5; ctx.strokeStyle = '#e0e0e0'; 
-        ctx.moveTo(hand.x, hand.y); ctx.lineTo(flywheelX, hand.y); ctx.stroke();
+        ctx.moveTo(hand.x, hand.y); ctx.lineTo(cx - 200 * scale, hand.y); ctx.stroke(); // Cadena
+        
+        ctx.restore();
     }
 
     function startMetronomeLoop() {
@@ -545,39 +561,29 @@
             const cycleMs = (60 / targetSpm) * 1000;
             const now = Date.now();
             if(now - lastBeepTime > cycleMs) { lastBeepTime = now; playBeep(880, 0.1); }
-            
             const progress = (now - lastBeepTime) / cycleMs; 
             let drivePhase = 0; let isDrive = true;
-            if (progress < 0.35) {
-                drivePhase = progress / 0.35; isDrive = true;
-            } else {
-                const recovProgress = (progress - 0.35) / 0.65;
-                drivePhase = 1.0 - recovProgress; isDrive = false;
-            }
+            if (progress < 0.35) { drivePhase = progress / 0.35; isDrive = true; } 
+            else { const recovProgress = (progress - 0.35) / 0.65; drivePhase = 1.0 - recovProgress; isDrive = false; }
             const p = Math.min(1, Math.max(0, drivePhase));
             drawRower(p, isDrive); updateGauge(p, isDrive);
-        } else {
-             drawRower(0, true); updateGauge(0, true); 
-        }
+        } else { drawRower(0, true); updateGauge(0, true); }
         animFrame = requestAnimationFrame(loop);
       };
       animFrame = requestAnimationFrame(loop);
     }
 
-    /* ----------------- Audio ----------------- */
+    /* ----------------- Audio & Logic ----------------- */
     let audioCtx = null;
     function initAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function playBeep(freq=880, dur=0.1) {
-      if(!audioCtx) return;
-      if(audioCtx.state === 'suspended') audioCtx.resume();
+      if(!audioCtx) return; if(audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
       osc.type = 'sine'; osc.frequency.value = freq; osc.connect(gain); gain.connect(audioCtx.destination);
       osc.start(); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-      osc.stop(audioCtx.currentTime + dur);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur); osc.stop(audioCtx.currentTime + dur);
     }
 
-    /* ----------------- Logica UI ----------------- */
     dom.routineBtn.addEventListener('click', () => { dom.modal.style.display = 'flex'; loadRoutineForm(); });
     dom.closeModal.addEventListener('click', () => dom.modal.style.display = 'none');
     dom.cancelRoutineBtn.addEventListener('click', () => dom.modal.style.display = 'none');
@@ -585,7 +591,7 @@
 
     function addIntervalRow(data = {sec: 60, spm: 20, label: 'Trabajo'}) {
       const div = document.createElement('div'); div.className = 'interval-row';
-      div.innerHTML = `<input type="number" class="int-dur" value="${data.sec}"><input type="number" class="int-spm" value="${data.spm}"><select class="int-lbl"><option value="Calentar" ${data.label==='Calentar'?'selected':''}>Calentar</option><option value="Trabajo" ${data.label==='Trabajo'?'selected':''}>Trabajo</option><option value="Sprint" ${data.label==='Sprint'?'selected':''}>Sprint</option><option value="Descanso" ${data.label==='Descanso'?'selected':''}>Descanso</option><option value="Enfriar" ${data.label==='Enfriar'?'selected':''}>Enfriar</option></select><button class="del-row-btn" style="background:#ff4545;color:white;border:none;border-radius:4px">&times;</button>`;
+      div.innerHTML = `<input type="number" class="int-dur" value="${data.sec}"><input type="number" class="int-spm" value="${data.spm}"><select class="int-lbl"><option value="Calentar" ${data.label==='Calentar'?'selected':''}>Calentar</option><option value="Trabajo" ${data.label==='Trabajo'?'selected':''}>Trabajo</option><option value="Sprint" ${data.label==='Sprint'?'selected':''}>Sprint</option><option value="Descanso" ${data.label==='Descanso'?'selected':''}>Descanso</option></select><button class="del-row-btn" style="background:#ff4545;color:white;border:none;border-radius:4px">&times;</button>`;
       div.querySelector('.del-row-btn').onclick = () => div.remove(); dom.intervalsContainer.appendChild(div);
     }
     function loadRoutineForm() {
@@ -595,12 +601,10 @@
     }
     dom.startRoutineBtn.addEventListener('click', () => {
       initAudio(); const name = document.getElementById('routine-name').value || 'Rutina';
-      const rows = Array.from(document.querySelectorAll('.interval-row'));
-      if(rows.length === 0) return alert("Agrega intervalos");
+      const rows = Array.from(document.querySelectorAll('.interval-row')); if(!rows.length) return;
       const steps = rows.map(r => ({ sec: parseInt(r.querySelector('.int-dur').value)||60, spm: parseInt(r.querySelector('.int-spm').value)||20, label: r.querySelector('.int-lbl').value }));
       localStorage.setItem('lastRoutine', JSON.stringify({ name, steps }));
-      startIntervalSession({ name, steps }); dom.modal.style.display = 'none';
-      syncWakeLock(); // Intentar activar pantalla al iniciar rutina
+      startIntervalSession({ name, steps }); dom.modal.style.display = 'none'; syncWakeLock();
     });
 
     function startIntervalSession(routine) {
@@ -611,89 +615,65 @@
     function loadStep(idx) {
       if (idx >= activeRoutine.steps.length) { finishRoutine(); return; }
       currentStepIndex = idx; const step = activeRoutine.steps[idx]; stepTimeRemaining = step.sec;
-      updateText(dom.intPhaseName, step.label);
-      updateText(dom.intStepCount, `${idx + 1} / ${activeRoutine.steps.length}`);
-      updateText(dom.intTargetSpm, step.spm);
-      
+      updateText('int-phase-name', step.label); updateText('int-step-count', `${idx + 1} / ${activeRoutine.steps.length}`);
+      updateText('int-target-spm', step.spm);
       const nextStep = activeRoutine.steps[idx+1];
-      if(nextStep && dom.nextBox) { 
-          dom.nextBox.style.display = 'block'; 
-          updateText(dom.nextVal, `${nextStep.label} @ ${nextStep.spm}`); 
-      } 
+      if(nextStep && dom.nextBox) { dom.nextBox.style.display = 'block'; updateText('next-interval-val', `${nextStep.label} @ ${nextStep.spm}`); } 
       else if(dom.nextBox) { dom.nextBox.style.display = 'none'; }
       updateIntervalUI();
     }
     function updateIntervalUI() {
       if(!activeRoutine) return;
       const step = activeRoutine.steps[currentStepIndex];
-      updateText(dom.intTimer, formatMMSS(stepTimeRemaining));
+      updateText('int-timer', formatMMSS(stepTimeRemaining));
       if(dom.intProgressBar) dom.intProgressBar.style.width = `${((step.sec - stepTimeRemaining) / step.sec) * 100}%`;
-      updateText(dom.intCurrentSpm, currentSpm);
+      updateText('int-current-spm', currentSpm);
       
       const dash = dom.intervalDashboard; const arrow = dom.intArrow; const msg = dom.intMsg;
       if(dash) dash.className = ''; if(arrow) arrow.className = 'int-arrow';
       
-      if (!isRowing) { 
-          updateText(arrow, "−"); updateText(msg, "REMA"); 
-          if(arrow) arrow.style.color = "#888"; if(dash) dash.style.borderColor = "#444"; 
-      }
+      if (!isRowing) { updateText('int-arrow', "−"); updateText('int-msg', "REMA"); if(arrow) arrow.style.color = "#888"; if(dash) dash.style.borderColor = "#444"; }
       else {
         const diff = currentSpm - step.spm;
-        if (diff < -2) { updateText(arrow, "▲"); updateText(msg, "ACELERA"); arrow.classList.add('guide-up'); dash.classList.add('dash-slow'); }
-        else if (diff > 2) { updateText(arrow, "▼"); updateText(msg, "BAJA"); arrow.classList.add('guide-down'); dash.classList.add('dash-fast'); }
-        else { updateText(arrow, "●"); updateText(msg, "BIEN"); arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); }
+        if (diff < -2) { updateText('int-arrow', "▲"); updateText('int-msg', "SUBE"); arrow.classList.add('guide-up'); dash.classList.add('dash-slow'); }
+        else if (diff > 2) { updateText('int-arrow', "▼"); updateText('int-msg', "BAJA"); arrow.classList.add('guide-down'); dash.classList.add('dash-fast'); }
+        else { updateText('int-arrow', "●"); updateText('int-msg', "BIEN"); arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); }
       }
     }
     function checkRowingStatus(spm) {
         if (spm > 0) {
-            isRowing = true; 
-            updateText(dom.intStatus, "REMA"); 
+            isRowing = true; updateText('int-status', "REMA"); 
             if(dom.intStatus) dom.intStatus.style.color = "#4caf50";
             if(rowingTimeout) clearTimeout(rowingTimeout);
             rowingTimeout = setTimeout(() => { 
-                isRowing = false; 
-                updateText(dom.intStatus, "PAUSADO"); 
-                if(dom.intStatus) dom.intStatus.style.color = "#ffd700"; 
+                isRowing = false; updateText('int-status', "PAUSA"); if(dom.intStatus) dom.intStatus.style.color = "#ffd700"; 
                 updateIntervalUI(); drawRower(0, true); updateGauge(0, true); 
             }, 4000);
-            syncWakeLock(); // Asegurar pantalla encendida mientras rema
+            syncWakeLock();
         }
     }
 
-    const FTMS_UUID = 0x1826; const ROWER_CHAR_UUID = 0x2AD1; const HR_SERVICE_UUID = 0x180D; const HR_CHAR_UUID = 0x2A37;
+    const FTMS_UUID=0x1826; const ROWER_CHAR_UUID=0x2AD1; const HR_SERVICE_UUID=0x180D; const HR_CHAR_UUID=0x2A37;
     
     dom.connectRowerBtn.addEventListener('click', async ()=>{
-      try{ if(!navigator.bluetooth) throw new Error("Bluetooth API no disponible"); 
+      try{ if(!navigator.bluetooth) throw new Error("Bluetooth API Off"); 
         const dev = await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_UUID]}], optionalServices:[FTMS_UUID]});
-        const server = await dev.gatt.connect(); connectedRower=true; 
-        updateText(dom.rowerStatus, `${dev.name}`); 
-        if(dom.rowerStatus) dom.rowerStatus.className='status connected';
-        
+        const server = await dev.gatt.connect(); connectedRower=true; updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
         const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
-        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); 
-        syncWakeLock();
-      }catch(e){ showError("Err Remo: " + e.message); connectedRower=false; }
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); syncWakeLock();
+      }catch(e){ showError("Err Remo: " + e.message); }
     });
 
     dom.connectHrBtn.addEventListener('click', async ()=>{
-      try{ 
-        if(!navigator.bluetooth) throw new Error("Bluetooth no soportado");
+      try{ if(!navigator.bluetooth) throw new Error("Bluetooth Off");
         const dev = await navigator.bluetooth.requestDevice({ filters:[{services:[HR_SERVICE_UUID]}], optionalServices:[HR_SERVICE_UUID] });
-        const server = await dev.gatt.connect(); connectedHr=true; 
-        updateText(dom.hrStatus, `${dev.name}`); 
-        if(dom.hrStatus) dom.hrStatus.className='status connected';
-        const svc = await server.getPrimaryService(HR_SERVICE_UUID); 
-        const ch = await svc.getCharacteristic(HR_CHAR_UUID);
-        await ch.startNotifications(); 
-        ch.addEventListener('characteristicvaluechanged', e=>{ 
-            const v=e.target.value; if(v.byteLength < 1) return;
-            const flags = v.getUint8(0);
-            const val = (flags & 1) ? v.getUint16(1, true) : v.getUint8(1);
-            updateText(dom.hrVal, val);
-            if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
-        }); 
-        syncWakeLock();
-      }catch(e){ showError("Err HR: " + e.message); connectedHr=false; updateText(dom.hrStatus, "Error"); if(dom.hrStatus) dom.hrStatus.className='status disconnected'; }
+        const server = await dev.gatt.connect(); connectedHr=true; updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
+        const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', e=>{ 
+            const v=e.target.value; const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
+            updateText('heart-rate', val); if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
+        }); syncWakeLock();
+      }catch(e){ showError("Err HR: " + e.message); }
     });
 
     let rawEvents = [];
@@ -701,12 +681,8 @@
     function parseRowerData(data){
       const flags=data.getUint16(0,true); let offset=2; const parsed={};
       const sr=data.getUint8(offset)/2.0; offset+=1; currentSpm = Math.round(sr); 
-      updateText(dom.spmVal, currentSpm); parsed.spm = currentSpm;
-      checkRowingStatus(currentSpm); if(inIntervalMode) updateIntervalUI();
-      
-      const strokes=data.getUint16(offset,true); offset+=2; 
-      updateText('total-strokes', strokes); parsed.strokes=strokes;
-      
+      updateText('stroke-rate', currentSpm); parsed.spm = currentSpm; checkRowingStatus(currentSpm); if(inIntervalMode) updateIntervalUI();
+      const strokes=data.getUint16(offset,true); offset+=2; updateText('total-strokes', strokes); parsed.strokes=strokes;
       if(flags&0x0002) offset+=1; 
       if(flags&0x0004){ const dist=(data.getUint32(offset,true)&0x00FFFFFF); offset+=3; updateText('distance', (dist/1000).toFixed(2)); parsed.dist_m=dist; }
       if(flags&0x0008){ const pace=data.getUint16(offset,true); offset+=2; lastPaceSeconds = pace; updateText('pace', formatMMSS(pace)); parsed.pace_s=pace; }
@@ -714,90 +690,47 @@
       if(flags&0x0020){ const p=data.getInt16(offset,true); offset+=2; lastPowerBle = p; parsed.power_ble=p; }
       if(flags&0x0080) offset+=2; 
       if(flags&0x0100){ const kcal=data.getUint16(offset,true); offset+=5; updateText('calories', kcal); parsed.kcal=kcal; }
-      
       parsed.power_display = applyPowerDisplay(); if(sessionActive && isRowing){ rawEvents.push({ts:nowTs(), parsed}); }
     }
     
-    function computePowerC2(paceS){ if(!paceS||paceS<=0) return null; return 2.8/Math.pow(paceS/500,3); }
     function applyPowerDisplay(){
       const mode=dom.powerMode.value, fact=dom.corrFactor.value;
-      const pC2=computePowerC2(lastPaceSeconds), pCorr=Math.max(0, (lastPowerBle||0)*fact);
-      let val=0; if(mode==='equiv'){ val=pC2??pCorr??lastPowerBle??0; } else if(mode==='ble'){ val=lastPowerBle??0; } else { val=pCorr??pC2??0; }
-      updateText(dom.powerVal, Math.round(val)); return Math.round(val);
+      const pC2 = (lastPaceSeconds>0) ? 2.8/Math.pow(lastPaceSeconds/500,3) : 0; const pCorr=Math.max(0, (lastPowerBle||0)*fact);
+      let val=0; if(mode==='equiv'){ val=pC2||pCorr||lastPowerBle||0; } else if(mode==='ble'){ val=lastPowerBle||0; } else { val=pCorr||pC2||0; }
+      updateText('power', Math.round(val)); return Math.round(val);
     }
     dom.powerMode.addEventListener('change', applyPowerDisplay); dom.corrFactor.addEventListener('input', applyPowerDisplay);
 
     function startTimer(){ 
-        if(sessionTimer) return; 
-        sessionActive = true; 
-        syncWakeLock(); 
-        sessionTimer = setInterval(()=>{ 
-            if(isRowing) { 
-                elapsedSeconds++; 
-                updateText('duration', formatMMSS(elapsedSeconds)); 
-                if(inIntervalMode) { 
-                    stepTimeRemaining--; 
-                    updateIntervalUI(); 
-                    if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); 
-                } 
-            } 
-        }, 1000); 
-        dom.exportBtn.disabled=false; 
+        if(sessionTimer) return; sessionActive = true; syncWakeLock(); dom.exportBtn.disabled=false; 
+        sessionTimer = setInterval(()=>{ if(isRowing) { elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); if(inIntervalMode) { stepTimeRemaining--; updateIntervalUI(); if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); } } }, 1000); 
     }
-    
     function stopTimer(){ 
-        clearInterval(sessionTimer); 
-        if(animFrame) cancelAnimationFrame(animFrame); 
-        sessionTimer = null; 
-        sessionActive = false; 
-        inIntervalMode = false; 
-        isRowing = false; 
-        dom.intervalDashboard.style.display = 'none'; 
-        if(wakeLock) wakeLock.release().catch(()=>{}); wakeLock=null; 
+        clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
+        dom.intervalDashboard.style.display = 'none'; if(wakeLock) wakeLock.release().catch(()=>{}); wakeLock=null; 
     }
-    
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
-    
     dom.endSessionBtn.addEventListener('click', ()=>{ 
-        if(!rawEvents.length && !sessionActive && elapsedSeconds === 0) return alert("No hay datos de sesión"); 
-        stopTimer(); 
-        dom.mainScreen.style.display='none'; 
-        dom.resultsScreen.style.display='flex'; 
-        updateText('res-duration', formatMMSS(elapsedSeconds)); 
-        updateText('res-distance', document.getElementById('distance').textContent + " km"); 
-        updateText('res-calories', document.getElementById('calories').textContent + " kcal"); 
-        updateText('res-strokes', document.getElementById('total-strokes').textContent); 
-        const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); 
-        updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM");
+        if(!rawEvents.length && !sessionActive && elapsedSeconds === 0) return alert("Sin datos"); stopTimer(); 
+        dom.mainScreen.style.display='none'; dom.resultsScreen.style.display='flex'; 
+        updateText('res-duration', formatMMSS(elapsedSeconds)); updateText('res-distance', document.getElementById('distance').textContent + " km"); 
+        updateText('res-calories', document.getElementById('calories').textContent + " kcal"); updateText('res-strokes', document.getElementById('total-strokes').textContent); 
+        const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM");
         document.getElementById('download-report-btn').disabled = false;
     });
-
     document.getElementById('new-session-btn').addEventListener('click', ()=>{ dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); });
-    
     function resetUI(){ 
-        elapsedSeconds=0; rawEvents=[]; 
-        ['duration','distance','calories','total-strokes','stroke-rate','power'].forEach(id=>updateText(id, '0')); 
-        updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; 
+        elapsedSeconds=0; rawEvents=[]; ['duration','distance','calories','total-strokes','stroke-rate','power'].forEach(id=>updateText(id, '0')); updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; 
         document.getElementById('download-report-btn').disabled = true;
     }
-
-    // Funcionalidad Exportar CSV Simple
     const exportData = () => {
         if(!rawEvents.length) return alert("Sin datos");
         let csv = "Timestamp,SPM,Watts,Pace,Strokes,Dist\n";
-        rawEvents.forEach(e => {
-            csv += `${e.ts},${e.parsed.spm},${e.parsed.power_display},${e.parsed.pace_s||0},${e.parsed.strokes},${e.parsed.dist_m||0}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `remo_sesion_${Date.now()}.csv`;
-        a.click();
+        rawEvents.forEach(e => { csv += `${e.ts},${e.parsed.spm},${e.parsed.power_display},${e.parsed.pace_s||0},${e.parsed.strokes},${e.parsed.dist_m||0}\n`; });
+        const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `remo_sesion_${Date.now()}.csv`; a.click();
     };
-    dom.exportBtn.addEventListener('click', exportData);
-    document.getElementById('download-report-btn').addEventListener('click', exportData);
-    
-    drawRower(0, true);
-    initGauge();
+    dom.exportBtn.addEventListener('click', exportData); document.getElementById('download-report-btn').addEventListener('click', exportData);
+    drawRower(0, true); initGauge();
   </script>
 </body>
 </html>
