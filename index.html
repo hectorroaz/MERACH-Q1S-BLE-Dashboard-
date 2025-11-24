@@ -3,648 +3,762 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo - Clean Cockpit</title>
+  <title>Panel Remo - V4 Stable</title>
   <style>
     :root{
-      --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
-      --primary-color:#03dac6; --secondary-color:#bb86fc; --accent-color:#cf6679;
-      --interval-bg:#151922; --interval-text:#ffffff; 
-      --guide-fast:#f44336; --guide-slow:#2196f3; --guide-good:#4caf50;
+      --bg-color:#000000; 
+      --card-bg:#141414; 
+      --text-main:#ffffff;
+      --text-muted:#888888;
+      --accent:#03dac6; 
+      --alert:#cf6679;
+      --guide-slow:#2196f3; --guide-fast:#f44336; --guide-good:#4caf50;
     }
     
-    html,body{height:100%; margin:0; padding:0; overflow:hidden; background:var(--bg-color);}
-    body{
-      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-      color:var(--text-color);
-      display:flex; flex-direction:column;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* === CONTENEDOR PRINCIPAL === */
+    * { box-sizing: border-box; user-select: none; }
+    
+    html,body{height:100%; margin:0; padding:0; overflow:hidden; background:var(--bg-color); font-family:'Segoe UI', sans-serif;}
+    
+    /* === LAYOUT PRINCIPAL === */
     .container {
       width: 100%; height: 100vh; 
       display: flex; flex-direction: column; 
-      position: relative; 
-      padding: 10px; box-sizing: border-box;
-    }
-    
-    /* Encabezado (solo vertical) */
-    header { text-align:center; padding:5px 0; flex-shrink: 0; }
-    h1 { font-size:1.2rem; margin:0; opacity: 0.8; }
-    
-    /* === BOTONES FLOTANTES (FANTASMA) === */
-    .buttons-container {
-        display:flex; justify-content:center; gap:8px; 
-        flex-wrap:wrap; z-index: 100;
-        transition: opacity 0.5s ease, transform 0.5s ease;
-        padding: 5px; background: rgba(0,0,0,0.6); border-radius: 12px;
-    }
-    
-    /* Estado oculto */
-    .buttons-hidden {
-        opacity: 0; pointer-events: none; transform: translateY(20px);
+      position: relative;
     }
 
-    button {
-        padding:10px 14px; font-size:13px; border:none; border-radius:8px; 
-        cursor:pointer; background:var(--primary-color); color:var(--bg-color); 
-        font-weight:bold; min-width: 60px;
-    }
-    button:active{transform:scale(0.96);}
-    button:disabled{background:#444; color:#888;}
-    #end-session-btn{background:var(--accent-color); color: white;}
-    #fullscreen-btn{background:#333; color: white; font-size: 1.2rem; padding: 5px 12px;}
+    /* HEADER (Solo visible en vertical) */
+    header { padding: 10px; text-align: center; color: var(--text-muted); font-size: 0.8rem; letter-spacing: 2px;}
 
-    /* Status Bar */
-    .status-bar{
-        display:flex; justify-content:space-between; 
-        background:var(--card-color); padding:4px 10px; 
-        border-radius:6px; margin-bottom:5px; 
-        font-size:10px; text-align:center; flex-shrink: 0;
+    /* === DASHBOARD SUPERIOR / IZQUIERDO (VISUAL) === */
+    #visual-panel {
+      position: relative;
+      flex: 1; /* Ocupa el espacio sobrante */
+      display: flex;
+      flex-direction: column;
+      background: #080a10;
+      overflow: hidden;
+      border-bottom: 1px solid #333;
     }
-    .connected{color:var(--primary-color); font-weight: bold;} .disconnected{color:var(--accent-color);}
 
-    /* === DASHBOARD IZQUIERDO (HUMANOIDE) === */
-    #interval-dashboard {
-        display: none; 
-        background: var(--interval-bg);
-        border: 2px solid #333;
-        border-radius: 12px;
-        flex-direction: column;
+    /* HUD Elements (Texto sobre el canvas) */
+    .hud { position: absolute; z-index: 10; pointer-events: none; }
+    .hud-tl { top: 15px; left: 15px; } /* Fase */
+    .hud-tr { top: 15px; right: 15px; text-align: right; } /* Timer */
+    .hud-mid-r { top: 70px; right: 15px; text-align: right; } /* Objetivo */
+    
+    .hud-title { font-size: 1.4rem; font-weight: 900; font-style: italic; color: #fff; text-transform: uppercase; margin:0; line-height: 1;}
+    .hud-sub { font-size: 0.75rem; color: #666; background: #1a1a1a; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;}
+    .hud-time { font-size: 3.5rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; line-height: 0.9; letter-spacing: -2px;}
+    .hud-status { color: #ffca28; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;}
+    
+    .hud-target-val { font-size: 2rem; font-weight: 900; color: var(--accent); line-height: 1; }
+    .hud-target-lbl { font-size: 0.6rem; color: #666; font-weight: bold; letter-spacing: 1px; }
+
+    /* Feedback Visual (Flechas) */
+    .hud-feedback {
+        position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(20,20,20,0.8); padding: 8px 16px; border-radius: 30px;
+        border: 1px solid #333; z-index: 10;
+        transition: all 0.2s;
+    }
+    .fb-arrow { font-size: 1.5rem; line-height: 0.8; }
+    .fb-text { font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; color: #fff; }
+
+    /* Canvas Container */
+    #canvas-wrapper {
+        flex: 1; /* Crece para llenar el panel visual */
+        width: 100%;
         position: relative;
-        overflow: hidden; 
-        transition: border-color 0.3s ease;
-        flex-grow: 1; /* Ocupar espacio disponible */
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    /* Metrónomo (Barra inferior del visual) */
+    .metronome-bar {
+        height: 6px; width: 100%; display: flex; gap: 2px;
+        background: #000; padding: 0 10px 10px 10px; box-sizing: border-box;
+        flex-shrink: 0; z-index: 20;
+    }
+    .metro-seg { flex: 1; background: #222; border-radius: 2px; transition: background 0.1s; }
+    .metro-seg.active { box-shadow: 0 0 8px currentColor; opacity: 1; }
+
+    /* Barra de progreso de intervalo (Fina linea azul abajo) */
+    .interval-progress { height: 3px; background: #000; width: 100%; flex-shrink: 0; }
+    .ip-fill { height: 100%; background: #2979ff; width: 0%; transition: width 1s linear; }
+
+    /* === DATA GRID (DATOS NUMÉRICOS) === */
+    #data-panel {
+        padding: 10px;
+        background: #000;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        flex-shrink: 0; /* No encoger */
+    }
+
+    .card {
+        background: var(--card-bg); border-radius: 8px; padding: 10px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        border: 1px solid #222; min-height: 70px;
+    }
+    .card-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;}
+    .card-val { font-size: 1.5rem; font-weight: 700; color: #fff; }
+    .card-unit { font-size: 0.7rem; color: #555; margin-left: 2px; font-weight: normal;}
+    .val-highlight { color: var(--accent); }
+
+    /* === CONTROLES FLOTANTES === */
+    .controls {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: rgba(10,10,10,0.9); padding: 5px; border-radius: 12px;
+        display: flex; gap: 8px; z-index: 100;
+        border: 1px solid #333;
+        transition: opacity 0.5s, transform 0.5s;
+    }
+    .controls.hidden { opacity: 0; transform: translate(-50%, 50px); pointer-events: none; }
     
-    .dash-slow { border-color: var(--guide-slow) !important; box-shadow: inset 0 0 30px rgba(33, 150, 243, 0.15); }
-    .dash-fast { border-color: var(--guide-fast) !important; box-shadow: inset 0 0 30px rgba(244, 67, 54, 0.15); }
-    .dash-good { border-color: var(--guide-good) !important; box-shadow: inset 0 0 30px rgba(76, 175, 80, 0.15); }
-
-    /* Textos Superpuestos (HUD) */
-    .hud-element { position: absolute; z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.8); pointer-events: none;}
-    
-    /* Fase (Arriba Izquierda) */
-    .hud-top-left { top: 15px; left: 15px; display: flex; flex-direction: column; align-items: flex-start; }
-    .int-phase-name { font-size: 1.2rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1; }
-    .int-step-count { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #ccc; margin-top: 4px; }
-
-    /* Timer (Arriba Derecha) */
-    .hud-top-right { top: 10px; right: 15px; text-align: right; }
-    .int-timer-big { font-size: 2.8rem; font-weight: bold; color: white; line-height: 1; font-family: monospace; letter-spacing: -1px;}
-    .int-timer-status { font-size: 0.6rem; color: #ffd700; font-weight: bold; text-transform: uppercase;}
-
-    /* Objetivo (Debajo del Timer - SIN SOLAPAR) */
-    .hud-target { top: 80px; right: 15px; text-align: right; }
-    .target-val { font-size: 1.6rem; font-weight: 900; color: var(--primary-color); line-height: 1; }
-    .target-lbl { font-size: 0.55rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;}
-
-    /* Guía Visual (Flechas) */
-    .hud-guidance { 
-        bottom: 25px; left: 50%; transform: translateX(-50%); 
-        display: flex; align-items: center; gap: 10px;
-        background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;
-        transition: opacity 0.3s;
+    button {
+        background: #333; color: #fff; border: none; padding: 10px 14px;
+        border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer;
     }
-    .int-arrow { font-size: 1.5rem; line-height: 1; }
-    .int-msg { font-weight: 900; font-size: 0.9rem; }
+    button.primary { background: var(--accent); color: #000; }
+    button.danger { background: var(--alert); color: #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Canvas Humanoide */
-    .viz-container { 
-        width: 100%; height: 100%; 
-        display: flex; align-items: center; justify-content: center;
-        padding-bottom: 20px; /* Espacio para barra gauge */
-    }
-    canvas#rower-canvas {
-        max-width: 100%; max-height: 100%;
-        width: auto; height: auto;
-    }
-
-    /* Gauge Metrónomo */
-    .gauge-wrapper {
-        position: absolute; bottom: 8px; left: 5%; width: 90%; height: 8px; 
-        z-index: 5; display: flex; gap: 3px;
-    }
-    .gauge-segment { flex: 1; background: #333; border-radius: 2px; transition: background 0.1s; }
-    .gauge-segment.active { box-shadow: 0 0 8px currentColor; }
-
-    /* Barra de Progreso Intervalo */
-    .progress-line { position: absolute; bottom: 0; left: 0; height: 4px; background: #2aa7ff; width: 100%; transition: width 1s linear; z-index: 6;}
-
-    /* Colores Guía */
-    .guide-up { color: var(--guide-slow); } .guide-down { color: var(--guide-fast); } .guide-ok { color: var(--guide-good); } 
-
-    /* === DASHBOARD DERECHO (DATOS) === */
-    .data-grid {
-        display: flex; gap: 5px; flex-wrap: wrap; width: 100%; margin-top: 10px;
-    }
-    .metric-card {
-        background:var(--card-color); padding:8px; border-radius:8px; text-align:center;
-        display:flex; flex-direction:column; justify-content:center;
-        flex: 1 1 30%; min-width: 70px; border: 1px solid #333;
-    }
-    .metric-card .value{font-size:1.4rem; font-weight:bold; color:var(--text-color);}
-    .metric-card .label{font-size:.6rem; color:var(--secondary-color); text-transform: uppercase; margin-bottom: 2px;}
-    .metric-card .unit{font-size:.6rem; color: #777;}
-    .highlight-val { color: var(--primary-color) !important; }
-    .card-pulse { animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(3, 218, 198, 0.4); } 100% { box-shadow: 0 0 0 10px rgba(0,0,0,0); } }
-
-    /* === LAYOUT RESPONSIVO (HORIZONTAL) === */
+    /* === MODOS RESPONSIVOS === */
+    /* MODO HORIZONTAL (COCKPIT) */
     @media (orientation: landscape) {
-        body { padding: 0; }
-        .container { flex-direction: row; padding: 0; gap: 0; }
-        header, h1 { display: none; }
-
-        /* Status bar flota arriba semitransparente */
-        .status-bar {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 50;
-            background: rgba(0,0,0,0.3); pointer-events: none; border-radius: 0; padding: 2px 10px;
-        }
-
-        /* Botones flotan abajo centro */
-        .buttons-container {
-            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-            margin: 0; width: auto; 
-        }
-        /* Cuando se ocultan, bajan */
-        .buttons-hidden { transform: translate(-50%, 50px); opacity: 0; }
-
-        /* Panel Izquierdo (60%) */
-        #interval-dashboard {
-            width: 60%; height: 100vh; border: none; border-right: 1px solid #333; margin: 0; border-radius: 0;
-            display: flex !important; /* Siempre visible para layout */
-        }
-        /* Ajuste de HUD en horizontal */
-        .int-phase-name { font-size: 1.6rem; }
-        .int-timer-big { font-size: 3.5rem; }
-        .hud-top-right { top: 20px; right: 20px; }
-        .hud-target { top: 100px; right: 20px; } /* Más abajo para no chocar */
-        .hud-guidance { bottom: 30px; } /* Subir un poco para no tapar gauge */
+        .container { flex-direction: row; }
+        header { display: none; }
         
-        /* Panel Derecho (40%) */
-        .data-grid {
-            width: 40%; height: 100vh; margin: 0; padding: 30px 10px 10px 10px; /* Padding top para status bar */
-            display: grid !important; 
-            grid-template-columns: 1fr 1fr; 
-            grid-template-rows: repeat(4, 1fr);
-            gap: 8px; align-content: center;
-            background: #0e0e0e;
-            overflow-y: auto;
+        #visual-panel { 
+            width: 60%; height: 100%; 
+            border-bottom: none; border-right: 1px solid #333;
         }
-        .metric-card { width: 100%; height: 100%; flex: none; }
-        .metric-card .value { font-size: 2rem; }
+        
+        /* Ajustar HUD en horizontal */
+        .hud-time { font-size: 4.5rem; }
+        .hud-mid-r { top: 90px; } /* Bajar objetivo para no chocar con timer */
+
+        #data-panel {
+            width: 40%; height: 100%;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            overflow-y: auto;
+            padding-bottom: 60px; /* Espacio para botones */
+        }
+        
+        /* Botones un poco más compactos en horizontal */
+        .controls { bottom: 10px; }
     }
 
-    /* Modales y Utilidades */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; justify-content: center; align-items: center; }
-    .modal-content { background: #1a1a2e; width: 90%; max-width: 450px; border-radius: 12px; border: 1px solid #555; display: flex; flex-direction: column; max-height: 90vh;}
-    .modal-header { padding: 15px; background: #16213e; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0;}
-    .modal-body { padding: 15px; overflow-y: auto; }
-    .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 30px; gap: 5px; margin-bottom: 8px; align-items: center;}
-    .interval-row input, .interval-row select { background: #333; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box;}
-
-    #results-screen{display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-color); width:100%; height:100vh; position:fixed; top:0; left:0; z-index:3000;}
-    .results-grid{display:grid; grid-template-columns:1fr 1fr; gap:15px; width:90%; max-width:400px; margin-bottom:20px}
+    /* Clases de utilidad */
+    .color-up { color: var(--guide-slow); } 
+    .color-down { color: var(--guide-fast); } 
+    .color-good { color: var(--guide-good); }
     
-    #err-banner{position:fixed; top:10px; left:50%; transform:translateX(-50%); background:#500; color:#fff; padding:8px 15px; border-radius:20px; z-index:9999; display:none; font-size:12px;}
+    #err-msg { position: fixed; top: 10px; left: 50%; transform:translateX(-50%); background:#500; color:white; padding:5px 10px; border-radius:5px; font-size:12px; display:none; z-index:9999;}
+    
+    /* Modales */
+    .modal-wrap { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:none; justify-content:center; align-items:center;}
+    .modal-box { background:#1a1a1a; padding:20px; border-radius:10px; width:90%; max-width:400px; border:1px solid #444; }
+    .res-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; color: #ccc;}
   </style>
 </head>
 <body>
 
-  <div id="err-banner">Error</div>
+  <div id="err-msg">Error</div>
 
-  <div class="container" id="main-screen">
-    <header><h1>Panel Remo Pro</h1></header>
+  <div class="container">
+    <header>PANEL REMO PRO V4</header>
 
-    <div class="status-bar">
-      <div id="rower-status" class="status disconnected">Remo: Desconectado</div>
-      <div id="hr-status" class="status disconnected">HR: --</div>
-    </div>
-
-    <div id="interval-dashboard">
-      <div class="hud-element hud-top-left">
-        <div class="int-phase-name" id="int-phase-name">CALENTAR</div>
-        <span class="int-step-count" id="int-step-count">1 / 4</span>
-      </div>
-
-      <div class="hud-element hud-top-right">
-        <div class="int-timer-big" id="int-timer">00:00</div>
-        <div class="int-timer-status" id="int-status">LISTO</div>
-      </div>
-
-      <div class="hud-element hud-target">
-        <div class="target-val" id="int-target-spm">20</div>
-        <div class="target-lbl">OBJETIVO SPM</div>
-      </div>
-
-      <div class="hud-element hud-guidance">
-        <span class="int-arrow" id="int-arrow">−</span>
-        <span class="int-msg" id="int-msg">REMA</span>
-      </div>
-
-      <div class="viz-container">
-        <canvas id="rower-canvas" width="450" height="220"></canvas>
-      </div>
-
-      <div class="gauge-wrapper" id="gauge-bar"></div>
-      <div class="progress-line" id="int-progress-bar" style="width: 100%"></div>
-    </div>
-
-    <div class="data-grid">
-        <div class="metric-card"><div class="label">Ritmo</div><div class="value highlight-val"><span id="stroke-rate">0</span> <span class="unit">SPM</span></div></div>
-        <div class="metric-card" id="hr-card"><div class="label">Pulso</div><div class="value"><span id="heart-rate">--</span> <span class="unit">BPM</span></div></div>
+    <div id="visual-panel">
         
-        <div class="metric-card"><div class="label">Potencia</div><div class="value"><span id="power">0</span> <span class="unit">W</span></div>
-           <div style="display:none"><select id="power-mode"><option value="equiv">Eq</option></select><input id="corr-factor" value="7.2"></div>
+        <div class="hud hud-tl">
+            <h2 class="hud-title" id="lbl-phase">CALENTAR</h2>
+            <span class="hud-sub" id="lbl-step">1 / 4</span>
         </div>
-        
-        <div class="metric-card"><div class="label">Distancia</div><div class="value"><span id="distance">0.00</span> <span class="unit">km</span></div></div>
-        
-        <div class="metric-card"><div class="label">Tiempo Total</div><div class="value" id="duration">00:00</div></div>
-        <div class="metric-card"><div class="label">Pace/500m</div><div class="value" id="pace">--:--</div></div>
-        
-        <div class="metric-card"><div class="label">Calorías</div><div class="value"><span id="calories">0</span> <span class="unit">kcal</span></div></div>
-        <div class="metric-card"><div class="label">Paladas</div><div class="value" id="total-strokes">0</div></div>
+
+        <div class="hud hud-tr">
+            <div class="hud-time" id="lbl-timer">00:00</div>
+            <div class="hud-status" id="lbl-status">LISTO</div>
+        </div>
+
+        <div class="hud hud-mid-r">
+            <div class="hud-target-val" id="lbl-target">20</div>
+            <div class="hud-target-lbl">OBJETIVO</div>
+        </div>
+
+        <div class="hud-feedback" id="feedback-box" style="opacity:0">
+            <span class="fb-arrow" id="fb-arrow">−</span>
+            <span class="fb-text" id="fb-msg">REMA</span>
+        </div>
+
+        <div id="canvas-wrapper">
+            <canvas id="main-canvas"></canvas>
+        </div>
+
+        <div class="metronome-bar" id="gauge-container"></div>
+        <div class="interval-progress"><div class="ip-fill" id="progress-fill"></div></div>
     </div>
 
-    <div class="buttons-container" id="controls-bar">
-      <button id="fullscreen-btn" title="Pantalla Completa">⛶</button>
-      <button id="connect-rower-btn">🔗 Remo</button>
-      <button id="connect-hr-btn">❤️ HR</button>
-      <button id="routine-btn">⚡ Rutina</button>
-      <button id="end-session-btn">⏹ Finalizar</button>
-      <button id="export-btn" disabled>⬇ CSV</button>
+    <div id="data-panel">
+        <div class="card">
+            <div class="card-lbl">Ritmo</div>
+            <div class="card-val val-highlight"><span id="val-spm">0</span><span class="card-unit">SPM</span></div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Potencia</div>
+            <div class="card-val"><span id="val-watts">0</span><span class="card-unit">W</span></div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Pulso</div>
+            <div class="card-val"><span id="val-hr">--</span><span class="card-unit">BPM</span></div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Distancia</div>
+            <div class="card-val"><span id="val-dist">0.00</span><span class="card-unit">km</span></div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Tiempo Total</div>
+            <div class="card-val" id="val-total-time">00:00</div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Pace/500m</div>
+            <div class="card-val" id="val-pace">--:--</div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Calorías</div>
+            <div class="card-val" id="val-cal">0</div>
+        </div>
+        <div class="card">
+            <div class="card-lbl">Paladas</div>
+            <div class="card-val" id="val-strokes">0</div>
+        </div>
     </div>
 
+    <div class="controls" id="controls">
+        <button onclick="toggleFullScreen()">⛶</button>
+        <button id="btn-conn-rower">🔗 Remo</button>
+        <button id="btn-conn-hr">❤️ HR</button>
+        <button id="btn-routine" class="primary">⚡ Rutina</button>
+        <button id="btn-end" class="danger">⏹ Fin</button>
+        <button id="btn-csv" disabled>⬇ CSV</button>
+    </div>
   </div>
 
-  <div id="results-screen">
-    <h2 style="color:white">Resumen Sesión</h2>
-    <div class="results-grid">
-      <div class="metric-card"><div class="label">Tiempo</div><div class="value" id="res-duration">00:00</div></div>
-      <div class="metric-card"><div class="label">Distancia</div><div class="value" id="res-distance">0.00 km</div></div>
-      <div class="metric-card"><div class="label">Calorías</div><div class="value" id="res-calories">0 kcal</div></div>
-      <div class="metric-card"><div class="label">Ritmo Med</div><div class="value" id="res-avg-spm">0 SPM</div></div>
-    </div>
-    <div style="display:flex; gap:10px">
-      <button id="download-report-btn" disabled>Guardar Datos</button>
-      <button id="new-session-btn">Nueva Sesión</button>
-    </div>
+  <div class="modal-wrap" id="modal-results">
+      <div class="modal-box">
+          <h2 style="color:white; margin-top:0">Resumen Sesión</h2>
+          <div class="res-row"><span>Tiempo</span><span id="res-time">00:00</span></div>
+          <div class="res-row"><span>Distancia</span><span id="res-dist">0.00 km</span></div>
+          <div class="res-row"><span>Calorías</span><span id="res-cal">0</span></div>
+          <div class="res-row"><span>Ritmo Medio</span><span id="res-spm">0 SPM</span></div>
+          <div style="margin-top:20px; display:flex; gap:10px">
+              <button class="primary" style="flex:1" onclick="downloadCSV()">Guardar</button>
+              <button style="flex:1" onclick="location.reload()">Nuevo</button>
+          </div>
+      </div>
   </div>
 
-  <div class="modal-overlay" id="routine-modal">
-    <div class="modal-content">
-      <div class="modal-header"><h3 style="color:white;margin:0">Editor Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
-      <div class="modal-body">
-        <div style="margin-bottom:10px"><label style="color:#aaa;font-size:10px">NOMBRE</label><input type="text" id="routine-name" placeholder="Ej: Pirámide"></div>
-        <div id="intervals-container"></div>
-        <button id="add-interval-btn" style="width:100%;background:#3498db;color:white;padding:10px;border:none;border-radius:6px;margin-top:10px">+ Intervalo</button>
-      </div>
-      <div style="padding:15px; border-top:1px solid #333; display:flex; justify-content:flex-end; gap:10px">
-        <button id="cancel-routine-btn" style="background:transparent;border:1px solid #555">Cancelar</button>
-        <button id="start-routine-btn" style="background:#2ecc71;color:white">INICIAR</button>
-      </div>
+  <div class="modal-wrap" id="modal-routine">
+    <div class="modal-box">
+        <h3 style="color:white; margin-top:0">Iniciar Rutina</h3>
+        <p style="color:#aaa; font-size:12px">Rutina estándar cargada: Calentamiento, Fuerza, Recuperación.</p>
+        <div style="margin-top:20px; display:flex; justify-content:space-between">
+            <button onclick="document.getElementById('modal-routine').style.display='none'">Cancelar</button>
+            <button class="primary" onclick="startRoutine()">INICIAR</button>
+        </div>
     </div>
   </div>
 
   <script>
-    /* ================= SYSTEM & WAKE LOCK ================= */
+    /* =========================================
+       1. GESTIÓN DEL SISTEMA Y WAKE LOCK
+       ========================================= */
     const dom = {
-       dashboard: document.getElementById('interval-dashboard'),
-       controls: document.getElementById('controls-bar'),
-       canvas: document.getElementById('rower-canvas'),
-       gauge: document.getElementById('gauge-bar'),
-       err: document.getElementById('err-banner')
+        canvas: document.getElementById('main-canvas'),
+        ctx: document.getElementById('main-canvas').getContext('2d'),
+        wrapper: document.getElementById('canvas-wrapper'),
+        gauge: document.getElementById('gauge-container'),
+        controls: document.getElementById('controls'),
+        error: document.getElementById('err-msg')
     };
-    
-    const showError = (m) => { dom.err.textContent=m; dom.err.style.display='block'; setTimeout(()=>dom.err.style.display='none', 4000); };
-    const updateText = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt; };
-    const formatMMSS=(s)=>{const m=Math.floor(s/60),sec=Math.max(0,Math.round(s%60));return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
 
-    // WAKE LOCK LOGIC (VITAL)
     let wakeLock = null;
-    const requestWakeLock = async () => {
+    async function requestWakeLock() {
         try {
-            if ('wakeLock' in navigator) {
+            if('wakeLock' in navigator) {
                 wakeLock = await navigator.wakeLock.request('screen');
-                wakeLock.addEventListener('release', () => { console.log('WakeLock released'); });
-                console.log('WakeLock Active');
+                wakeLock.addEventListener('release', () => console.log('WakeLock released'));
             }
-        } catch (err) { console.warn('WakeLock err:', err); }
-    };
-    
+        } catch(e) { console.log(e); }
+    }
     document.addEventListener('visibilitychange', () => {
-        if (wakeLock !== null && document.visibilityState === 'visible') requestWakeLock();
-    });
-    
-    // FULLSCREEN & AUTO-HIDE BUTTONS
-    document.getElementById('fullscreen-btn').addEventListener('click', () => {
-        if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>showError("Fullscr err"));
-        else document.exitFullscreen();
+        if(document.visibilityState === 'visible' && session.active) requestWakeLock();
     });
 
-    let hideControlsTimeout;
-    const showControls = () => {
-        dom.controls.classList.remove('buttons-hidden');
-        if(hideControlsTimeout) clearTimeout(hideControlsTimeout);
-        if(sessionActive) hideControlsTimeout = setTimeout(() => dom.controls.classList.add('buttons-hidden'), 4000);
-    };
-    
-    document.body.addEventListener('touchstart', showControls, {passive: true});
+    function toggleFullScreen() {
+        if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if(document.exitFullscreen) document.exitFullscreen();
+    }
+
+    // Auto-ocultar controles
+    let controlsTimeout;
+    function showControls() {
+        dom.controls.classList.remove('hidden');
+        if(controlsTimeout) clearTimeout(controlsTimeout);
+        if(session.active) controlsTimeout = setTimeout(() => dom.controls.classList.add('hidden'), 3000);
+    }
+    document.body.addEventListener('touchstart', showControls, {passive:true});
     document.body.addEventListener('click', showControls);
 
-    /* ================= APP LOGIC ================= */
-    let sessionTimer=null, elapsed=0, sessionActive=false, isRowing=false, rowingTimer=null;
-    let currentSpm=0, activeRoutine=null, stepIdx=0, stepTime=0;
-    let rawEvents=[];
-    
-    // GAUGE
-    function initGauge(){
-        dom.gauge.innerHTML='';
-        for(let i=0; i<20; i++){
-            let d=document.createElement('div'); d.className='gauge-segment';
-            d.dataset.c = i<5?'#4caf50':(i<10?'#ffeb3b':(i<15?'#ff9800':'#f44336'));
+    /* =========================================
+       2. LÓGICA DE SESIÓN Y DATOS
+       ========================================= */
+    const session = {
+        active: false,
+        startTime: 0,
+        elapsed: 0,
+        timer: null,
+        isRowing: false,
+        lastStrokeTime: 0,
+        events: []
+    };
+
+    const data = {
+        spm: 0, dist: 0, watts: 0, cal: 0, pace: 0, strokes: 0, hr: 0
+    };
+
+    const routine = {
+        active: false,
+        steps: [
+            { sec: 300, spm: 18, label: 'Calentar' },
+            { sec: 60, spm: 24, label: 'Fuerza' },
+            { sec: 120, spm: 20, label: 'Recuperar' },
+            { sec: 60, spm: 26, label: 'Sprint' }
+        ],
+        idx: 0,
+        timeLeft: 0
+    };
+
+    function updateDisplay() {
+        document.getElementById('val-spm').textContent = data.spm;
+        document.getElementById('val-watts').textContent = data.watts;
+        document.getElementById('val-hr').textContent = data.hr > 0 ? data.hr : '--';
+        document.getElementById('val-dist').textContent = (data.dist/1000).toFixed(2);
+        document.getElementById('val-cal').textContent = data.cal;
+        document.getElementById('val-strokes').textContent = data.strokes;
+        document.getElementById('val-total-time').textContent = formatTime(session.elapsed);
+        document.getElementById('val-pace').textContent = formatTime(data.pace);
+    }
+
+    function formatTime(s) {
+        const m = Math.floor(s/60);
+        const sec = Math.floor(s%60);
+        return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    /* =========================================
+       3. PARSING BLUETOOTH (CORE CORREGIDO)
+       ========================================= */
+    document.getElementById('btn-conn-rower').onclick = async () => {
+        try {
+            const dev = await navigator.bluetooth.requestDevice({
+                filters: [{services: [0x1826]}], // FTMS
+                optionalServices: [0x1826]
+            });
+            const server = await dev.gatt.connect();
+            const service = await server.getPrimaryService(0x1826);
+            const char = await service.getCharacteristic(0x2AD1); // Rower Data
+            await char.startNotifications();
+            char.addEventListener('characteristicvaluechanged', parseRowerData);
+            document.getElementById('btn-conn-rower').style.color = '#03dac6';
+            requestWakeLock();
+        } catch(e) { showError('Error BT: ' + e.message); }
+    };
+
+    document.getElementById('btn-conn-hr').onclick = async () => {
+        try {
+            const dev = await navigator.bluetooth.requestDevice({
+                filters: [{services: [0x180D]}] 
+            });
+            const server = await dev.gatt.connect();
+            const service = await server.getPrimaryService(0x180D);
+            const char = await service.getCharacteristic(0x2A37);
+            await char.startNotifications();
+            char.addEventListener('characteristicvaluechanged', e => {
+                const v = e.target.value;
+                data.hr = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
+            });
+            document.getElementById('btn-conn-hr').style.color = '#03dac6';
+        } catch(e) { showError('Error HR'); }
+    };
+
+    function parseRowerData(e) {
+        const v = e.target.value;
+        const flags = v.getUint16(0, true);
+        let offset = 2;
+
+        if(!session.active && !routine.active) startSession();
+
+        // 1. Stroke Rate (Siempre presente o casi siempre)
+        // Algunos remos envían uint8, otros uint16. Asumimos standard byte.
+        const spmRaw = v.getUint8(offset); 
+        data.spm = Math.round(spmRaw / 2); // Standard FTMS suele ser rate * 2
+        offset += 1;
+
+        // Detectar si estamos remando
+        if(data.spm > 0) {
+            session.isRowing = true;
+            session.lastStrokeTime = Date.now();
+            document.getElementById('lbl-status').textContent = "REMANDO";
+            document.getElementById('lbl-status').style.color = "#4caf50";
+        }
+
+        // 2. Stroke Count
+        data.strokes = v.getUint16(offset, true);
+        offset += 2;
+
+        // 3. Average Speed (Saltamos si existe)
+        if(flags & 0x0001) offset += 2;
+
+        // 4. Total Distance (Uint24)
+        if(flags & 0x0002) {
+            data.dist = v.getUint16(offset, true) | (v.getUint8(offset+2) << 16);
+            offset += 3;
+        }
+
+        // 5. Instantaneous Pace (Uint16)
+        if(flags & 0x0004) {
+            data.pace = v.getUint16(offset, true);
+            offset += 2;
+        }
+
+        // 6. Average Power (Saltar)
+        if(flags & 0x0008) offset += 2;
+
+        // 7. Instantaneous Power (Sint16)
+        if(flags & 0x0010) {
+            data.watts = v.getInt16(offset, true);
+            offset += 2;
+        }
+
+        // 8. Energy (Total/PerHour)
+        if(flags & 0x0020) offset += 5; // Energy Total + Per Hour
+        
+        // 9. Energy Per Minute (Calorias actuales a veces aqui)
+        // ... simplificado, usamos el Total Energy field standard:
+        if(flags & 0x0100) { // Flag específico de Expended Energy
+             data.cal = v.getUint16(offset, true);
+             // offset += ...
+        }
+
+        // Guardar evento
+        if(session.active) {
+            session.events.push({
+                t: session.elapsed,
+                spm: data.spm, w: data.watts, hr: data.hr
+            });
+        }
+    }
+
+    /* =========================================
+       4. ANIMACIÓN Y CANVAS (CORREGIDO)
+       ========================================= */
+    // Resize Observer para el Canvas: CRUCIAL para evitar pantalla negra
+    const resizeObserver = new ResizeObserver(entries => {
+        for(let entry of entries) {
+            const {width, height} = entry.contentRect;
+            const dpr = window.devicePixelRatio || 1;
+            dom.canvas.width = width * dpr;
+            dom.canvas.height = height * dpr;
+            // No dibujamos aquí, el loop se encarga
+        }
+    });
+    resizeObserver.observe(dom.wrapper);
+
+    // Inicializar Metrónomo
+    function initGauge() {
+        dom.gauge.innerHTML = '';
+        for(let i=0; i<20; i++) {
+            let d = document.createElement('div');
+            d.className = 'metro-seg';
+            // Colores por índice
+            if(i<5) d.style.color = 'var(--guide-good)'; 
+            else if(i<10) d.style.color = '#ffeb3b';
+            else if(i<15) d.style.color = '#ff9800';
+            else d.style.color = 'var(--guide-fast)';
             dom.gauge.appendChild(d);
         }
     }
-    function updateGauge(phase, active){
-        const segs = dom.gauge.children;
-        const limit = Math.floor(phase * 20);
-        for(let i=0; i<20; i++){
-            segs[i].className = (active && i<=limit) ? 'gauge-segment active' : 'gauge-segment';
-            segs[i].style.backgroundColor = (active && i<=limit) ? segs[i].dataset.c : '';
-            segs[i].style.boxShadow = '';
-            if(active && i<=limit) segs[i].style.boxShadow = `0 0 5px ${segs[i].dataset.c}`;
-        }
-    }
+    initGauge();
 
-    // CANVAS HUMANOIDE
-    const ctx = dom.canvas.getContext('2d');
-    function drawRower(phase, isDrive) {
-        // Resize dinámico
-        const dpr = window.devicePixelRatio || 1;
-        const rect = dom.canvas.getBoundingClientRect();
-        if(dom.canvas.width !== rect.width * dpr || dom.canvas.height !== rect.height * dpr){
-             dom.canvas.width = rect.width * dpr; dom.canvas.height = rect.height * dpr;
-        }
+    function drawRower(phase) {
+        const ctx = dom.ctx;
+        const w = dom.canvas.width;
+        const h = dom.canvas.height;
         
-        ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+        ctx.clearRect(0, 0, w, h);
+        
+        // Configurar escala para mantener proporciones
+        // Usamos un tamaño virtual de 500x300
+        const scale = Math.min(w / 500, h / 300) * 0.9; 
+        const offsetX = (w - (500*scale)) / 2;
+        const offsetY = (h - (300*scale)) / 2;
+
         ctx.save();
-        
-        // ESCALA REDUCIDA (0.85) PARA DAR AIRE
-        const baseScale = Math.min(dom.canvas.width / 450, dom.canvas.height / 220);
-        const finalScale = baseScale * 0.85; 
-        
-        const offsetX = (dom.canvas.width - (450 * finalScale)) / 2;
-        const offsetY = (dom.canvas.height - (220 * finalScale)) / 2;
-        
-        ctx.translate(offsetX, offsetY); 
-        ctx.scale(finalScale, finalScale);
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
 
-        // Interpolación de color
-        const r = Math.round(76 + (244 - 76) * phase);
-        const g = Math.round(175 + (67 - 175) * phase);
-        const b = Math.round(80 + (54 - 80) * phase);
-        const color = `rgb(${r},${g},${b})`;
+        // Interpolación de color (Verde -> Rojo segun fase de fuerza)
+        // Drive es 0.0 a 0.4 aprox.
+        let r=76, g=175, b=80; // Verde base
+        if(phase < 0.5) { // Fase de fuerza (Drive)
+            const stress = phase / 0.5; // 0 a 1
+            r = 76 + (244-76)*stress;
+            g = 175 + (67-175)*stress;
+            b = 80 + (54-80)*stress;
+        }
         
-        ctx.strokeStyle = color; ctx.fillStyle = color;
+        const color = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
-        // Dibujo
-        const cx=225, cy=180;
-        const slide = 180 * phase;
-        const seatX = (cx - 90) + slide;
-        const kneeY = cy - 60 * (1 - phase);
+        // Dibujo Stickman
+        const cx = 250, cy = 220;
+        const slideLen = 160;
+        
+        // Fase aplicada a la posición
+        const seatSlide = slideLen * phase;
+        const seatX = (cx - 80) + seatSlide;
         
         // Riel
-        ctx.beginPath(); ctx.strokeStyle='#333'; ctx.lineWidth=8;
-        ctx.moveTo(cx-180, cy); ctx.lineTo(cx+180, cy); ctx.stroke();
-        
-        // Cuerpo
-        ctx.strokeStyle = color; ctx.lineWidth = 14;
-        ctx.beginPath();
-        ctx.moveTo(cx-140, cy-20); // Tobillo
-        ctx.lineTo((seatX+(cx-140))/2, kneeY); // Rodilla
-        ctx.lineTo(seatX, cy-30); // Cadera
-        
-        // Torso & Swing
-        const angle = -20 + (phase * 45); // Swing -20 a +25 grados
-        const rad = angle * Math.PI/180;
+        ctx.beginPath(); ctx.strokeStyle='#333'; ctx.lineWidth=10;
+        ctx.moveTo(cx-180, cy+20); ctx.lineTo(cx+180, cy+20); ctx.stroke();
+
+        // Piernas
+        ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=18;
+        const ankleX = cx - 140; const ankleY = cy;
+        const kneeX = (ankleX + seatX) / 2;
+        const kneeY = cy - 60 * (1-phase); // Sube las rodillas en la recuperación
+        ctx.moveTo(ankleX, ankleY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(seatX, cy-10); ctx.stroke();
+
+        // Torso
+        const swing = -20 + (phase * 40); // Angulo espalda
+        const rad = swing * Math.PI / 180;
         const shoulderX = seatX + Math.sin(rad)*110;
-        const shoulderY = (cy-30) - Math.cos(rad)*110;
+        const shoulderY = (cy-10) - Math.cos(rad)*110;
         
-        ctx.lineTo(shoulderX, shoulderY); 
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(seatX, cy-10); ctx.lineTo(shoulderX, shoulderY); ctx.stroke();
 
         // Cabeza
-        const headX = shoulderX + Math.sin(rad)*20;
-        const headY = shoulderY - Math.cos(rad)*20;
-        ctx.beginPath(); ctx.arc(headX, headY, 14, 0, Math.PI*2); ctx.fill();
+        const headX = shoulderX + Math.sin(rad)*25;
+        const headY = shoulderY - Math.cos(rad)*25;
+        ctx.beginPath(); ctx.arc(headX, headY, 18, 0, Math.PI*2); ctx.fill();
 
         // Brazos
-        let armExt = phase > 0.5 ? 1 - ((phase-0.5)*1.8) : 1;
-        const handX = shoulderX - (110 * armExt);
-        const handY = shoulderY + 35;
+        let armExt = 0;
+        // Fase 0 (Catch) -> Brazos estirados (1.0)
+        // Fase 0.5 (Finish) -> Brazos flexionados (0.0)
+        if(phase < 0.5) armExt = 1; 
+        else {
+             // Recuperación: estirar brazos rápido
+             armExt = (phase - 0.5) * 2; 
+        }
         
-        ctx.beginPath(); ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(handX, handY); ctx.stroke();
-        
-        // Remo (Handle)
-        ctx.beginPath(); ctx.strokeStyle='#eee'; ctx.lineWidth=4;
+        // Simplificación visual: Brazos estirados al inicio, encogidos al final
+        const armLen = 100;
+        // Logic fix: Handle position relative to shoulder
+        const handX = shoulderX - (armLen * (phase > 0.4 && phase < 0.6 ? 0.2 : 0.9)); // Simplificado
+        const handY = shoulderY + 40;
+
+        ctx.beginPath(); ctx.lineWidth=14;
+        ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(handX, handY); ctx.stroke();
+
+        // Mango remo
+        ctx.beginPath(); ctx.strokeStyle='#eee'; ctx.lineWidth=6;
         ctx.moveTo(handX, handY); ctx.lineTo(cx-200, handY); ctx.stroke();
 
         ctx.restore();
     }
 
-    // ANIMATION LOOP
-    let animId=null, lastBeep=0;
-    let audioCtx=null;
-    
-    function startAnim() {
-        if(animId) cancelAnimationFrame(animId);
-        const loop = () => {
-            if(activeRoutine && sessionActive) {
-                const step = activeRoutine.steps[stepIdx];
-                const target = step.spm || 20;
-                const cycle = 60000 / target;
-                const now = Date.now();
-                
-                if(now - lastBeep > cycle) {
-                    lastBeep = now;
-                    if(audioCtx) {
-                       const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                       o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
-                       o.start(); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.1);
-                       o.stop(audioCtx.currentTime+0.1);
-                    }
-                }
-                
-                const p = (now - lastBeep) / cycle;
-                let phase = p < 0.4 ? p/0.4 : 1 - ((p-0.4)/0.6); // 40% Drive, 60% Recovery
-                phase = Math.max(0, Math.min(1, phase));
-                
-                if(isRowing) {
-                    drawRower(phase, p < 0.4);
-                    updateGauge(phase, p < 0.4);
-                } else {
-                    drawRower(0, true); updateGauge(0, false);
-                }
+    // Animation Loop (Render Loop)
+    let lastTime = 0;
+    function animate(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        
+        // Calcular fase del ciclo basada en SPM objetivo
+        let phase = 0;
+        if(routine.active) {
+            const step = routine.steps[routine.idx];
+            const targetSPM = step.spm;
+            const cycleDuration = 60000 / targetSPM;
+            const cycleOffset = timestamp % cycleDuration;
+            
+            // 0.0 -> 1.0 (Catch -> Finish -> Recovery -> Catch)
+            // Asumimos Drive ratio 1:2 aprox
+            let rawPhase = cycleOffset / cycleDuration;
+            
+            // Mapeamos para que la animación se vea natural
+            // 0.0 - 0.4: Drive (Fuerza)
+            // 0.4 - 1.0: Recovery (Recuperación)
+            if(rawPhase < 0.4) {
+                phase = rawPhase / 0.4; // 0 a 1 rapido
+            } else {
+                phase = 1 - ((rawPhase - 0.4) / 0.6); // 1 a 0 lento
             }
-            animId = requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
+        }
+
+        drawRower(phase);
+        updateMetronome(phase);
+        updateDisplay();
+
+        // Reset estado si no remamos
+        if(Date.now() - session.lastStrokeTime > 4000 && session.isRowing) {
+            session.isRowing = false;
+            document.getElementById('lbl-status').textContent = "PAUSA";
+            document.getElementById('lbl-status').style.color = "#ffd700";
+        }
+
+        requestAnimationFrame(animate);
     }
+    requestAnimationFrame(animate);
 
-    // BLUETOOTH
-    const connectDev = async (filters, type) => {
-        try {
-            const dev = await navigator.bluetooth.requestDevice({filters, optionalServices: filters[0].services});
-            const srv = await dev.gatt.connect();
-            const svc = await srv.getPrimaryService(filters[0].services[0]);
-            
-            updateText(type === 'rower' ? 'rower-status' : 'hr-status', dev.name);
-            document.getElementById(type === 'rower' ? 'rower-status' : 'hr-status').className = 'status connected';
-            requestWakeLock();
-            
-            // Simulación básica de setup de características (simplificado para brevedad)
-            const chars = await svc.getCharacteristics();
-            for(let c of chars) {
-                if(c.properties.notify) {
-                    await c.startNotifications();
-                    c.addEventListener('characteristicvaluechanged', (e) => handleData(e, type));
-                }
+    function updateMetronome(phase) {
+        const segs = dom.gauge.children;
+        // phase va de 0 a 1. Mapeamos a 20 segmentos.
+        const activeIdx = Math.floor(phase * 20);
+        
+        for(let i=0; i<20; i++) {
+            if(i <= activeIdx) {
+                segs[i].classList.add('active');
+                segs[i].style.backgroundColor = segs[i].style.color; // Usar color guardado
+            } else {
+                segs[i].classList.remove('active');
+                segs[i].style.backgroundColor = '#222';
             }
-        } catch(e) { showError(e.message); }
-    };
-
-    document.getElementById('connect-rower-btn').onclick = () => connectDev([{services:[0x1826]}], 'rower');
-    document.getElementById('connect-hr-btn').onclick = () => connectDev([{services:[0x180D]}], 'hr');
-
-    function handleData(e, type) {
-        const v = e.target.value;
-        if(type === 'hr') {
-            const hr = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
-            updateText('heart-rate', hr);
-        } else {
-            // Remo FTMS simplificado
-            if(!sessionActive && !activeRoutine) startSession();
-            
-            // Detectar stroke rate byte 
-            // NOTA: Esto depende del flag byte exacto, asumiendo standard offset
-            const spm = v.getUint8(3) / 2; // Ejemplo offset común
-            if(spm > 0) {
-                currentSpm = Math.round(spm);
-                updateText('stroke-rate', currentSpm);
-                isRowing = true;
-                if(rowingTimer) clearTimeout(rowingTimer);
-                rowingTimer = setTimeout(() => { isRowing=false; updateText('stroke-rate',0); }, 3000);
-            }
-            // Aquí iría el parsing completo de potencia/distancia como en tu código original
         }
     }
 
-    // SESSION CONTROL
-    function startSession(routine = null) {
-        if(sessionActive) return;
-        sessionActive = true;
-        elapsed = 0; rawEvents = [];
-        requestWakeLock();
-        dom.dashboard.style.display = 'flex';
-        // Auto-hide buttons
-        setTimeout(() => dom.controls.classList.add('buttons-hidden'), 2000);
-        
-        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        
-        activeRoutine = routine;
-        if(routine) loadStep(0);
-        
-        sessionTimer = setInterval(() => {
-            elapsed++;
-            updateText('duration', formatMMSS(elapsed));
-            if(activeRoutine) {
-                stepTime--;
-                document.getElementById('int-timer').textContent = formatMMSS(stepTime);
-                document.getElementById('int-progress-bar').style.width = (stepTime / activeRoutine.steps[stepIdx].sec * 100) + '%';
+    /* =========================================
+       5. RUTINA & FEEDBACK
+       ========================================= */
+    document.getElementById('btn-routine').onclick = () => {
+        document.getElementById('modal-routine').style.display = 'flex';
+    };
+
+    window.startRoutine = function() {
+        document.getElementById('modal-routine').style.display = 'none';
+        startSession(true);
+    };
+
+    function startSession(isRoutine = false) {
+        if(session.active) return;
+        session.active = true;
+        session.startTime = Date.now();
+        document.getElementById('btn-csv').disabled = false;
+        showControls(); // Trigger auto hide
+
+        if(isRoutine) {
+            routine.active = true;
+            routine.idx = 0;
+            loadStep(0);
+        }
+
+        session.timer = setInterval(() => {
+            session.elapsed++;
+            
+            if(routine.active) {
+                routine.timeLeft--;
+                document.getElementById('lbl-timer').textContent = formatTime(routine.timeLeft);
                 
-                // Feedback visual flechas
-                const diff = currentSpm - activeRoutine.steps[stepIdx].spm;
-                const arrow = document.getElementById('int-arrow');
-                const msg = document.getElementById('int-msg');
-                const dash = dom.dashboard;
+                // Barra progreso intervalo
+                const stepTotal = routine.steps[routine.idx].sec;
+                const pct = ((stepTotal - routine.timeLeft) / stepTotal) * 100;
+                document.getElementById('progress-fill').style.width = pct + "%";
+
+                // Feedback
+                const target = routine.steps[routine.idx].spm;
+                const diff = data.spm - target;
+                const box = document.getElementById('feedback-box');
+                const arrow = document.getElementById('fb-arrow');
+                const msg = document.getElementById('fb-msg');
+
+                box.style.opacity = session.isRowing ? 1 : 0;
                 
-                if(!isRowing) { 
-                    arrow.textContent='−'; msg.textContent='REMA'; dash.className=''; 
-                } else if(diff < -2) {
-                    arrow.textContent='▲'; msg.textContent='SUBE'; dash.className='dash-slow'; arrow.className='int-arrow guide-up';
-                } else if(diff > 2) {
-                    arrow.textContent='▼'; msg.textContent='BAJA'; dash.className='dash-fast'; arrow.className='int-arrow guide-down';
+                if(diff < -2) { // Muy lento
+                    box.className = 'hud-feedback color-up';
+                    arrow.textContent = '▲'; msg.textContent = 'SUBE';
+                } else if (diff > 2) { // Muy rapido
+                    box.className = 'hud-feedback color-down';
+                    arrow.textContent = '▼'; msg.textContent = 'BAJA';
                 } else {
-                    arrow.textContent='●'; msg.textContent='BIEN'; dash.className='dash-good'; arrow.className='int-arrow guide-ok';
+                    box.className = 'hud-feedback color-good';
+                    arrow.textContent = '●'; msg.textContent = 'BIEN';
                 }
 
-                if(stepTime <= 0) loadStep(stepIdx + 1);
+                if(routine.timeLeft <= 0) {
+                    routine.idx++;
+                    if(routine.idx >= routine.steps.length) finishSession();
+                    else loadStep(routine.idx);
+                }
             }
         }, 1000);
-        
-        startAnim();
     }
 
     function loadStep(i) {
-        if(i >= activeRoutine.steps.length) return endSession();
-        stepIdx = i;
-        const s = activeRoutine.steps[i];
-        stepTime = s.sec;
-        updateText('int-phase-name', s.label);
-        updateText('int-step-count', `${i+1} / ${activeRoutine.steps.length}`);
-        updateText('int-target-spm', s.spm);
+        const s = routine.steps[i];
+        routine.timeLeft = s.sec;
+        document.getElementById('lbl-phase').textContent = s.label;
+        document.getElementById('lbl-step').textContent = `${i+1} / ${routine.steps.length}`;
+        document.getElementById('lbl-target').textContent = s.spm;
     }
 
-    function endSession() {
-        clearInterval(sessionTimer);
-        cancelAnimationFrame(animId);
-        sessionActive = false;
-        sessionTimer = null;
-        dom.controls.classList.remove('buttons-hidden');
-        document.getElementById('main-screen').style.display='none';
-        document.getElementById('results-screen').style.display='flex';
-        updateText('res-duration', formatMMSS(elapsed));
+    function finishSession() {
+        clearInterval(session.timer);
+        session.active = false;
+        routine.active = false;
+        
+        document.getElementById('res-time').textContent = formatTime(session.elapsed);
+        document.getElementById('res-dist').textContent = (data.dist/1000).toFixed(2) + " km";
+        document.getElementById('res-cal').textContent = data.cal;
+        
+        // Calculo SPM medio simple
+        const sum = session.events.reduce((acc, e) => acc + e.spm, 0);
+        const avg = session.events.length ? Math.round(sum / session.events.length) : 0;
+        document.getElementById('res-spm').textContent = avg + " SPM";
+
+        document.getElementById('modal-results').style.display = 'flex';
     }
-
-    document.getElementById('end-session-btn').onclick = endSession;
-    document.getElementById('new-session-btn').onclick = () => location.reload();
-
-    // RUTINA MODAL (Lógica básica de formulario)
-    const modal = document.getElementById('routine-modal');
-    document.getElementById('routine-btn').onclick = () => { modal.style.display='flex'; loadRoutineUI(); };
-    document.getElementById('close-modal').onclick = () => modal.style.display='none';
-    document.getElementById('cancel-routine-btn').onclick = () => modal.style.display='none';
     
-    function loadRoutineUI() {
-        const c = document.getElementById('intervals-container'); c.innerHTML='';
-        addIntRow(300, 18, 'Calentar'); addIntRow(60, 24, 'Fuerza');
+    document.getElementById('btn-end').onclick = finishSession;
+
+    /* =========================================
+       6. UTILIDADES CSV & ERROR
+       ========================================= */
+    function showError(msg) {
+        dom.error.textContent = msg;
+        dom.error.style.display = 'block';
+        setTimeout(() => dom.error.style.display = 'none', 4000);
     }
-    function addIntRow(s, r, l) {
-        const c = document.getElementById('intervals-container');
-        const d = document.createElement('div'); d.className='interval-row';
-        d.innerHTML = `<input type="number" value="${s}"><input type="number" value="${r}"><input type="text" value="${l}"><button onclick="this.parentElement.remove()" style="background:#522">&times;</button>`;
-        c.appendChild(d);
-    }
-    document.getElementById('add-interval-btn').onclick = () => addIntRow(60, 20, 'Intervalo');
-    
-    document.getElementById('start-routine-btn').onclick = () => {
-        const rows = document.querySelectorAll('.interval-row');
-        const steps = Array.from(rows).map(r => {
-            const i = r.querySelectorAll('input');
-            return { sec: parseInt(i[0].value), spm: parseInt(i[1].value), label: i[2].value };
+
+    window.downloadCSV = function() {
+        let csv = "Time,SPM,Watts,HR\n";
+        session.events.forEach(e => {
+            csv += `${e.t},${e.spm},${e.w},${e.hr}\n`;
         });
-        modal.style.display='none';
-        startSession({ steps });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'remo_session.csv';
+        a.click();
     };
 
-    // INIT
-    initGauge();
-    drawRower(0, true);
   </script>
 </body>
 </html>
