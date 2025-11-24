@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo PRO - UI Mejorado</title>
+  <title>Panel Remo PRO - UI UX V2</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
       --primary-color:#03dac6; --secondary-color:#bb86fc; --accent-color:#cf6679;
       --interval-bg:#1a2639; --interval-text:#ffffff; 
       --guide-fast:#f44336; --guide-slow:#2196f3; --guide-good:#4caf50;
-      --target-color: #00e676; /* Color verde brillante para objetivo */
+      --target-color: #00e676;
+      /* Colores Zonas HR */
+      --hr-z1: #29b6f6; /* Azul */
+      --hr-z2: #66bb6a; /* Verde */
+      --hr-z3: #ffee58; /* Amarilla */
+      --hr-z4: #ffa726; /* Naranja */
+      --hr-z5: #ef5350; /* Rojo */
     }
     
     html,body{height:100%; margin:0; padding:0; overflow:hidden;}
@@ -35,7 +41,6 @@
       overflow-y: auto;
     }
     
-    /* Cabecera con botón Fullscreen */
     header{
         text-align:center; padding:5px 10px; flex-shrink: 0; 
         display: flex; justify-content: space-between; align-items: center;
@@ -77,7 +82,6 @@
     .dash-fast { border-color: var(--guide-fast) !important; box-shadow: inset 0 0 20px rgba(244, 67, 54, 0.2); }
     .dash-good { border-color: var(--guide-good) !important; box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.2); }
 
-    /* Header del Intervalo: Reorganizado */
     .int-header { 
         display: flex; justify-content: space-between; align-items: flex-start; 
         margin-bottom: 5px; z-index: 5; position: relative;
@@ -86,7 +90,6 @@
     .int-phase-name { font-size: 1.1rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1.1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
     .int-step-count { background: #0f1724; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; color: #aaa; font-weight: bold; margin-top: 4px; width: fit-content; }
     
-    /* Bloque derecho: Timer y Objetivo debajo */
     .int-right-block { 
         display: flex; flex-direction: column; align-items: flex-end; 
         background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px;
@@ -128,7 +131,6 @@
     .int-actual-num { font-size: 1.5rem; font-weight: bold; color: white; line-height: 1; }
     .int-actual-lbl { font-size: 0.6rem; color: #888; text-transform: uppercase; }
     
-    /* Barra de próximo intervalo */
     .next-interval-box { 
         position: absolute; bottom: 10px; left: 10px;
         background: rgba(255,255,255,0.1); padding: 4px 8px; 
@@ -137,13 +139,44 @@
     .next-lbl { font-size: 0.5rem; color: #aaa; text-transform: uppercase; display: block;}
     .next-val { font-size: 0.75rem; color: white; font-weight: bold;}
 
-    /* Indicador Metrónomo Lineal */
-    .linear-gauge-container { width: 95%; height: 10px; display: flex; gap: 2px; margin-top: 5px; }
-    .gauge-segment { flex: 1; background: #333; border-radius: 2px; transition: background 0.1s, box-shadow 0.1s; }
+    /* === CAMBIO SOLICITADO: BARRA METRÓNOMO MÁS GRUESA Y EFECTOS === */
+    .linear-gauge-container { 
+        width: 95%; 
+        height: 22px; /* Aumentado de 10px */
+        display: flex; gap: 2px; margin-top: 5px; 
+    }
+    .gauge-segment { 
+        flex: 1; background: #333; border-radius: 2px; 
+        transition: background 0.1s, box-shadow 0.1s, transform 0.1s; 
+    }
     .gauge-segment.active { opacity: 1; box-shadow: 0 0 8px currentColor; }
     
-    .int-progress-container { width: 100%; height: 4px; background: #0f1724; border-radius: 2px; margin-top: 5px;}
-    .int-progress-bar { height: 100%; background: #2aa7ff; width: 100%; transition: width 1s linear; }
+    /* Efecto para el primer y ultimo cuadro */
+    @keyframes pulse-limit {
+        0% { transform: scale(1); filter: brightness(1.2); }
+        50% { transform: scale(1.3); filter: brightness(1.8); z-index: 10; }
+        100% { transform: scale(1); filter: brightness(1.2); }
+    }
+    .gauge-segment.limit-active {
+        animation: pulse-limit 0.25s ease-out forwards;
+        box-shadow: 0 0 15px currentColor !important;
+    }
+
+    /* === CAMBIO SOLICITADO: BARRA PROGRESO GRADIENTE Y GRUESA === */
+    .int-progress-container { 
+        width: 100%; 
+        height: 14px; /* Aumentado de 4px */
+        background: #0f1724; border-radius: 7px; margin-top: 5px;
+        overflow: hidden;
+    }
+    .int-progress-bar { 
+        height: 100%; 
+        /* Gradiente Azul -> Naranja */
+        background: linear-gradient(90deg, #2196f3 0%, #ff9800 100%);
+        width: 100%; 
+        transition: width 1s linear; 
+        box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    }
 
     .guide-up { color: var(--guide-slow); } .guide-down { color: var(--guide-fast); } .guide-ok { color: var(--guide-good); } 
 
@@ -158,8 +191,16 @@
     .metric-card .label{font-size:.6rem; color:var(--secondary-color); text-transform: uppercase;}
     .metric-card .value{font-size:1.3rem; font-weight:bold; color:var(--primary-color);}
     .metric-card .unit{font-size:.6rem; color: #888;}
-    .card-pulse { animation: pulse-green 1s infinite; }
-    @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
+    
+    /* Clases para Zonas HR */
+    .hr-z1 { color: var(--hr-z1) !important; }
+    .hr-z2 { color: var(--hr-z2) !important; }
+    .hr-z3 { color: var(--hr-z3) !important; }
+    .hr-z4 { color: var(--hr-z4) !important; }
+    .hr-z5 { color: var(--hr-z5) !important; }
+
+    .card-pulse { animation: pulse-card 1s infinite; }
+    @keyframes pulse-card { 0% { box-shadow: 0 0 0 0 rgba(255,255,255, 0.1); } 70% { box-shadow: 0 0 0 6px rgba(255,255,255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255, 0); } }
 
     /* === BARRA DE BOTONES (CONTROLES) === */
     .buttons-container {
@@ -168,14 +209,9 @@
         transition: opacity 0.5s ease, transform 0.5s ease;
     }
     
-    /* Clase para ocultar los botones durante entrenamiento */
     .buttons-hidden {
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(20px);
-        height: 0;
-        margin: 0;
-        overflow: hidden;
+        opacity: 0; pointer-events: none; transform: translateY(20px);
+        height: 0; margin: 0; overflow: hidden;
     }
 
     button{
@@ -190,7 +226,6 @@
     #export-btn{background:var(--secondary-color);}
     #routine-btn{background:#3f51b5; color:white;}
 
-    /* Botón flotante para mostrar menú */
     #toggle-ui-fab {
         position: fixed; bottom: 20px; right: 20px;
         width: 50px; height: 50px; border-radius: 50%;
@@ -202,62 +237,38 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
 
-    /* === HORIZONTAL (LANDSCAPE) - COCKPIT MODE === */
+    /* === HORIZONTAL (LANDSCAPE) === */
     @media (orientation: landscape) {
         body { padding: 0; overflow: hidden; }
         .container { flex-direction: row; padding: 5px; gap: 10px; height: 100vh; }
+        header, h1 { display: none; } 
+        #fs-toggle { position: absolute; top: 10px; right: 10px; z-index: 100; opacity: 0.5; background: rgba(0,0,0,0.5); border-radius: 4px; }
+        .status-bar { position: absolute; top: 0; left: 0; right: 50px; background: rgba(0,0,0,0.5); padding: 2px 10px; z-index: 90; margin: 0; border-radius: 0; justify-content: center; gap: 20px; font-size: 9px; }
         
-        header, h1 { display: none; } /* Ocultar cabecera */
-        
-        /* Botón Fullscreen flota en landscape */
-        #fs-toggle { 
-            position: absolute; top: 10px; right: 10px; 
-            z-index: 100; opacity: 0.5; background: rgba(0,0,0,0.5); border-radius: 4px;
-        }
-
-        .status-bar {
-            position: absolute; top: 0; left: 0; right: 50px; /* Dejar espacio al btn FS */
-            background: rgba(0,0,0,0.5); padding: 2px 10px;
-            z-index: 90; margin: 0; border-radius: 0;
-            justify-content: center; gap: 20px; font-size: 9px;
-        }
-
-        /* IZQUIERDA: Humanoide (60%) */
-        #interval-dashboard {
-            display: flex !important; width: 60%; height: 100%; margin: 0; border: none;
-            background: #151515; justify-content: center;
-        }
-        
+        #interval-dashboard { display: flex !important; width: 60%; height: 100%; margin: 0; border: none; background: #151515; justify-content: center; }
         .int-header { position: absolute; top: 25px; left: 15px; right: 15px; width: auto; }
         .int-right-block { align-items: flex-end; }
         .int-timer-big { font-size: 3.5rem; }
         .int-target-val { font-size: 2rem; }
         .int-phase-name { font-size: 1.8rem; }
-
         .int-main-visual { display: flex; flex-direction: column; justify-content: center; height: 100%; }
-        
         canvas#rower-canvas { max-width: 100%; max-height: 60vh; width: auto !important; height: auto !important; }
         
-        /* DERECHA: Datos (40%) */
-        .dashboard {
-            display: grid !important; width: 40%; height: 100%; gap: 5px;
-            grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr);
-            align-content: center; overflow-y: auto; padding-top: 25px;
-        }
+        .dashboard { display: grid !important; width: 40%; height: 100%; gap: 5px; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); align-content: center; overflow-y: auto; padding-top: 25px; }
         .metrics-row { display: contents; } 
         .metric-card { width: 100%; height: 100%; min-height: 0; padding: 5px; border: 1px solid #333; }
         .metric-card .value { font-size: 1.8rem; }
-        .buttons-container { display: none; } /* En landscape ocultamos botones siempre, usamos FAB */
-        #toggle-ui-fab { display: flex; } /* Siempre visible en Landscape para control */
+        .buttons-container { display: none; } 
+        #toggle-ui-fab { display: flex; } 
         
         .int-actual-row { bottom: 30px; right: 30px; }
         .int-actual-num { font-size: 3rem; }
         .next-interval-box { bottom: 30px; left: 30px; }
-        .int-progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; }
+        .int-progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 12px; border-radius: 0; }
     }
 
-    /* Utiles ocultos */
-    #power-card .label, #power-card .power-controls, #power-card .subtle { display: none !important; }
+    /* === CAMBIO SOLICITADO: OCULTAR FUENTE EQUIV === */
+    #power-card .label, #power-card .power-controls, #power-source { display: none !important; }
     
     /* Modales */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
@@ -353,13 +364,13 @@
             <select id="power-mode"><option value="equiv">Equiv</option><option value="ble">BLE</option><option value="corr">Corr</option></select>
             <input id="corr-factor" type="number" step="0.1" value="7.2">
           </div>
-          <div class="subtle" id="power-source" style="display:block!important">Fuente: Equiv</div>
+          <div class="subtle" id="power-source">Fuente: Equiv</div>
         </div>
         <div class="metric-card"><div class="label">Tiempo</div><div class="value" id="duration">00:00</div></div>
       </div>
       <div class="metrics-row">
-         <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
-         <div class="metric-card"><div class="label">Pace/500</div><div class="value" id="pace">--:--</div></div>
+          <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
+          <div class="metric-card"><div class="label">Pace/500</div><div class="value" id="pace">--:--</div></div>
       </div>
     </div>
 
@@ -370,7 +381,7 @@
       <button id="end-session-btn">⏹ Final</button>
       <button id="export-btn" disabled>⬇ CSV</button>
     </div>
-  
+   
   </div>
 
   <div id="results-screen">
@@ -425,7 +436,6 @@
       addIntervalBtn: document.getElementById('add-interval-btn'), intervalsContainer: document.getElementById('intervals-container'), 
       startRoutineBtn: document.getElementById('start-routine-btn'), cancelRoutineBtn: document.getElementById('cancel-routine-btn'), 
       canvas: document.getElementById('rower-canvas'), gaugeBar: document.getElementById('gauge-bar'),
-      // Nuevos controles UI
       mainControls: document.getElementById('main-controls'), fab: document.getElementById('toggle-ui-fab'),
       fsToggle: document.getElementById('fs-toggle')
     };
@@ -443,11 +453,11 @@
             document.documentElement.requestFullscreen().catch(err => {
                 console.log(`Error full-screen: ${err.message}`);
             });
-            dom.fsToggle.textContent = '✖'; // Icono salir
+            dom.fsToggle.textContent = '✖'; 
         } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
-                dom.fsToggle.textContent = '⛶'; // Icono entrar
+                dom.fsToggle.textContent = '⛶'; 
             }
         }
     }
@@ -465,7 +475,6 @@
     }
 
     dom.fab.addEventListener('click', () => {
-        // Toggle manual de los controles
         if(dom.mainControls.classList.contains('buttons-hidden')){
             dom.mainControls.classList.remove('buttons-hidden');
         } else {
@@ -473,10 +482,7 @@
         }
     });
 
-
-    /* =========================================================================
-       WAKE LOCK (Sin cambios funcionales)
-       ========================================================================= */
+    /* ================= WAKE LOCK ================= */
     let wakeLock = null;
     let connectedRower = false;
     let connectedHr = false;
@@ -510,7 +516,7 @@
     document.addEventListener('fullscreenchange', () => { isFullscreen = !!document.fullscreenElement; syncWakeLock(); });
     document.addEventListener('touchstart', async () => { if(shouldHoldWakeLock() && !wakeLock) await syncWakeLock(); }, {passive: true});
 
-    /* ----------------- GAUGE & VISUALS ----------------- */
+    /* ----------------- GAUGE & VISUALS MODIFICADOS ----------------- */
     const SEGMENT_COUNT = 20;
     function initGauge() {
         if(!dom.gaugeBar) return;
@@ -522,19 +528,36 @@
             seg.dataset.color = color; dom.gaugeBar.appendChild(seg);
         }
     }
+    
+    // Función mejorada con efecto de destello en extremos
     function updateGauge(phase, isDrive) {
         if(!dom.gaugeBar) return;
         const segments = dom.gaugeBar.children;
         const activeCount = Math.floor(phase * SEGMENT_COUNT);
+        
         for (let i = 0; i < SEGMENT_COUNT; i++) {
             const seg = segments[i];
-            if ((isDrive && i <= activeCount) || (!isDrive && i <= activeCount)) { 
-                seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; 
-            } else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
+            const isActive = (isDrive && i <= activeCount) || (!isDrive && i <= activeCount);
+            
+            // Limpiar clases
+            seg.className = isActive ? 'gauge-segment active' : 'gauge-segment inactive';
+            seg.style.background = isActive ? seg.dataset.color : '';
+
+            // Efecto Visual Min/Max en los extremos
+            if (isActive) {
+                // Si es el primer cuadro (inicio)
+                if (i === 0 && activeCount <= 1) {
+                    seg.classList.add('limit-active');
+                }
+                // Si es el último cuadro (final)
+                else if (i === SEGMENT_COUNT - 1) {
+                    seg.classList.add('limit-active');
+                }
+            }
         }
     }
 
-    /* ----------------- CANVAS (Sin cambios lógica) ----------------- */
+    /* ----------------- CANVAS ----------------- */
     const ctx = dom.canvas.getContext('2d');
     let animFrame = null;
     let lastBeepTime = 0;
@@ -656,7 +679,7 @@
       activeRoutine = routine; currentStepIndex = 0; inIntervalMode = true; isRowing = false;
       dom.intervalDashboard.style.display = 'flex'; 
       loadStep(0); startTimer(); startMetronomeLoop();
-      setUIFocusMode(true); // Ocultar botones al iniciar
+      setUIFocusMode(true); 
     }
 
     function loadStep(idx) {
@@ -721,7 +744,10 @@
         alert("El remo se ha desconectado."); stopTimer(); syncWakeLock();
     }
 
-    // --- CONEXIÓN HR ---
+    // --- CONEXIÓN HR (MODIFICADA CON ZONAS) ---
+    const USER_AGE = 33;
+    const MAX_HR = 220 - USER_AGE; // 187 BPM
+
     dom.connectHrBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth Off");
         const dev = await navigator.bluetooth.requestDevice({ filters:[{services:[HR_SERVICE_UUID]}], optionalServices:[HR_SERVICE_UUID] });
@@ -730,13 +756,33 @@
         connectedHr=true; 
         updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
         const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
-        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', e=>{ 
-            const v=e.target.value; const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
-            updateText('heart-rate', val); if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
-        }); 
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleHrData); 
         syncWakeLock();
       }catch(e){ showError("Err HR: " + e.message); connectedHr=false; syncWakeLock(); }
     });
+
+    function handleHrData(e) {
+        const v = e.target.value; 
+        const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
+        updateText('heart-rate', val); 
+        
+        // Logica de Zonas HR
+        const hrEl = document.getElementById('heart-rate');
+        const pct = val / MAX_HR;
+        hrEl.className = 'value'; // Limpiar clases anteriores
+        
+        if (pct < 0.6) hrEl.classList.add('hr-z1');       // < 112
+        else if (pct < 0.7) hrEl.classList.add('hr-z2');  // 112 - 130
+        else if (pct < 0.8) hrEl.classList.add('hr-z3');  // 131 - 149
+        else if (pct < 0.9) hrEl.classList.add('hr-z4');  // 150 - 168
+        else hrEl.classList.add('hr-z5');                 // > 168
+
+        if(dom.hrCard) { 
+            dom.hrCard.classList.remove('card-pulse'); 
+            void dom.hrCard.offsetWidth; 
+            dom.hrCard.classList.add('card-pulse'); 
+        }
+    }
 
     function onHrDisconnected() {
         connectedHr = false; updateText('hr-status', 'HR: --');
@@ -790,7 +836,7 @@
         clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); 
         sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
         dom.intervalDashboard.style.display = 'none'; syncWakeLock();
-        setUIFocusMode(false); // Mostrar botones al parar
+        setUIFocusMode(false); 
     }
 
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
@@ -827,4 +873,3 @@
   </script>
 </body>
 </html>
-
