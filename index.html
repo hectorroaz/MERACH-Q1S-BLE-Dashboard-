@@ -2,9 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <!-- Viewport crítico para móviles -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo - Mobile Pro</title>
+  <title>Panel Remo - Cockpit Mode</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -13,7 +12,7 @@
       --guide-fast:#f44336; --guide-slow:#2196f3; --guide-good:#4caf50;
     }
     
-    html,body{height:100%; margin:0; padding:0; overflow-x:hidden; overflow-y:auto;}
+    html,body{height:100%; margin:0; padding:0; overflow:hidden;}
     body{
       font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
       background:var(--bg-color);
@@ -21,23 +20,28 @@
       display:flex;
       flex-direction:column;
       align-items:center;
-      padding:10px;
       box-sizing:border-box;
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Contenedor principal */
-    .container{width:100%; max-width:900px; display:flex; flex-direction:column; position:relative; padding-bottom: 60px;}
+    /* === ESTRUCTURA PRINCIPAL === */
+    .container {
+      width: 100%; height: 100%; 
+      display: flex; flex-direction: column; 
+      position: relative; 
+      padding: 10px;
+      overflow-y: auto; /* Scroll solo si es vertical */
+    }
     
-    header{text-align:center; padding:5px 0;}
+    header{text-align:center; padding:5px 0; flex-shrink: 0;}
     h1{font-size:1.2rem; margin:0; opacity: 0.8;}
     
     /* Botones */
-    .buttons{display:flex; justify-content:center; gap:8px; margin:5px 0 10px 0; flex-wrap:wrap;}
+    .buttons{display:flex; justify-content:center; gap:8px; margin:5px 0 10px 0; flex-wrap:wrap; flex-shrink: 0;}
     button{
         padding:10px 14px; font-size:13px; border:none; border-radius:8px; 
         cursor:pointer; background:var(--primary-color); color:var(--bg-color); 
-        font-weight:bold; transition:all .2s; flex: 1 1 auto; min-width: 100px;
+        font-weight:bold; transition:all .2s; flex: 1 1 auto; min-width: 80px;
         touch-action: manipulation;
     }
     button:active{transform:scale(0.96);}
@@ -47,10 +51,15 @@
     #routine-btn{background:#3f51b5; color:white;}
 
     /* Status Bar */
-    .status-bar{display:flex; justify-content:space-between; background:var(--card-color); padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:10px; text-align:center; gap: 5px;}
+    .status-bar{
+        display:flex; justify-content:space-between; 
+        background:var(--card-color); padding:6px 12px; 
+        border-radius:6px; margin-bottom:10px; 
+        font-size:10px; text-align:center; gap: 5px; flex-shrink: 0;
+    }
     .connected{color:var(--primary-color); font-weight: bold;} .disconnected{color:var(--accent-color);}
 
-    /* === DASHBOARD DE INTERVALOS === */
+    /* === DASHBOARD DE INTERVALOS (HUMANOIDE) === */
     #interval-dashboard {
         display: none; 
         background: var(--interval-bg);
@@ -58,10 +67,11 @@
         border-radius: 12px;
         padding: 10px;
         flex-direction: column;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         position: relative;
         overflow: hidden; 
         transition: border-color 0.3s ease;
+        flex-shrink: 0; /* No encoger en vertical */
     }
     
     .dash-slow { border-color: var(--guide-slow) !important; box-shadow: inset 0 0 20px rgba(33, 150, 243, 0.2); }
@@ -70,11 +80,11 @@
 
     .int-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; z-index: 5; position: relative;}
     .int-phase-info { display: flex; flex-direction: column; max-width: 55%; }
-    .int-phase-name { font-size: 1.3rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+    .int-phase-name { font-size: 1.1rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
     .int-step-count { background: #0f1724; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; color: #aaa; font-weight: bold; margin-top: 4px; width: fit-content; }
     
     .int-timer-block { text-align: right; }
-    .int-timer-big { font-size: 2.2rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
+    .int-timer-big { font-size: 2rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; }
     .int-timer-status { font-size: 0.6rem; color: #ffd700; font-weight: bold; text-transform: uppercase;}
 
     .int-main-visual { 
@@ -92,83 +102,145 @@
     canvas#rower-canvas {
         width: 100% !important;
         height: auto !important;
-        max-width: 500px;
+        max-width: 400px; /* Limitado en vertical */
         aspect-ratio: 450/220;
     }
 
     .rower-overlay-text { position: absolute; top: 10px; right: 10px; text-align: right; pointer-events: none; }
-    .target-big { font-size: 2rem; font-weight: 900; color: white; opacity: 0.9; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
+    .target-big { font-size: 1.8rem; font-weight: 900; color: white; opacity: 0.9; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
     .target-lbl { font-size: 0.6rem; color: var(--primary-color); text-transform: uppercase; font-weight: bold;}
 
     .int-guidance { 
-        position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
-        text-align: center; display: flex; flex-direction: column; align-items: center; 
-        pointer-events: none; 
+        position: relative; text-align: center; display: flex; flex-direction: row; 
+        align-items: center; justify-content: center; gap: 10px;
+        background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 20px; 
+        width: fit-content; margin: 0 auto 5px auto;
     }
-    .int-arrow { font-size: 3rem; line-height: 0.8; transition: all 0.3s ease; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .int-guidance-text { font-weight: 900; font-size: 1rem; letter-spacing: 1px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;}
+    .int-arrow { font-size: 1.5rem; line-height: 1; transition: all 0.3s ease; }
+    .int-guidance-text { font-weight: 900; font-size: 0.9rem; letter-spacing: 1px;}
 
     .int-right-col { display: flex; flex-direction: row; justify-content: space-around; width: 100%; margin-top: 5px; align-items: center;}
     .int-actual-val { text-align: center; }
-    .int-actual-num { font-size: 2.8rem; font-weight: bold; color: white; line-height: 1; }
+    .int-actual-num { font-size: 2.2rem; font-weight: bold; color: white; line-height: 1; }
     .int-actual-lbl { font-size: 0.6rem; color: #888; text-transform: uppercase; }
 
     .next-interval-box { background: rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 6px; border-left: 3px solid #555; text-align: left; }
     .next-lbl { font-size: 0.55rem; color: #aaa; text-transform: uppercase; display: block;}
     .next-val { font-size: 0.85rem; color: white; font-weight: bold;}
 
-    .linear-gauge-container { width: 90%; height: 8px; display: flex; gap: 2px; margin-top: 5px; }
+    .linear-gauge-container { width: 90%; height: 6px; display: flex; gap: 2px; margin-top: 5px; }
     .gauge-segment { flex: 1; background: #333; border-radius: 2px; }
     .gauge-segment.active { opacity: 1; box-shadow: 0 0 5px currentColor; }
     
-    .int-progress-container { width: 100%; height: 4px; background: #0f1724; border-radius: 2px; margin-top: 10px;}
+    .int-progress-container { width: 100%; height: 4px; background: #0f1724; border-radius: 2px; margin-top: 5px;}
     .int-progress-bar { height: 100%; background: #2aa7ff; width: 100%; transition: width 1s linear; }
 
     .guide-up { color: var(--guide-slow); } .guide-down { color: var(--guide-fast); } .guide-ok { color: var(--guide-good); } 
 
-    /* Métricas Generales */
-    .dashboard{display:flex; flex-direction:column; gap:10px; width:100%}
-    .metrics-row{display:flex; gap:8px; justify-content:center; flex-wrap: wrap;}
-    .metric-card{
-        background:var(--card-color); padding:10px; border-radius:8px; text-align:center;
-        display:flex; flex-direction:column; justify-content:center;
-        flex: 1 1 30%; min-width: 80px;
+    /* === MÉTRICAS (DATA GRID) === */
+    .dashboard {
+        display:flex; flex-direction:column; gap:8px; width:100%; flex: 1;
     }
-    .metric-card .label{font-size:.65rem; color:var(--secondary-color); text-transform: uppercase;}
-    .metric-card .value{font-size:1.4rem; font-weight:bold; color:var(--primary-color);}
+    .metrics-row {
+        display:flex; gap:8px; justify-content:center; flex-wrap: wrap;
+    }
+    .metric-card {
+        background:var(--card-color); padding:8px; border-radius:8px; text-align:center;
+        display:flex; flex-direction:column; justify-content:center;
+        flex: 1 1 30%; min-width: 80px; 
+    }
+    .metric-card .label{font-size:.6rem; color:var(--secondary-color); text-transform: uppercase;}
+    .metric-card .value{font-size:1.3rem; font-weight:bold; color:var(--primary-color);}
     .metric-card .unit{font-size:.6rem; color: #888;}
     .card-pulse { animation: pulse-green 1s infinite; }
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
 
-    /* Media Queries */
-    @media (orientation: portrait) {
-        .int-main-visual { grid-template-rows: auto auto auto; }
-        .int-guidance { position: relative; top: 0; transform: none; margin-bottom: 5px; background: rgba(255,255,255,0.05); padding: 5px 20px; border-radius: 20px; width: fit-content; margin: 0 auto; flex-direction: row; gap: 10px;}
-        .int-arrow { font-size: 1.5rem; margin: 0; }
-        .int-guidance-text { font-size: 0.9rem; margin: 0; background: none;}
-        .metric-card { flex: 1 1 40%; }
-    }
-
-    @media (orientation: landscape) and (max-height: 500px) {
-        body { padding: 5px; }
-        h1, header { display: none; }
-        .buttons { margin: 5px 0; justify-content: flex-start; }
-        button { padding: 6px 10px; font-size: 11px; min-width: auto; }
+    /* === HORIZONTAL (LANDSCAPE) - EL MODO COCKPIT === */
+    @media (orientation: landscape) {
+        body { padding: 0; overflow: hidden; }
         
-        #interval-dashboard {
-            flex-direction: row; flex-wrap: wrap; padding: 5px; align-items: center; justify-content: center; height: 75vh;
+        /* Contenedor principal pasa a fila */
+        .container {
+            flex-direction: row; 
+            padding: 5px; 
+            gap: 10px;
+            height: 100vh;
         }
-        .int-header { position: absolute; top: 10px; right: 10px; flex-direction: column; align-items: flex-end; width: auto; text-align: right; }
-        .int-phase-info { align-items: flex-end; } .int-phase-name { font-size: 1.1rem; } .int-timer-big { font-size: 1.8rem; }
-        .int-main-visual { grid-template-columns: 1.5fr 1fr; width: 100%; height: 100%; align-items: center; }
-        .center-viz-container { height: 100%; justify-content: center; }
-        .rower-container { height: 100%; width: auto; align-items: center; }
-        canvas#rower-canvas { width: auto !important; height: 100% !important; max-height: 70vh !important; aspect-ratio: 450/220; }
-        .rower-overlay-text { top: auto; bottom: 5px; right: 5px; } .target-big { font-size: 1.5rem; }
-        .int-right-col { flex-direction: column; justify-content: center; height: 100%; gap: 10px; }
-        .int-guidance { position: relative; top: auto; left: auto; transform: none; margin-bottom: 10px; }
-        .int-progress-container { position: absolute; bottom: 0; left: 0; height: 3px; margin: 0; }
-        .dashboard { display: none; } 
+
+        /* Ocultar elementos no esenciales en horizontal */
+        header, .buttons button span { display: none; } /* Ocultar texto botones si necesario */
+        h1 { display: none; }
+        
+        /* Barra de botones lateral o superior muy fina */
+        .buttons {
+            position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+            z-index: 100; margin: 0; opacity: 0.3; transition: opacity 0.3s;
+        }
+        .buttons:hover { opacity: 1; }
+        .buttons button { padding: 4px 8px; font-size: 10px; min-width: auto; }
+
+        /* Status bar compacta arriba */
+        .status-bar {
+            position: absolute; top: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.5); padding: 2px 10px;
+            z-index: 90; margin: 0; border-radius: 0;
+            justify-content: center; gap: 20px; font-size: 9px;
+        }
+
+        /* IZQUIERDA: Humanoide (60% ancho) */
+        #interval-dashboard {
+            display: flex !important; /* Forzar display aunque no haya sesión activa para probar layout */
+            width: 60%;
+            height: 100%;
+            margin: 0;
+            border: none;
+            background: #151515;
+            justify-content: center;
+        }
+        
+        .int-header { position: absolute; top: 20px; left: 10px; right: 10px; }
+        .int-timer-big { font-size: 3rem; }
+        .int-phase-name { font-size: 1.5rem; }
+
+        .int-main-visual { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        
+        /* El canvas debe llenar el espacio pero mantener proporción */
+        canvas#rower-canvas {
+            max-width: 100%;
+            max-height: 60vh;
+            width: auto !important;
+            height: auto !important;
+        }
+        
+        /* DERECHA: Datos (40% ancho) */
+        .dashboard {
+            display: grid !important; /* IMPORTANTE: Asegurar que se ve */
+            width: 40%;
+            height: 100%;
+            gap: 5px;
+            grid-template-columns: 1fr 1fr; /* 2 columnas */
+            grid-template-rows: repeat(5, 1fr); /* Filas automáticas */
+            align-content: center;
+            overflow-y: auto;
+            padding-top: 20px; /* Espacio para status bar */
+        }
+
+        .metrics-row { display: contents; } /* Ignorar los divs fila originales */
+        
+        .metric-card {
+            width: 100%; height: 100%;
+            min-height: 0; 
+            padding: 5px;
+            border: 1px solid #333;
+        }
+        .metric-card .value { font-size: 1.8rem; }
+        .metric-card .label { font-size: 0.7rem; }
+        
+        /* Ajustes específicos de elementos */
+        .int-right-col { position: absolute; bottom: 20px; right: 20px; width: auto; flex-direction: column; align-items: flex-end; }
+        .int-actual-num { font-size: 3.5rem; }
+        .int-guidance { position: absolute; bottom: 20px; left: 20px; margin: 0; }
+        .int-progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; }
     }
 
     /* Utiles ocultos */
@@ -196,20 +268,11 @@
   <div class="container" id="main-screen">
     <header><h1>Panel Remo PRO</h1></header>
 
-    <div class="buttons">
-      <button id="connect-rower-btn">🔗 Remo</button>
-      <button id="connect-hr-btn">❤️ HR</button>
-      <button id="routine-btn">⚡ Rutina</button>
-      <button id="end-session-btn">⏹ Finalizar</button>
-      <button id="export-btn" disabled>⬇ CSV</button>
-    </div>
-
     <div class="status-bar">
       <div id="rower-status" class="status disconnected">Remo: Desconectado</div>
       <div id="hr-status" class="status disconnected">HR: --</div>
     </div>
 
-    <!-- INTERVAL DASHBOARD -->
     <div id="interval-dashboard">
       <div class="int-header">
         <div class="int-phase-info">
@@ -223,11 +286,6 @@
       </div>
 
       <div class="int-main-visual">
-        <div class="int-guidance">
-          <span class="int-arrow" id="int-arrow">−</span>
-          <div class="int-guidance-text" id="int-msg">REMA</div>
-        </div>
-
         <div class="center-viz-container">
             <div class="rower-container">
                 <canvas id="rower-canvas" width="450" height="220"></canvas>
@@ -237,6 +295,11 @@
                 </div>
             </div>
              <div class="linear-gauge-container" id="gauge-bar"></div>
+        </div>
+        
+        <div class="int-guidance">
+          <span class="int-arrow" id="int-arrow">−</span>
+          <div class="int-guidance-text" id="int-msg">REMA</div>
         </div>
 
         <div class="int-right-col">
@@ -256,11 +319,12 @@
       </div>
     </div>
 
-    <!-- METRICAS -->
     <div class="dashboard">
       <div class="metrics-row">
         <div class="metric-card"><div class="label">Ritmo</div><div><span class="value" id="stroke-rate">0</span><span class="unit">SPM</span></div></div>
         <div class="metric-card" id="hr-card"><div class="label">Pulso</div><div><span class="value" id="heart-rate">--</span><span class="unit">BPM</span></div></div>
+      </div>
+      <div class="metrics-row">
         <div class="metric-card"><div class="label">Paladas</div><div class="value" id="total-strokes">0</div></div>
         <div class="metric-card"><div class="label">Distancia</div><div><span class="value" id="distance">0.00</span><span class="unit">km</span></div></div>
       </div>
@@ -275,13 +339,23 @@
           <div class="subtle" id="power-source" style="display:block!important">Fuente: Equiv</div>
         </div>
         <div class="metric-card"><div class="label">Tiempo</div><div class="value" id="duration">00:00</div></div>
-        <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
-        <div class="metric-card"><div class="label">Pace/500</div><div class="value" id="pace">--:--</div></div>
+      </div>
+      <div class="metrics-row">
+         <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
+         <div class="metric-card"><div class="label">Pace/500</div><div class="value" id="pace">--:--</div></div>
       </div>
     </div>
+
+    <div class="buttons">
+      <button id="connect-rower-btn">🔗 Remo</button>
+      <button id="connect-hr-btn">❤️ HR</button>
+      <button id="routine-btn">⚡ Rutina</button>
+      <button id="end-session-btn">⏹ Final</button>
+      <button id="export-btn" disabled>⬇ CSV</button>
+    </div>
+
   </div>
 
-  <!-- RESULTS -->
   <div id="results-screen">
     <h2>Resumen Sesión</h2>
     <div class="results-grid">
@@ -297,7 +371,6 @@
     </div>
   </div>
 
-  <!-- MODAL RUTINA -->
   <div class="modal-overlay" id="routine-modal">
     <div class="modal-content">
       <div class="modal-header"><h3 style="color:white;margin:0">Editor Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
@@ -345,14 +418,13 @@
     let rawEvents = [];
 
     /* =========================================================================
-       WAKE LOCK MEJORADO (Adaptado del Contexto 1)
+       WAKE LOCK MEJORADO
        ========================================================================= */
     let wakeLock = null;
     let connectedRower = false;
     let connectedHr = false;
     let isFullscreen = false;
 
-    // Condición: Mantener pantalla si hay remo conectado, HR conectado, o sesión activa
     function shouldHoldWakeLock() {
       return connectedRower || connectedHr || sessionActive || isFullscreen;
     }
@@ -363,7 +435,6 @@
         wakeLock = await navigator.wakeLock.request('screen');
         wakeLock.addEventListener('release', () => {
           wakeLock = null;
-          // Re-intentar adquirir si todavía es necesario y la app es visible
           if (document.visibilityState === 'visible' && shouldHoldWakeLock()) {
             acquireWakeLockOnce().catch(() => {});
           }
@@ -390,7 +461,6 @@
       }
     }
 
-    // Event Listeners del Sistema
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') syncWakeLock();
     });
@@ -400,7 +470,6 @@
       syncWakeLock();
     });
     
-    // Backup para navegadores móviles a veces perezosos
     document.addEventListener('touchstart', async () => { 
         if(shouldHoldWakeLock() && !wakeLock) await syncWakeLock(); 
     }, {passive: true});
@@ -445,6 +514,7 @@
         if(!ctx) return;
         const dpr = window.devicePixelRatio || 1;
         const rect = dom.canvas.getBoundingClientRect();
+        // Ajuste dinámico de tamaño para evitar pixelación
         if(dom.canvas.width !== Math.floor(rect.width * dpr) || dom.canvas.height !== Math.floor(rect.height * dpr)){
              dom.canvas.width = rect.width * dpr; dom.canvas.height = rect.height * dpr;
              ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
@@ -542,14 +612,15 @@
       const steps = rows.map(r => ({ sec: parseInt(r.querySelector('.int-dur').value)||60, spm: parseInt(r.querySelector('.int-spm').value)||20, label: r.querySelector('.int-lbl').value }));
       localStorage.setItem('lastRoutine', JSON.stringify({ name, steps }));
       startIntervalSession({ name, steps }); dom.modal.style.display = 'none';
-      // Sync Wake Lock al iniciar rutina
       syncWakeLock();
     });
 
     function startIntervalSession(routine) {
       if(sessionActive) stopTimer(); resetUI();
       activeRoutine = routine; currentStepIndex = 0; inIntervalMode = true; isRowing = false;
-      dom.intervalDashboard.style.display = 'flex'; loadStep(0); startTimer(); startMetronomeLoop();
+      // Mostrar dashboard, y en CSS se encarga del layout
+      dom.intervalDashboard.style.display = 'flex'; 
+      loadStep(0); startTimer(); startMetronomeLoop();
     }
     function loadStep(idx) {
       if (idx >= activeRoutine.steps.length) { finishRoutine(); return; }
@@ -593,65 +664,50 @@
 
     const FTMS_UUID=0x1826; const ROWER_CHAR_UUID=0x2AD1; const HR_SERVICE_UUID=0x180D; const HR_CHAR_UUID=0x2A37;
     
-    // --- CONEXIÓN REMO CON GESTIÓN DE DESCONEXIÓN ---
+    // --- CONEXIÓN REMO ---
     dom.connectRowerBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth API Off"); 
         const dev = await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_UUID]}], optionalServices:[FTMS_UUID]});
-        
-        // Listener de desconexión (Portado de Context 1)
         dev.addEventListener('gattserverdisconnected', onRowerDisconnected);
-        
         const server = await dev.gatt.connect(); 
         connectedRower=true; 
         updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
-        
         const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
         await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); 
-        
-        syncWakeLock(); // Activar pantalla
+        syncWakeLock();
       }catch(e){ showError("Err Remo: " + e.message); connectedRower=false; syncWakeLock(); }
     });
 
     function onRowerDisconnected() {
-        connectedRower = false;
-        updateText('rower-status', 'Remo: Desconectado');
+        connectedRower = false; updateText('rower-status', 'Remo: Desconectado');
         if(dom.rowerStatus) dom.rowerStatus.className = 'status disconnected';
-        alert("El remo se ha desconectado.");
-        stopTimer(); 
-        syncWakeLock(); // Liberar pantalla si no hay nada más
+        alert("El remo se ha desconectado."); stopTimer(); syncWakeLock();
     }
 
-    // --- CONEXIÓN HR CON GESTIÓN DE DESCONEXIÓN ---
+    // --- CONEXIÓN HR ---
     dom.connectHrBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth Off");
         const dev = await navigator.bluetooth.requestDevice({ filters:[{services:[HR_SERVICE_UUID]}], optionalServices:[HR_SERVICE_UUID] });
-        
         dev.addEventListener('gattserverdisconnected', onHrDisconnected);
-
         const server = await dev.gatt.connect(); 
         connectedHr=true; 
         updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
-        
         const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
         await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', e=>{ 
             const v=e.target.value; const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
             updateText('heart-rate', val); if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
         }); 
-        
-        syncWakeLock(); // Activar pantalla
+        syncWakeLock();
       }catch(e){ showError("Err HR: " + e.message); connectedHr=false; syncWakeLock(); }
     });
 
     function onHrDisconnected() {
-        connectedHr = false;
-        updateText('hr-status', 'HR: --');
+        connectedHr = false; updateText('hr-status', 'HR: --');
         if(dom.hrStatus) dom.hrStatus.className = 'status disconnected';
-        updateText('heart-rate', '--');
-        syncWakeLock();
+        updateText('heart-rate', '--'); syncWakeLock();
     }
 
     function handleRowerData(e){ 
-        // Si llegan datos y no hay sesión timer, iniciar (Auto-start)
         if(!sessionTimer && !inIntervalMode) startTimer(); 
         parseRowerData(e.target.value); 
     }
@@ -681,18 +737,12 @@
 
     function startTimer(){ 
         if(sessionTimer) return; 
-        sessionActive = true; 
-        syncWakeLock(); // Asegurar pantalla encendida
-        dom.exportBtn.disabled=false; 
-        
+        sessionActive = true; syncWakeLock(); dom.exportBtn.disabled=false; 
         sessionTimer = setInterval(()=>{ 
-            // La pantalla sigue activa aunque no se reme, porque sessionActive=true
             if(isRowing) { 
-                elapsedSeconds++; 
-                updateText('duration', formatMMSS(elapsedSeconds)); 
+                elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); 
                 if(inIntervalMode) { 
-                    stepTimeRemaining--; 
-                    updateIntervalUI(); 
+                    stepTimeRemaining--; updateIntervalUI(); 
                     if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); 
                 } 
             } 
@@ -700,14 +750,9 @@
     }
 
     function stopTimer(){ 
-        clearInterval(sessionTimer); 
-        if(animFrame) cancelAnimationFrame(animFrame); 
-        sessionTimer = null; 
-        sessionActive = false; // Importante para el Wake Lock
-        inIntervalMode = false; 
-        isRowing = false; 
-        dom.intervalDashboard.style.display = 'none'; 
-        syncWakeLock(); // Intentar liberar pantalla
+        clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); 
+        sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
+        dom.intervalDashboard.style.display = 'none'; syncWakeLock();
     }
 
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
@@ -723,8 +768,7 @@
     });
 
     document.getElementById('new-session-btn').addEventListener('click', ()=>{ 
-        dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); 
-        syncWakeLock(); // Actualizar estado de pantalla
+        dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); syncWakeLock();
     });
 
     function resetUI(){ 
