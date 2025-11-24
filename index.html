@@ -3,762 +3,827 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo - V4 Stable</title>
+  <title>Panel Remo PRO - UI Mejorado</title>
   <style>
     :root{
-      --bg-color:#000000; 
-      --card-bg:#141414; 
-      --text-main:#ffffff;
-      --text-muted:#888888;
-      --accent:#03dac6; 
-      --alert:#cf6679;
-      --guide-slow:#2196f3; --guide-fast:#f44336; --guide-good:#4caf50;
+      --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
+      --primary-color:#03dac6; --secondary-color:#bb86fc; --accent-color:#cf6679;
+      --interval-bg:#1a2639; --interval-text:#ffffff; 
+      --guide-fast:#f44336; --guide-slow:#2196f3; --guide-good:#4caf50;
+      --target-color: #00e676; /* Color verde brillante para objetivo */
     }
     
-    * { box-sizing: border-box; user-select: none; }
-    
-    html,body{height:100%; margin:0; padding:0; overflow:hidden; background:var(--bg-color); font-family:'Segoe UI', sans-serif;}
-    
-    /* === LAYOUT PRINCIPAL === */
+    html,body{height:100%; margin:0; padding:0; overflow:hidden;}
+    body{
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+      background:var(--bg-color);
+      color:var(--text-color);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.3s;
+    }
+
+    /* === ESTRUCTURA PRINCIPAL === */
     .container {
-      width: 100%; height: 100vh; 
+      width: 100%; height: 100%; 
       display: flex; flex-direction: column; 
-      position: relative;
+      position: relative; 
+      padding: 10px;
+      overflow-y: auto;
     }
-
-    /* HEADER (Solo visible en vertical) */
-    header { padding: 10px; text-align: center; color: var(--text-muted); font-size: 0.8rem; letter-spacing: 2px;}
-
-    /* === DASHBOARD SUPERIOR / IZQUIERDO (VISUAL) === */
-    #visual-panel {
-      position: relative;
-      flex: 1; /* Ocupa el espacio sobrante */
-      display: flex;
-      flex-direction: column;
-      background: #080a10;
-      overflow: hidden;
-      border-bottom: 1px solid #333;
-    }
-
-    /* HUD Elements (Texto sobre el canvas) */
-    .hud { position: absolute; z-index: 10; pointer-events: none; }
-    .hud-tl { top: 15px; left: 15px; } /* Fase */
-    .hud-tr { top: 15px; right: 15px; text-align: right; } /* Timer */
-    .hud-mid-r { top: 70px; right: 15px; text-align: right; } /* Objetivo */
     
-    .hud-title { font-size: 1.4rem; font-weight: 900; font-style: italic; color: #fff; text-transform: uppercase; margin:0; line-height: 1;}
-    .hud-sub { font-size: 0.75rem; color: #666; background: #1a1a1a; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;}
-    .hud-time { font-size: 3.5rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; line-height: 0.9; letter-spacing: -2px;}
-    .hud-status { color: #ffca28; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;}
-    
-    .hud-target-val { font-size: 2rem; font-weight: 900; color: var(--accent); line-height: 1; }
-    .hud-target-lbl { font-size: 0.6rem; color: #666; font-weight: bold; letter-spacing: 1px; }
-
-    /* Feedback Visual (Flechas) */
-    .hud-feedback {
-        position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-        display: flex; align-items: center; gap: 8px;
-        background: rgba(20,20,20,0.8); padding: 8px 16px; border-radius: 30px;
-        border: 1px solid #333; z-index: 10;
-        transition: all 0.2s;
+    /* Cabecera con botón Fullscreen */
+    header{
+        text-align:center; padding:5px 10px; flex-shrink: 0; 
+        display: flex; justify-content: space-between; align-items: center;
+        position: relative; height: 40px;
     }
-    .fb-arrow { font-size: 1.5rem; line-height: 0.8; }
-    .fb-text { font-weight: 800; font-size: 0.9rem; letter-spacing: 1px; color: #fff; }
+    h1{font-size:1.2rem; margin:0; opacity: 0.8; flex-grow: 1; text-align: center;}
+    
+    #fs-toggle {
+        background: none; border: none; color: var(--text-color);
+        font-size: 1.5rem; cursor: pointer; padding: 5px;
+        opacity: 0.7; z-index: 10;
+    }
 
-    /* Canvas Container */
-    #canvas-wrapper {
-        flex: 1; /* Crece para llenar el panel visual */
-        width: 100%;
+    /* Status Bar */
+    .status-bar{
+        display:flex; justify-content:space-between; 
+        background:var(--card-color); padding:6px 12px; 
+        border-radius:6px; margin-bottom:10px; 
+        font-size:10px; text-align:center; gap: 5px; flex-shrink: 0;
+    }
+    .connected{color:var(--primary-color); font-weight: bold;} .disconnected{color:var(--accent-color);}
+
+    /* === DASHBOARD DE INTERVALOS (HUMANOIDE) === */
+    #interval-dashboard {
+        display: none; 
+        background: var(--interval-bg);
+        border: 2px solid #444;
+        border-radius: 12px;
+        padding: 10px 15px;
+        flex-direction: column;
+        margin-bottom: 10px;
         position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        overflow: hidden; 
+        transition: border-color 0.3s ease;
+        flex-shrink: 0;
     }
-    canvas { width: 100%; height: 100%; display: block; }
-
-    /* Metrónomo (Barra inferior del visual) */
-    .metronome-bar {
-        height: 6px; width: 100%; display: flex; gap: 2px;
-        background: #000; padding: 0 10px 10px 10px; box-sizing: border-box;
-        flex-shrink: 0; z-index: 20;
-    }
-    .metro-seg { flex: 1; background: #222; border-radius: 2px; transition: background 0.1s; }
-    .metro-seg.active { box-shadow: 0 0 8px currentColor; opacity: 1; }
-
-    /* Barra de progreso de intervalo (Fina linea azul abajo) */
-    .interval-progress { height: 3px; background: #000; width: 100%; flex-shrink: 0; }
-    .ip-fill { height: 100%; background: #2979ff; width: 0%; transition: width 1s linear; }
-
-    /* === DATA GRID (DATOS NUMÉRICOS) === */
-    #data-panel {
-        padding: 10px;
-        background: #000;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-        flex-shrink: 0; /* No encoger */
-    }
-
-    .card {
-        background: var(--card-bg); border-radius: 8px; padding: 10px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        border: 1px solid #222; min-height: 70px;
-    }
-    .card-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;}
-    .card-val { font-size: 1.5rem; font-weight: 700; color: #fff; }
-    .card-unit { font-size: 0.7rem; color: #555; margin-left: 2px; font-weight: normal;}
-    .val-highlight { color: var(--accent); }
-
-    /* === CONTROLES FLOTANTES === */
-    .controls {
-        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        background: rgba(10,10,10,0.9); padding: 5px; border-radius: 12px;
-        display: flex; gap: 8px; z-index: 100;
-        border: 1px solid #333;
-        transition: opacity 0.5s, transform 0.5s;
-    }
-    .controls.hidden { opacity: 0; transform: translate(-50%, 50px); pointer-events: none; }
     
-    button {
-        background: #333; color: #fff; border: none; padding: 10px 14px;
-        border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer;
-    }
-    button.primary { background: var(--accent); color: #000; }
-    button.danger { background: var(--alert); color: #fff; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .dash-slow { border-color: var(--guide-slow) !important; box-shadow: inset 0 0 20px rgba(33, 150, 243, 0.2); }
+    .dash-fast { border-color: var(--guide-fast) !important; box-shadow: inset 0 0 20px rgba(244, 67, 54, 0.2); }
+    .dash-good { border-color: var(--guide-good) !important; box-shadow: inset 0 0 20px rgba(76, 175, 80, 0.2); }
 
-    /* === MODOS RESPONSIVOS === */
-    /* MODO HORIZONTAL (COCKPIT) */
+    /* Header del Intervalo: Reorganizado */
+    .int-header { 
+        display: flex; justify-content: space-between; align-items: flex-start; 
+        margin-bottom: 5px; z-index: 5; position: relative;
+    }
+    .int-phase-info { display: flex; flex-direction: column; max-width: 50%; }
+    .int-phase-name { font-size: 1.1rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1.1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+    .int-step-count { background: #0f1724; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; color: #aaa; font-weight: bold; margin-top: 4px; width: fit-content; }
+    
+    /* Bloque derecho: Timer y Objetivo debajo */
+    .int-right-block { 
+        display: flex; flex-direction: column; align-items: flex-end; 
+        background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px;
+    }
+    .int-timer-big { font-size: 2.2rem; font-weight: bold; color: white; line-height: 0.9; font-family: monospace; letter-spacing: -1px;}
+    
+    .int-target-wrapper {
+        display: flex; align-items: baseline; gap: 4px; margin-top: 2px;
+    }
+    .int-target-val { font-size: 1.4rem; font-weight: 900; color: var(--target-color); line-height: 1; }
+    .int-target-lbl { font-size: 0.6rem; color: #aaa; text-transform: uppercase; font-weight: bold; }
+
+    .int-main-visual { 
+        display: grid; grid-template-columns: 1fr; gap: 5px;
+        align-items: center; position: relative; z-index: 2;
+    }
+
+    .center-viz-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
+    .rower-container { position: relative; width: 100%; display: flex; justify-content: center; align-items: flex-end; }
+    
+    canvas#rower-canvas {
+        width: 100% !important; height: auto !important;
+        max-width: 400px; aspect-ratio: 450/220;
+    }
+
+    .int-guidance { 
+        position: relative; text-align: center; display: flex; flex-direction: row; 
+        align-items: center; justify-content: center; gap: 10px;
+        background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 20px; 
+        width: fit-content; margin: 0 auto 5px auto;
+    }
+    .int-arrow { font-size: 1.5rem; line-height: 1; transition: all 0.3s ease; }
+    .int-guidance-text { font-weight: 900; font-size: 0.9rem; letter-spacing: 1px;}
+
+    .int-actual-row { 
+        display: flex; justify-content: center; align-items: baseline; gap: 5px; 
+        margin-top: 0px; position: absolute; bottom: 10px; right: 10px;
+    }
+    .int-actual-num { font-size: 1.5rem; font-weight: bold; color: white; line-height: 1; }
+    .int-actual-lbl { font-size: 0.6rem; color: #888; text-transform: uppercase; }
+    
+    /* Barra de próximo intervalo */
+    .next-interval-box { 
+        position: absolute; bottom: 10px; left: 10px;
+        background: rgba(255,255,255,0.1); padding: 4px 8px; 
+        border-radius: 4px; border-left: 3px solid #555; text-align: left; 
+    }
+    .next-lbl { font-size: 0.5rem; color: #aaa; text-transform: uppercase; display: block;}
+    .next-val { font-size: 0.75rem; color: white; font-weight: bold;}
+
+    /* Indicador Metrónomo Lineal */
+    .linear-gauge-container { width: 95%; height: 10px; display: flex; gap: 2px; margin-top: 5px; }
+    .gauge-segment { flex: 1; background: #333; border-radius: 2px; transition: background 0.1s, box-shadow 0.1s; }
+    .gauge-segment.active { opacity: 1; box-shadow: 0 0 8px currentColor; }
+    
+    .int-progress-container { width: 100%; height: 4px; background: #0f1724; border-radius: 2px; margin-top: 5px;}
+    .int-progress-bar { height: 100%; background: #2aa7ff; width: 100%; transition: width 1s linear; }
+
+    .guide-up { color: var(--guide-slow); } .guide-down { color: var(--guide-fast); } .guide-ok { color: var(--guide-good); } 
+
+    /* === MÉTRICAS (DATA GRID) === */
+    .dashboard { display:flex; flex-direction:column; gap:8px; width:100%; flex: 1; }
+    .metrics-row { display:flex; gap:8px; justify-content:center; flex-wrap: wrap; }
+    .metric-card {
+        background:var(--card-color); padding:8px; border-radius:8px; text-align:center;
+        display:flex; flex-direction:column; justify-content:center;
+        flex: 1 1 30%; min-width: 80px; 
+    }
+    .metric-card .label{font-size:.6rem; color:var(--secondary-color); text-transform: uppercase;}
+    .metric-card .value{font-size:1.3rem; font-weight:bold; color:var(--primary-color);}
+    .metric-card .unit{font-size:.6rem; color: #888;}
+    .card-pulse { animation: pulse-green 1s infinite; }
+    @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); } }
+
+    /* === BARRA DE BOTONES (CONTROLES) === */
+    .buttons-container {
+        display:flex; justify-content:center; gap:8px; margin:5px 0 10px 0; 
+        flex-wrap:wrap; flex-shrink: 0; width: 100%;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    /* Clase para ocultar los botones durante entrenamiento */
+    .buttons-hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px);
+        height: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    button{
+        padding:12px 14px; font-size:13px; border:none; border-radius:8px; 
+        cursor:pointer; background:var(--primary-color); color:var(--bg-color); 
+        font-weight:bold; transition:all .2s; flex: 1 1 auto; min-width: 80px;
+        touch-action: manipulation; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    button:active{transform:scale(0.96);}
+    button:disabled{background:#444; color:#888;}
+    #end-session-btn{background:var(--accent-color); color: white;}
+    #export-btn{background:var(--secondary-color);}
+    #routine-btn{background:#3f51b5; color:white;}
+
+    /* Botón flotante para mostrar menú */
+    #toggle-ui-fab {
+        position: fixed; bottom: 20px; right: 20px;
+        width: 50px; height: 50px; border-radius: 50%;
+        background: rgba(255,255,255,0.15); backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white; font-size: 24px; display: none;
+        justify-content: center; align-items: center;
+        z-index: 999; cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    /* === HORIZONTAL (LANDSCAPE) - COCKPIT MODE === */
     @media (orientation: landscape) {
-        .container { flex-direction: row; }
-        header { display: none; }
+        body { padding: 0; overflow: hidden; }
+        .container { flex-direction: row; padding: 5px; gap: 10px; height: 100vh; }
         
-        #visual-panel { 
-            width: 60%; height: 100%; 
-            border-bottom: none; border-right: 1px solid #333;
+        header, h1 { display: none; } /* Ocultar cabecera */
+        
+        /* Botón Fullscreen flota en landscape */
+        #fs-toggle { 
+            position: absolute; top: 10px; right: 10px; 
+            z-index: 100; opacity: 0.5; background: rgba(0,0,0,0.5); border-radius: 4px;
         }
-        
-        /* Ajustar HUD en horizontal */
-        .hud-time { font-size: 4.5rem; }
-        .hud-mid-r { top: 90px; } /* Bajar objetivo para no chocar con timer */
 
-        #data-panel {
-            width: 40%; height: 100%;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(4, 1fr);
-            overflow-y: auto;
-            padding-bottom: 60px; /* Espacio para botones */
+        .status-bar {
+            position: absolute; top: 0; left: 0; right: 50px; /* Dejar espacio al btn FS */
+            background: rgba(0,0,0,0.5); padding: 2px 10px;
+            z-index: 90; margin: 0; border-radius: 0;
+            justify-content: center; gap: 20px; font-size: 9px;
+        }
+
+        /* IZQUIERDA: Humanoide (60%) */
+        #interval-dashboard {
+            display: flex !important; width: 60%; height: 100%; margin: 0; border: none;
+            background: #151515; justify-content: center;
         }
         
-        /* Botones un poco más compactos en horizontal */
-        .controls { bottom: 10px; }
+        .int-header { position: absolute; top: 25px; left: 15px; right: 15px; width: auto; }
+        .int-right-block { align-items: flex-end; }
+        .int-timer-big { font-size: 3.5rem; }
+        .int-target-val { font-size: 2rem; }
+        .int-phase-name { font-size: 1.8rem; }
+
+        .int-main-visual { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        
+        canvas#rower-canvas { max-width: 100%; max-height: 60vh; width: auto !important; height: auto !important; }
+        
+        /* DERECHA: Datos (40%) */
+        .dashboard {
+            display: grid !important; width: 40%; height: 100%; gap: 5px;
+            grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr);
+            align-content: center; overflow-y: auto; padding-top: 25px;
+        }
+        .metrics-row { display: contents; } 
+        .metric-card { width: 100%; height: 100%; min-height: 0; padding: 5px; border: 1px solid #333; }
+        .metric-card .value { font-size: 1.8rem; }
+        .buttons-container { display: none; } /* En landscape ocultamos botones siempre, usamos FAB */
+        #toggle-ui-fab { display: flex; } /* Siempre visible en Landscape para control */
+        
+        .int-actual-row { bottom: 30px; right: 30px; }
+        .int-actual-num { font-size: 3rem; }
+        .next-interval-box { bottom: 30px; left: 30px; }
+        .int-progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; }
     }
 
-    /* Clases de utilidad */
-    .color-up { color: var(--guide-slow); } 
-    .color-down { color: var(--guide-fast); } 
-    .color-good { color: var(--guide-good); }
-    
-    #err-msg { position: fixed; top: 10px; left: 50%; transform:translateX(-50%); background:#500; color:white; padding:5px 10px; border-radius:5px; font-size:12px; display:none; z-index:9999;}
+    /* Utiles ocultos */
+    #power-card .label, #power-card .power-controls, #power-card .subtle { display: none !important; }
     
     /* Modales */
-    .modal-wrap { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:none; justify-content:center; align-items:center;}
-    .modal-box { background:#1a1a1a; padding:20px; border-radius:10px; width:90%; max-width:400px; border:1px solid #444; }
-    .res-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; color: #ccc;}
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
+    .modal-content { background: #1a1a2e; width: 95%; max-width: 500px; max-height: 95vh; border-radius: 12px; display: flex; flex-direction: column; border: 1px solid #444;}
+    .modal-header { padding: 10px 15px; background: #16213e; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+    .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 30px; gap: 5px; align-items: center; background: #222; padding: 8px; border-radius: 4px; margin-bottom: 5px;}
+    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; }
+
+    #results-screen{display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-color); width:100%; min-height:100vh; position:absolute; top:0; left:0; z-index:200}
+    .results-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px; margin-bottom:20px}
+    .result-item{text-align:center; background: var(--card-color); padding: 10px; border-radius: 8px;}
+    
+    #err-banner{position:fixed; left:10px; right:10px; bottom:20px; background:#332020; color:#ffd1d1; border:1px solid #7a2c2c; padding:10px; border-radius:8px; display:none; z-index:9999; font-size:12px; text-align: center;}
   </style>
 </head>
 <body>
+  <div id="err-banner"></div>
 
-  <div id="err-msg">Error</div>
+  <div id="toggle-ui-fab">☰</div>
 
-  <div class="container">
-    <header>PANEL REMO PRO V4</header>
+  <div class="container" id="main-screen">
+    
+    <header>
+        <div style="width:24px"></div> <h1>Panel Remo PRO</h1>
+        <button id="fs-toggle" title="Pantalla Completa">⛶</button>
+    </header>
 
-    <div id="visual-panel">
+    <div class="status-bar">
+      <div id="rower-status" class="status disconnected">Remo: Desconectado</div>
+      <div id="hr-status" class="status disconnected">HR: --</div>
+    </div>
+
+    <div id="interval-dashboard">
+      <div class="int-header">
+        <div class="int-phase-info">
+          <div class="int-phase-name" id="int-phase-name">CALENTAMIENTO</div>
+          <span class="int-step-count" id="int-step-count">1 / 4</span>
+        </div>
         
-        <div class="hud hud-tl">
-            <h2 class="hud-title" id="lbl-phase">CALENTAR</h2>
-            <span class="hud-sub" id="lbl-step">1 / 4</span>
-        </div>
-
-        <div class="hud hud-tr">
-            <div class="hud-time" id="lbl-timer">00:00</div>
-            <div class="hud-status" id="lbl-status">LISTO</div>
-        </div>
-
-        <div class="hud hud-mid-r">
-            <div class="hud-target-val" id="lbl-target">20</div>
-            <div class="hud-target-lbl">OBJETIVO</div>
-        </div>
-
-        <div class="hud-feedback" id="feedback-box" style="opacity:0">
-            <span class="fb-arrow" id="fb-arrow">−</span>
-            <span class="fb-text" id="fb-msg">REMA</span>
-        </div>
-
-        <div id="canvas-wrapper">
-            <canvas id="main-canvas"></canvas>
-        </div>
-
-        <div class="metronome-bar" id="gauge-container"></div>
-        <div class="interval-progress"><div class="ip-fill" id="progress-fill"></div></div>
-    </div>
-
-    <div id="data-panel">
-        <div class="card">
-            <div class="card-lbl">Ritmo</div>
-            <div class="card-val val-highlight"><span id="val-spm">0</span><span class="card-unit">SPM</span></div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Potencia</div>
-            <div class="card-val"><span id="val-watts">0</span><span class="card-unit">W</span></div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Pulso</div>
-            <div class="card-val"><span id="val-hr">--</span><span class="card-unit">BPM</span></div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Distancia</div>
-            <div class="card-val"><span id="val-dist">0.00</span><span class="card-unit">km</span></div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Tiempo Total</div>
-            <div class="card-val" id="val-total-time">00:00</div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Pace/500m</div>
-            <div class="card-val" id="val-pace">--:--</div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Calorías</div>
-            <div class="card-val" id="val-cal">0</div>
-        </div>
-        <div class="card">
-            <div class="card-lbl">Paladas</div>
-            <div class="card-val" id="val-strokes">0</div>
-        </div>
-    </div>
-
-    <div class="controls" id="controls">
-        <button onclick="toggleFullScreen()">⛶</button>
-        <button id="btn-conn-rower">🔗 Remo</button>
-        <button id="btn-conn-hr">❤️ HR</button>
-        <button id="btn-routine" class="primary">⚡ Rutina</button>
-        <button id="btn-end" class="danger">⏹ Fin</button>
-        <button id="btn-csv" disabled>⬇ CSV</button>
-    </div>
-  </div>
-
-  <div class="modal-wrap" id="modal-results">
-      <div class="modal-box">
-          <h2 style="color:white; margin-top:0">Resumen Sesión</h2>
-          <div class="res-row"><span>Tiempo</span><span id="res-time">00:00</span></div>
-          <div class="res-row"><span>Distancia</span><span id="res-dist">0.00 km</span></div>
-          <div class="res-row"><span>Calorías</span><span id="res-cal">0</span></div>
-          <div class="res-row"><span>Ritmo Medio</span><span id="res-spm">0 SPM</span></div>
-          <div style="margin-top:20px; display:flex; gap:10px">
-              <button class="primary" style="flex:1" onclick="downloadCSV()">Guardar</button>
-              <button style="flex:1" onclick="location.reload()">Nuevo</button>
+        <div class="int-right-block">
+          <div class="int-timer-big" id="int-timer">00:00</div>
+          <div class="int-target-wrapper">
+             <span class="int-target-val" id="int-target-spm">20</span>
+             <span class="int-target-lbl">SPM OBJ</span>
           </div>
+        </div>
       </div>
+
+      <div class="int-main-visual">
+        <div class="center-viz-container">
+            <div class="rower-container">
+                <canvas id="rower-canvas" width="450" height="220"></canvas>
+            </div>
+             <div class="linear-gauge-container" id="gauge-bar"></div>
+        </div>
+        
+        <div class="int-guidance">
+          <span class="int-arrow" id="int-arrow">−</span>
+          <div class="int-guidance-text" id="int-msg">REMA</div>
+        </div>
+
+        <div class="int-actual-row">
+            <span class="int-actual-num" id="int-current-spm">0</span>
+            <span class="int-actual-lbl">ACTUAL</span>
+        </div>
+        
+        <div class="next-interval-box" id="next-interval-box" style="display:none;">
+            <span class="next-lbl">LUEGO:</span>
+            <span class="next-val" id="next-interval-val">--</span>
+        </div>
+      </div>
+
+      <div class="int-progress-container">
+        <div class="int-progress-bar" id="int-progress-bar" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="metrics-row">
+        <div class="metric-card"><div class="label">Ritmo</div><div><span class="value" id="stroke-rate">0</span><span class="unit">SPM</span></div></div>
+        <div class="metric-card" id="hr-card"><div class="label">Pulso</div><div><span class="value" id="heart-rate">--</span><span class="unit">BPM</span></div></div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-card"><div class="label">Paladas</div><div class="value" id="total-strokes">0</div></div>
+        <div class="metric-card"><div class="label">Distancia</div><div><span class="value" id="distance">0.00</span><span class="unit">km</span></div></div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-card" id="power-card">
+          <div class="label" style="display:block!important">Potencia</div>
+          <div><span class="value" id="power">0</span><span class="unit">W</span></div>
+          <div class="power-controls" style="display:none!important">
+            <select id="power-mode"><option value="equiv">Equiv</option><option value="ble">BLE</option><option value="corr">Corr</option></select>
+            <input id="corr-factor" type="number" step="0.1" value="7.2">
+          </div>
+          <div class="subtle" id="power-source" style="display:block!important">Fuente: Equiv</div>
+        </div>
+        <div class="metric-card"><div class="label">Tiempo</div><div class="value" id="duration">00:00</div></div>
+      </div>
+      <div class="metrics-row">
+         <div class="metric-card"><div class="label">Calorías</div><div><span class="value" id="calories">0</span><span class="unit">kcal</span></div></div>
+         <div class="metric-card"><div class="label">Pace/500</div><div class="value" id="pace">--:--</div></div>
+      </div>
+    </div>
+
+    <div class="buttons-container" id="main-controls">
+      <button id="connect-rower-btn">🔗 Remo</button>
+      <button id="connect-hr-btn">❤️ HR</button>
+      <button id="routine-btn">⚡ Rutina</button>
+      <button id="end-session-btn">⏹ Final</button>
+      <button id="export-btn" disabled>⬇ CSV</button>
+    </div>
+  
   </div>
 
-  <div class="modal-wrap" id="modal-routine">
-    <div class="modal-box">
-        <h3 style="color:white; margin-top:0">Iniciar Rutina</h3>
-        <p style="color:#aaa; font-size:12px">Rutina estándar cargada: Calentamiento, Fuerza, Recuperación.</p>
-        <div style="margin-top:20px; display:flex; justify-content:space-between">
-            <button onclick="document.getElementById('modal-routine').style.display='none'">Cancelar</button>
-            <button class="primary" onclick="startRoutine()">INICIAR</button>
-        </div>
+  <div id="results-screen">
+    <h2>Resumen Sesión</h2>
+    <div class="results-grid">
+      <div class="result-item"><div class="label">Tiempo</div><div class="value" id="res-duration">00:00</div></div>
+      <div class="result-item"><div class="label">Distancia</div><div class="value" id="res-distance">0.00 km</div></div>
+      <div class="result-item"><div class="label">Calorías</div><div class="value" id="res-calories">0 kcal</div></div>
+      <div class="result-item"><div class="label">Paladas</div><div class="value" id="res-strokes">0</div></div>
+      <div class="result-item"><div class="label">Ritmo Med</div><div class="value" id="res-avg-spm">0 SPM</div></div>
+    </div>
+    <div class="buttons-container">
+      <button id="download-report-btn" disabled>Guardar Datos</button>
+      <button id="new-session-btn">Nueva Sesión</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="routine-modal">
+    <div class="modal-content">
+      <div class="modal-header"><h3 style="color:white;margin:0">Editor Rutina</h3><span class="close-modal" id="close-modal" style="cursor:pointer;color:#888;font-size:24px">&times;</span></div>
+      <div class="modal-body">
+        <div style="margin-bottom:15px"><label style="color:#aaa;font-size:11px">NOMBRE</label><input type="text" id="routine-name" style="width:100%;box-sizing:border-box;background:#333;border:none;color:white;padding:10px;border-radius:6px" placeholder="Ej: Tabata"></div>
+        <div style="margin-bottom:10px"><label style="color:#aaa;font-size:11px">INTERVALOS</label><div id="intervals-container" style="display:flex;flex-direction:column;gap:5px;margin-top:5px"></div></div>
+        <button id="add-interval-btn" style="width:100%;background:#3498db;color:white;padding:12px;border:none;border-radius:6px;cursor:pointer">+ Agregar</button>
+      </div>
+      <div style="padding:15px;border-top:1px solid #333;display:flex;justify-content:space-between"><button id="cancel-routine-btn" style="background:transparent;border:1px solid #555;color:#aaa">Cancelar</button><button id="start-routine-btn" style="background:#2ecc71;color:white">INICIAR</button></div>
     </div>
   </div>
 
   <script>
-    /* =========================================
-       1. GESTIÓN DEL SISTEMA Y WAKE LOCK
-       ========================================= */
+    /* ----------------- Utilidades & DOM ----------------- */
+    const showError=(msg)=>{const b=document.getElementById('err-banner'); if(b){b.innerText=msg; b.style.display='block'; setTimeout(()=>b.style.display='none',5000);}};
+    const formatMMSS=(s)=>{const m=Math.floor(s/60),sec=Math.max(0,Math.round(s%60));return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+    const nowTs=()=>{const d=new Date();return `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;}
+    function updateText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
     const dom = {
-        canvas: document.getElementById('main-canvas'),
-        ctx: document.getElementById('main-canvas').getContext('2d'),
-        wrapper: document.getElementById('canvas-wrapper'),
-        gauge: document.getElementById('gauge-container'),
-        controls: document.getElementById('controls'),
-        error: document.getElementById('err-msg')
+      rowerStatus: document.getElementById('rower-status'), hrStatus: document.getElementById('hr-status'),
+      hrCard: document.getElementById('hr-card'), connectRowerBtn: document.getElementById('connect-rower-btn'), 
+      connectHrBtn: document.getElementById('connect-hr-btn'), endSessionBtn: document.getElementById('end-session-btn'), 
+      routineBtn: document.getElementById('routine-btn'), exportBtn: document.getElementById('export-btn'),
+      intervalDashboard: document.getElementById('interval-dashboard'), intPhaseName: document.getElementById('int-phase-name'), 
+      intStepCount: document.getElementById('int-step-count'), intTimer: document.getElementById('int-timer'), 
+      intArrow: document.getElementById('int-arrow'), intMsg: document.getElementById('int-msg'), 
+      intTargetSpm: document.getElementById('int-target-spm'), intCurrentSpm: document.getElementById('int-current-spm'), 
+      intProgressBar: document.getElementById('int-progress-bar'), nextBox: document.getElementById('next-interval-box'), 
+      nextVal: document.getElementById('next-interval-val'), spmVal: document.getElementById('stroke-rate'), 
+      powerVal: document.getElementById('power'), hrVal: document.getElementById('heart-rate'), 
+      powerMode: document.getElementById('power-mode'), corrFactor: document.getElementById('corr-factor'), 
+      mainScreen: document.getElementById('main-screen'), resultsScreen: document.getElementById('results-screen'), 
+      modal: document.getElementById('routine-modal'), closeModal: document.getElementById('close-modal'), 
+      addIntervalBtn: document.getElementById('add-interval-btn'), intervalsContainer: document.getElementById('intervals-container'), 
+      startRoutineBtn: document.getElementById('start-routine-btn'), cancelRoutineBtn: document.getElementById('cancel-routine-btn'), 
+      canvas: document.getElementById('rower-canvas'), gaugeBar: document.getElementById('gauge-bar'),
+      // Nuevos controles UI
+      mainControls: document.getElementById('main-controls'), fab: document.getElementById('toggle-ui-fab'),
+      fsToggle: document.getElementById('fs-toggle')
     };
 
-    let wakeLock = null;
-    async function requestWakeLock() {
-        try {
-            if('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-                wakeLock.addEventListener('release', () => console.log('WakeLock released'));
+    let sessionTimer=null, elapsedSeconds=0, sessionActive=false, currentSpm=0;
+    let isRowing=false, rowingTimeout=null;
+    let activeRoutine=null, currentStepIndex=0, stepTimeRemaining=0, inIntervalMode=false;
+    let lastPaceSeconds=null, lastPowerBle=null;
+    let rawEvents = [];
+    let uiHidden = false;
+
+    /* --- FULLSCREEN & UI CONTROL --- */
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error full-screen: ${err.message}`);
+            });
+            dom.fsToggle.textContent = '✖'; // Icono salir
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+                dom.fsToggle.textContent = '⛶'; // Icono entrar
             }
-        } catch(e) { console.log(e); }
+        }
     }
-    document.addEventListener('visibilitychange', () => {
-        if(document.visibilityState === 'visible' && session.active) requestWakeLock();
+    dom.fsToggle.addEventListener('click', toggleFullscreen);
+
+    function setUIFocusMode(active) {
+        uiHidden = active;
+        if (active) {
+            dom.mainControls.classList.add('buttons-hidden');
+            dom.fab.style.display = 'flex';
+        } else {
+            dom.mainControls.classList.remove('buttons-hidden');
+            dom.fab.style.display = 'none';
+        }
+    }
+
+    dom.fab.addEventListener('click', () => {
+        // Toggle manual de los controles
+        if(dom.mainControls.classList.contains('buttons-hidden')){
+            dom.mainControls.classList.remove('buttons-hidden');
+        } else {
+            dom.mainControls.classList.add('buttons-hidden');
+        }
     });
 
-    function toggleFullScreen() {
-        if(!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else if(document.exitFullscreen) document.exitFullscreen();
+
+    /* =========================================================================
+       WAKE LOCK (Sin cambios funcionales)
+       ========================================================================= */
+    let wakeLock = null;
+    let connectedRower = false;
+    let connectedHr = false;
+    let isFullscreen = false;
+
+    function shouldHoldWakeLock() { return connectedRower || connectedHr || sessionActive || isFullscreen; }
+
+    async function acquireWakeLockOnce() {
+      if (!('wakeLock' in navigator) || wakeLock) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          wakeLock = null;
+          if (document.visibilityState === 'visible' && shouldHoldWakeLock()) acquireWakeLockOnce().catch(() => {});
+        });
+      } catch (err) { console.warn("Wake Lock fail:", err); }
     }
 
-    // Auto-ocultar controles
-    let controlsTimeout;
-    function showControls() {
-        dom.controls.classList.remove('hidden');
-        if(controlsTimeout) clearTimeout(controlsTimeout);
-        if(session.active) controlsTimeout = setTimeout(() => dom.controls.classList.add('hidden'), 3000);
-    }
-    document.body.addEventListener('touchstart', showControls, {passive:true});
-    document.body.addEventListener('click', showControls);
-
-    /* =========================================
-       2. LÓGICA DE SESIÓN Y DATOS
-       ========================================= */
-    const session = {
-        active: false,
-        startTime: 0,
-        elapsed: 0,
-        timer: null,
-        isRowing: false,
-        lastStrokeTime: 0,
-        events: []
-    };
-
-    const data = {
-        spm: 0, dist: 0, watts: 0, cal: 0, pace: 0, strokes: 0, hr: 0
-    };
-
-    const routine = {
-        active: false,
-        steps: [
-            { sec: 300, spm: 18, label: 'Calentar' },
-            { sec: 60, spm: 24, label: 'Fuerza' },
-            { sec: 120, spm: 20, label: 'Recuperar' },
-            { sec: 60, spm: 26, label: 'Sprint' }
-        ],
-        idx: 0,
-        timeLeft: 0
-    };
-
-    function updateDisplay() {
-        document.getElementById('val-spm').textContent = data.spm;
-        document.getElementById('val-watts').textContent = data.watts;
-        document.getElementById('val-hr').textContent = data.hr > 0 ? data.hr : '--';
-        document.getElementById('val-dist').textContent = (data.dist/1000).toFixed(2);
-        document.getElementById('val-cal').textContent = data.cal;
-        document.getElementById('val-strokes').textContent = data.strokes;
-        document.getElementById('val-total-time').textContent = formatTime(session.elapsed);
-        document.getElementById('val-pace').textContent = formatTime(data.pace);
+    async function releaseWakeLockIfHeld() {
+      if (!wakeLock) return;
+      try { await wakeLock.release(); } catch (err) {}
+      wakeLock = null;
     }
 
-    function formatTime(s) {
-        const m = Math.floor(s/60);
-        const sec = Math.floor(s%60);
-        return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    async function syncWakeLock() {
+      if (document.visibilityState !== 'visible') return;
+      if (shouldHoldWakeLock()) await acquireWakeLockOnce(); else await releaseWakeLockIfHeld();
     }
 
-    /* =========================================
-       3. PARSING BLUETOOTH (CORE CORREGIDO)
-       ========================================= */
-    document.getElementById('btn-conn-rower').onclick = async () => {
-        try {
-            const dev = await navigator.bluetooth.requestDevice({
-                filters: [{services: [0x1826]}], // FTMS
-                optionalServices: [0x1826]
-            });
-            const server = await dev.gatt.connect();
-            const service = await server.getPrimaryService(0x1826);
-            const char = await service.getCharacteristic(0x2AD1); // Rower Data
-            await char.startNotifications();
-            char.addEventListener('characteristicvaluechanged', parseRowerData);
-            document.getElementById('btn-conn-rower').style.color = '#03dac6';
-            requestWakeLock();
-        } catch(e) { showError('Error BT: ' + e.message); }
-    };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncWakeLock(); });
+    document.addEventListener('fullscreenchange', () => { isFullscreen = !!document.fullscreenElement; syncWakeLock(); });
+    document.addEventListener('touchstart', async () => { if(shouldHoldWakeLock() && !wakeLock) await syncWakeLock(); }, {passive: true});
 
-    document.getElementById('btn-conn-hr').onclick = async () => {
-        try {
-            const dev = await navigator.bluetooth.requestDevice({
-                filters: [{services: [0x180D]}] 
-            });
-            const server = await dev.gatt.connect();
-            const service = await server.getPrimaryService(0x180D);
-            const char = await service.getCharacteristic(0x2A37);
-            await char.startNotifications();
-            char.addEventListener('characteristicvaluechanged', e => {
-                const v = e.target.value;
-                data.hr = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
-            });
-            document.getElementById('btn-conn-hr').style.color = '#03dac6';
-        } catch(e) { showError('Error HR'); }
-    };
-
-    function parseRowerData(e) {
-        const v = e.target.value;
-        const flags = v.getUint16(0, true);
-        let offset = 2;
-
-        if(!session.active && !routine.active) startSession();
-
-        // 1. Stroke Rate (Siempre presente o casi siempre)
-        // Algunos remos envían uint8, otros uint16. Asumimos standard byte.
-        const spmRaw = v.getUint8(offset); 
-        data.spm = Math.round(spmRaw / 2); // Standard FTMS suele ser rate * 2
-        offset += 1;
-
-        // Detectar si estamos remando
-        if(data.spm > 0) {
-            session.isRowing = true;
-            session.lastStrokeTime = Date.now();
-            document.getElementById('lbl-status').textContent = "REMANDO";
-            document.getElementById('lbl-status').style.color = "#4caf50";
-        }
-
-        // 2. Stroke Count
-        data.strokes = v.getUint16(offset, true);
-        offset += 2;
-
-        // 3. Average Speed (Saltamos si existe)
-        if(flags & 0x0001) offset += 2;
-
-        // 4. Total Distance (Uint24)
-        if(flags & 0x0002) {
-            data.dist = v.getUint16(offset, true) | (v.getUint8(offset+2) << 16);
-            offset += 3;
-        }
-
-        // 5. Instantaneous Pace (Uint16)
-        if(flags & 0x0004) {
-            data.pace = v.getUint16(offset, true);
-            offset += 2;
-        }
-
-        // 6. Average Power (Saltar)
-        if(flags & 0x0008) offset += 2;
-
-        // 7. Instantaneous Power (Sint16)
-        if(flags & 0x0010) {
-            data.watts = v.getInt16(offset, true);
-            offset += 2;
-        }
-
-        // 8. Energy (Total/PerHour)
-        if(flags & 0x0020) offset += 5; // Energy Total + Per Hour
-        
-        // 9. Energy Per Minute (Calorias actuales a veces aqui)
-        // ... simplificado, usamos el Total Energy field standard:
-        if(flags & 0x0100) { // Flag específico de Expended Energy
-             data.cal = v.getUint16(offset, true);
-             // offset += ...
-        }
-
-        // Guardar evento
-        if(session.active) {
-            session.events.push({
-                t: session.elapsed,
-                spm: data.spm, w: data.watts, hr: data.hr
-            });
-        }
-    }
-
-    /* =========================================
-       4. ANIMACIÓN Y CANVAS (CORREGIDO)
-       ========================================= */
-    // Resize Observer para el Canvas: CRUCIAL para evitar pantalla negra
-    const resizeObserver = new ResizeObserver(entries => {
-        for(let entry of entries) {
-            const {width, height} = entry.contentRect;
-            const dpr = window.devicePixelRatio || 1;
-            dom.canvas.width = width * dpr;
-            dom.canvas.height = height * dpr;
-            // No dibujamos aquí, el loop se encarga
-        }
-    });
-    resizeObserver.observe(dom.wrapper);
-
-    // Inicializar Metrónomo
+    /* ----------------- GAUGE & VISUALS ----------------- */
+    const SEGMENT_COUNT = 20;
     function initGauge() {
-        dom.gauge.innerHTML = '';
-        for(let i=0; i<20; i++) {
-            let d = document.createElement('div');
-            d.className = 'metro-seg';
-            // Colores por índice
-            if(i<5) d.style.color = 'var(--guide-good)'; 
-            else if(i<10) d.style.color = '#ffeb3b';
-            else if(i<15) d.style.color = '#ff9800';
-            else d.style.color = 'var(--guide-fast)';
-            dom.gauge.appendChild(d);
+        if(!dom.gaugeBar) return;
+        dom.gaugeBar.innerHTML = '';
+        for (let i = 0; i < SEGMENT_COUNT; i++) {
+            const seg = document.createElement('div'); seg.className = 'gauge-segment inactive';
+            let color = '#4caf50'; 
+            if (i >= 5) color = '#ffeb3b'; if (i >= 10) color = '#ff9800'; if (i >= 15) color = '#f44336'; 
+            seg.dataset.color = color; dom.gaugeBar.appendChild(seg);
         }
     }
-    initGauge();
+    function updateGauge(phase, isDrive) {
+        if(!dom.gaugeBar) return;
+        const segments = dom.gaugeBar.children;
+        const activeCount = Math.floor(phase * SEGMENT_COUNT);
+        for (let i = 0; i < SEGMENT_COUNT; i++) {
+            const seg = segments[i];
+            if ((isDrive && i <= activeCount) || (!isDrive && i <= activeCount)) { 
+                seg.className = 'gauge-segment active'; seg.style.background = seg.dataset.color; 
+            } else { seg.className = 'gauge-segment inactive'; seg.style.background = ''; }
+        }
+    }
 
-    function drawRower(phase) {
-        const ctx = dom.ctx;
-        const w = dom.canvas.width;
-        const h = dom.canvas.height;
-        
-        ctx.clearRect(0, 0, w, h);
-        
-        // Configurar escala para mantener proporciones
-        // Usamos un tamaño virtual de 500x300
-        const scale = Math.min(w / 500, h / 300) * 0.9; 
-        const offsetX = (w - (500*scale)) / 2;
-        const offsetY = (h - (300*scale)) / 2;
+    /* ----------------- CANVAS (Sin cambios lógica) ----------------- */
+    const ctx = dom.canvas.getContext('2d');
+    let animFrame = null;
+    let lastBeepTime = 0;
 
+    function lerpColor(a, b, amount) {
+        const ar = a >> 16, ag = a >> 8 & 0xff, ab = a & 0xff;
+        const br = b >> 16, bg = b >> 8 & 0xff, bb = b & 0xff;
+        return '#' + ((1 << 24) + ((ar + amount * (br - ar)) << 16) + ((ag + amount * (bg - ag)) << 8) + ((ab + amount * (bb - ab)) | 0)).toString(16).slice(1);
+    }
+
+    function drawRower(phase, isDrive = true) {
+        if(!ctx) return;
+        const dpr = window.devicePixelRatio || 1;
+        const rect = dom.canvas.getBoundingClientRect();
+        if(dom.canvas.width !== Math.floor(rect.width * dpr) || dom.canvas.height !== Math.floor(rect.height * dpr)){
+             dom.canvas.width = rect.width * dpr; dom.canvas.height = rect.height * dpr;
+             ctx.lineCap = 'round'; ctx.lineJoin = 'round'; 
+        }
+        ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+        
         ctx.save();
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
+        const globalScale = Math.min(dom.canvas.width / 450, dom.canvas.height / 220);
+        const offsetX = (dom.canvas.width - (450 * globalScale)) / 2;
+        const offsetY = (dom.canvas.height - (220 * globalScale)) / 2;
+        ctx.translate(offsetX, offsetY); ctx.scale(globalScale, globalScale);
 
-        // Interpolación de color (Verde -> Rojo segun fase de fuerza)
-        // Drive es 0.0 a 0.4 aprox.
-        let r=76, g=175, b=80; // Verde base
-        if(phase < 0.5) { // Fase de fuerza (Drive)
-            const stress = phase / 0.5; // 0 a 1
-            r = 76 + (244-76)*stress;
-            g = 175 + (67-175)*stress;
-            b = 80 + (54-80)*stress;
-        }
+        const colorHex = lerpColor(0x4caf50, 0xf44336, phase);
+        ctx.strokeStyle = colorHex; ctx.fillStyle = colorHex;
+
+        const cx = 225, cy = 180, scale = 0.9; 
+        const ankle = { x: cx - 140 * scale, y: cy - 20 * scale }; 
+        const slideLen = 180 * scale; 
+        const seatX = (ankle.x + (50 * scale)) + (slideLen * phase);
+        const hip = { x: seatX, y: cy - 30 * scale };
+        const kneeX = (hip.x + ankle.x) / 2;
+        const kneeY = hip.y - (60 * scale) * (1 - phase); 
+        const knee = { x: kneeX, y: kneeY };
+        const torsoLen = 120 * scale; 
+        const swingAngle = -25 + (phase * 50); 
+        const rad = swingAngle * Math.PI / 180;
+        const shoulder = { x: hip.x + Math.sin(rad) * torsoLen, y: hip.y - Math.cos(rad) * torsoLen };
+        const head = { x: shoulder.x + Math.sin(rad) * 25 * scale, y: shoulder.y - Math.cos(rad) * 25 * scale };
+        let armExtension = 1; if (phase > 0.5) armExtension = 1 - ((phase - 0.5) * 2 * 0.9);
+        const hand = { x: shoulder.x - (125 * scale * armExtension), y: shoulder.y + 40 * scale };
+
+        ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = '#333';
+        ctx.moveTo(cx - 180 * scale, cy); ctx.lineTo(cx + 180 * scale, cy); ctx.stroke(); 
+
+        ctx.strokeStyle = colorHex; ctx.lineWidth = 16;
+        ctx.beginPath(); ctx.moveTo(ankle.x, ankle.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(hip.x, hip.y); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(hip.x, hip.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke(); 
+        ctx.beginPath(); ctx.arc(head.x, head.y, 15 * scale, 0, Math.PI * 2); ctx.fill(); 
+        ctx.beginPath(); ctx.lineWidth = 14; ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hand.x, hand.y); ctx.stroke(); 
+        ctx.beginPath(); ctx.lineWidth = 5; ctx.strokeStyle = '#e0e0e0'; ctx.moveTo(hand.x, hand.y); ctx.lineTo(cx - 200 * scale, hand.y); ctx.stroke();
         
-        const color = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
-        ctx.fillStyle = color;
-        ctx.strokeStyle = color;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        // Dibujo Stickman
-        const cx = 250, cy = 220;
-        const slideLen = 160;
-        
-        // Fase aplicada a la posición
-        const seatSlide = slideLen * phase;
-        const seatX = (cx - 80) + seatSlide;
-        
-        // Riel
-        ctx.beginPath(); ctx.strokeStyle='#333'; ctx.lineWidth=10;
-        ctx.moveTo(cx-180, cy+20); ctx.lineTo(cx+180, cy+20); ctx.stroke();
-
-        // Piernas
-        ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=18;
-        const ankleX = cx - 140; const ankleY = cy;
-        const kneeX = (ankleX + seatX) / 2;
-        const kneeY = cy - 60 * (1-phase); // Sube las rodillas en la recuperación
-        ctx.moveTo(ankleX, ankleY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(seatX, cy-10); ctx.stroke();
-
-        // Torso
-        const swing = -20 + (phase * 40); // Angulo espalda
-        const rad = swing * Math.PI / 180;
-        const shoulderX = seatX + Math.sin(rad)*110;
-        const shoulderY = (cy-10) - Math.cos(rad)*110;
-        
-        ctx.beginPath(); ctx.moveTo(seatX, cy-10); ctx.lineTo(shoulderX, shoulderY); ctx.stroke();
-
-        // Cabeza
-        const headX = shoulderX + Math.sin(rad)*25;
-        const headY = shoulderY - Math.cos(rad)*25;
-        ctx.beginPath(); ctx.arc(headX, headY, 18, 0, Math.PI*2); ctx.fill();
-
-        // Brazos
-        let armExt = 0;
-        // Fase 0 (Catch) -> Brazos estirados (1.0)
-        // Fase 0.5 (Finish) -> Brazos flexionados (0.0)
-        if(phase < 0.5) armExt = 1; 
-        else {
-             // Recuperación: estirar brazos rápido
-             armExt = (phase - 0.5) * 2; 
-        }
-        
-        // Simplificación visual: Brazos estirados al inicio, encogidos al final
-        const armLen = 100;
-        // Logic fix: Handle position relative to shoulder
-        const handX = shoulderX - (armLen * (phase > 0.4 && phase < 0.6 ? 0.2 : 0.9)); // Simplificado
-        const handY = shoulderY + 40;
-
-        ctx.beginPath(); ctx.lineWidth=14;
-        ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(handX, handY); ctx.stroke();
-
-        // Mango remo
-        ctx.beginPath(); ctx.strokeStyle='#eee'; ctx.lineWidth=6;
-        ctx.moveTo(handX, handY); ctx.lineTo(cx-200, handY); ctx.stroke();
-
         ctx.restore();
     }
 
-    // Animation Loop (Render Loop)
-    let lastTime = 0;
-    function animate(timestamp) {
-        if (!lastTime) lastTime = timestamp;
-        
-        // Calcular fase del ciclo basada en SPM objetivo
-        let phase = 0;
-        if(routine.active) {
-            const step = routine.steps[routine.idx];
-            const targetSPM = step.spm;
-            const cycleDuration = 60000 / targetSPM;
-            const cycleOffset = timestamp % cycleDuration;
-            
-            // 0.0 -> 1.0 (Catch -> Finish -> Recovery -> Catch)
-            // Asumimos Drive ratio 1:2 aprox
-            let rawPhase = cycleOffset / cycleDuration;
-            
-            // Mapeamos para que la animación se vea natural
-            // 0.0 - 0.4: Drive (Fuerza)
-            // 0.4 - 1.0: Recovery (Recuperación)
-            if(rawPhase < 0.4) {
-                phase = rawPhase / 0.4; // 0 a 1 rapido
-            } else {
-                phase = 1 - ((rawPhase - 0.4) / 0.6); // 1 a 0 lento
-            }
-        }
-
-        drawRower(phase);
-        updateMetronome(phase);
-        updateDisplay();
-
-        // Reset estado si no remamos
-        if(Date.now() - session.lastStrokeTime > 4000 && session.isRowing) {
-            session.isRowing = false;
-            document.getElementById('lbl-status').textContent = "PAUSA";
-            document.getElementById('lbl-status').style.color = "#ffd700";
-        }
-
-        requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-
-    function updateMetronome(phase) {
-        const segs = dom.gauge.children;
-        // phase va de 0 a 1. Mapeamos a 20 segmentos.
-        const activeIdx = Math.floor(phase * 20);
-        
-        for(let i=0; i<20; i++) {
-            if(i <= activeIdx) {
-                segs[i].classList.add('active');
-                segs[i].style.backgroundColor = segs[i].style.color; // Usar color guardado
-            } else {
-                segs[i].classList.remove('active');
-                segs[i].style.backgroundColor = '#222';
-            }
-        }
+    function startMetronomeLoop() {
+      if(animFrame) cancelAnimationFrame(animFrame);
+      const loop = () => {
+        if(!inIntervalMode || !activeRoutine) return;
+        if(isRowing) {
+            const step = activeRoutine.steps[currentStepIndex];
+            const targetSpm = step.spm > 0 ? step.spm : 20; 
+            const cycleMs = (60 / targetSpm) * 1000;
+            const now = Date.now();
+            if(now - lastBeepTime > cycleMs) { lastBeepTime = now; playBeep(880, 0.1); }
+            const progress = (now - lastBeepTime) / cycleMs; 
+            let drivePhase = 0; let isDrive = true;
+            if (progress < 0.35) { drivePhase = progress / 0.35; isDrive = true; } 
+            else { const recovProgress = (progress - 0.35) / 0.65; drivePhase = 1.0 - recovProgress; isDrive = false; }
+            drawRower(Math.min(1, Math.max(0, drivePhase)), isDrive); updateGauge(Math.min(1, Math.max(0, drivePhase)), isDrive);
+        } else { drawRower(0, true); updateGauge(0, true); }
+        animFrame = requestAnimationFrame(loop);
+      };
+      animFrame = requestAnimationFrame(loop);
     }
 
-    /* =========================================
-       5. RUTINA & FEEDBACK
-       ========================================= */
-    document.getElementById('btn-routine').onclick = () => {
-        document.getElementById('modal-routine').style.display = 'flex';
-    };
+    /* ----------------- Audio & Logic ----------------- */
+    let audioCtx = null;
+    function initAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function playBeep(freq=880, dur=0.1) {
+      if(!audioCtx) return; if(audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq; osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur); osc.stop(audioCtx.currentTime + dur);
+    }
 
-    window.startRoutine = function() {
-        document.getElementById('modal-routine').style.display = 'none';
-        startSession(true);
-    };
+    dom.routineBtn.addEventListener('click', () => { dom.modal.style.display = 'flex'; loadRoutineForm(); });
+    dom.closeModal.addEventListener('click', () => dom.modal.style.display = 'none');
+    dom.cancelRoutineBtn.addEventListener('click', () => dom.modal.style.display = 'none');
+    dom.addIntervalBtn.addEventListener('click', () => addIntervalRow());
 
-    function startSession(isRoutine = false) {
-        if(session.active) return;
-        session.active = true;
-        session.startTime = Date.now();
-        document.getElementById('btn-csv').disabled = false;
-        showControls(); // Trigger auto hide
+    function addIntervalRow(data = {sec: 60, spm: 20, label: 'Trabajo'}) {
+      const div = document.createElement('div'); div.className = 'interval-row';
+      div.innerHTML = `<input type="number" class="int-dur" value="${data.sec}"><input type="number" class="int-spm" value="${data.spm}"><select class="int-lbl"><option value="Calentar" ${data.label==='Calentar'?'selected':''}>Calentar</option><option value="Trabajo" ${data.label==='Trabajo'?'selected':''}>Trabajo</option><option value="Sprint" ${data.label==='Sprint'?'selected':''}>Sprint</option><option value="Descanso" ${data.label==='Descanso'?'selected':''}>Descanso</option></select><button class="del-row-btn" style="background:#ff4545;color:white;border:none;border-radius:4px">&times;</button>`;
+      div.querySelector('.del-row-btn').onclick = () => div.remove(); dom.intervalsContainer.appendChild(div);
+    }
 
-        if(isRoutine) {
-            routine.active = true;
-            routine.idx = 0;
-            loadStep(0);
+    function loadRoutineForm() {
+      dom.intervalsContainer.innerHTML = ''; const saved = localStorage.getItem('lastRoutine');
+      if (saved) { const r = JSON.parse(saved); document.getElementById('routine-name').value = r.name; r.steps.forEach(s => addIntervalRow(s)); }
+      else { addIntervalRow({sec: 300, spm: 18, label: 'Calentar'}); addIntervalRow({sec: 60, spm: 24, label: 'Trabajo'}); addIntervalRow({sec: 60, spm: 20, label: 'Descanso'}); }
+    }
+
+    dom.startRoutineBtn.addEventListener('click', () => {
+      initAudio(); const name = document.getElementById('routine-name').value || 'Rutina';
+      const rows = Array.from(document.querySelectorAll('.interval-row')); if(!rows.length) return;
+      const steps = rows.map(r => ({ sec: parseInt(r.querySelector('.int-dur').value)||60, spm: parseInt(r.querySelector('.int-spm').value)||20, label: r.querySelector('.int-lbl').value }));
+      localStorage.setItem('lastRoutine', JSON.stringify({ name, steps }));
+      startIntervalSession({ name, steps }); dom.modal.style.display = 'none';
+      syncWakeLock();
+    });
+
+    function startIntervalSession(routine) {
+      if(sessionActive) stopTimer(); resetUI();
+      activeRoutine = routine; currentStepIndex = 0; inIntervalMode = true; isRowing = false;
+      dom.intervalDashboard.style.display = 'flex'; 
+      loadStep(0); startTimer(); startMetronomeLoop();
+      setUIFocusMode(true); // Ocultar botones al iniciar
+    }
+
+    function loadStep(idx) {
+      if (idx >= activeRoutine.steps.length) { finishRoutine(); return; }
+      currentStepIndex = idx; const step = activeRoutine.steps[idx]; stepTimeRemaining = step.sec;
+      updateText('int-phase-name', step.label); updateText('int-step-count', `${idx + 1} / ${activeRoutine.steps.length}`);
+      updateText('int-target-spm', step.spm);
+      const nextStep = activeRoutine.steps[idx+1];
+      if(nextStep && dom.nextBox) { dom.nextBox.style.display = 'block'; updateText('next-interval-val', `${nextStep.label} @ ${nextStep.spm}`); } 
+      else if(dom.nextBox) { dom.nextBox.style.display = 'none'; }
+      updateIntervalUI();
+    }
+
+    function updateIntervalUI() {
+      if(!activeRoutine) return;
+      const step = activeRoutine.steps[currentStepIndex];
+      updateText('int-timer', formatMMSS(stepTimeRemaining));
+      if(dom.intProgressBar) dom.intProgressBar.style.width = `${((step.sec - stepTimeRemaining) / step.sec) * 100}%`;
+      updateText('int-current-spm', currentSpm);
+      
+      const dash = dom.intervalDashboard; const arrow = dom.intArrow; 
+      if(dash) dash.className = ''; if(arrow) arrow.className = 'int-arrow';
+      
+      if (!isRowing) { updateText('int-arrow', "−"); updateText('int-msg', "REMA"); if(arrow) arrow.style.color = "#888"; if(dash) dash.style.borderColor = "#444"; }
+      else {
+        const diff = currentSpm - step.spm;
+        if (diff < -2) { updateText('int-arrow', "▲"); updateText('int-msg', "SUBE"); arrow.classList.add('guide-up'); dash.classList.add('dash-slow'); }
+        else if (diff > 2) { updateText('int-arrow', "▼"); updateText('int-msg', "BAJA"); arrow.classList.add('guide-down'); dash.classList.add('dash-fast'); }
+        else { updateText('int-arrow', "●"); updateText('int-msg', "BIEN"); arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); }
+      }
+    }
+
+    function checkRowingStatus(spm) {
+        if (spm > 0) {
+            isRowing = true; 
+            if(rowingTimeout) clearTimeout(rowingTimeout);
+            rowingTimeout = setTimeout(() => { 
+                isRowing = false; updateIntervalUI(); drawRower(0, true); updateGauge(0, true); 
+            }, 4000);
         }
-
-        session.timer = setInterval(() => {
-            session.elapsed++;
-            
-            if(routine.active) {
-                routine.timeLeft--;
-                document.getElementById('lbl-timer').textContent = formatTime(routine.timeLeft);
-                
-                // Barra progreso intervalo
-                const stepTotal = routine.steps[routine.idx].sec;
-                const pct = ((stepTotal - routine.timeLeft) / stepTotal) * 100;
-                document.getElementById('progress-fill').style.width = pct + "%";
-
-                // Feedback
-                const target = routine.steps[routine.idx].spm;
-                const diff = data.spm - target;
-                const box = document.getElementById('feedback-box');
-                const arrow = document.getElementById('fb-arrow');
-                const msg = document.getElementById('fb-msg');
-
-                box.style.opacity = session.isRowing ? 1 : 0;
-                
-                if(diff < -2) { // Muy lento
-                    box.className = 'hud-feedback color-up';
-                    arrow.textContent = '▲'; msg.textContent = 'SUBE';
-                } else if (diff > 2) { // Muy rapido
-                    box.className = 'hud-feedback color-down';
-                    arrow.textContent = '▼'; msg.textContent = 'BAJA';
-                } else {
-                    box.className = 'hud-feedback color-good';
-                    arrow.textContent = '●'; msg.textContent = 'BIEN';
-                }
-
-                if(routine.timeLeft <= 0) {
-                    routine.idx++;
-                    if(routine.idx >= routine.steps.length) finishSession();
-                    else loadStep(routine.idx);
-                }
-            }
-        }, 1000);
     }
 
-    function loadStep(i) {
-        const s = routine.steps[i];
-        routine.timeLeft = s.sec;
-        document.getElementById('lbl-phase').textContent = s.label;
-        document.getElementById('lbl-step').textContent = `${i+1} / ${routine.steps.length}`;
-        document.getElementById('lbl-target').textContent = s.spm;
+    const FTMS_UUID=0x1826; const ROWER_CHAR_UUID=0x2AD1; const HR_SERVICE_UUID=0x180D; const HR_CHAR_UUID=0x2A37;
+    
+    // --- CONEXIÓN REMO ---
+    dom.connectRowerBtn.addEventListener('click', async ()=>{
+      try{ if(!navigator.bluetooth) throw new Error("Bluetooth API Off"); 
+        const dev = await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_UUID]}], optionalServices:[FTMS_UUID]});
+        dev.addEventListener('gattserverdisconnected', onRowerDisconnected);
+        const server = await dev.gatt.connect(); 
+        connectedRower=true; 
+        updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
+        const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); 
+        syncWakeLock();
+      }catch(e){ showError("Err Remo: " + e.message); connectedRower=false; syncWakeLock(); }
+    });
+
+    function onRowerDisconnected() {
+        connectedRower = false; updateText('rower-status', 'Remo: Desconectado');
+        if(dom.rowerStatus) dom.rowerStatus.className = 'status disconnected';
+        alert("El remo se ha desconectado."); stopTimer(); syncWakeLock();
     }
 
-    function finishSession() {
-        clearInterval(session.timer);
-        session.active = false;
-        routine.active = false;
-        
-        document.getElementById('res-time').textContent = formatTime(session.elapsed);
-        document.getElementById('res-dist').textContent = (data.dist/1000).toFixed(2) + " km";
-        document.getElementById('res-cal').textContent = data.cal;
-        
-        // Calculo SPM medio simple
-        const sum = session.events.reduce((acc, e) => acc + e.spm, 0);
-        const avg = session.events.length ? Math.round(sum / session.events.length) : 0;
-        document.getElementById('res-spm').textContent = avg + " SPM";
+    // --- CONEXIÓN HR ---
+    dom.connectHrBtn.addEventListener('click', async ()=>{
+      try{ if(!navigator.bluetooth) throw new Error("Bluetooth Off");
+        const dev = await navigator.bluetooth.requestDevice({ filters:[{services:[HR_SERVICE_UUID]}], optionalServices:[HR_SERVICE_UUID] });
+        dev.addEventListener('gattserverdisconnected', onHrDisconnected);
+        const server = await dev.gatt.connect(); 
+        connectedHr=true; 
+        updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
+        const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
+        await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', e=>{ 
+            const v=e.target.value; const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
+            updateText('heart-rate', val); if(dom.hrCard) { dom.hrCard.classList.remove('card-pulse'); void dom.hrCard.offsetWidth; dom.hrCard.classList.add('card-pulse'); }
+        }); 
+        syncWakeLock();
+      }catch(e){ showError("Err HR: " + e.message); connectedHr=false; syncWakeLock(); }
+    });
 
-        document.getElementById('modal-results').style.display = 'flex';
+    function onHrDisconnected() {
+        connectedHr = false; updateText('hr-status', 'HR: --');
+        if(dom.hrStatus) dom.hrStatus.className = 'status disconnected';
+        updateText('heart-rate', '--'); syncWakeLock();
+    }
+
+    function handleRowerData(e){ 
+        if(!sessionTimer && !inIntervalMode) startTimer(); 
+        parseRowerData(e.target.value); 
+    }
+
+    function parseRowerData(data){
+      const flags=data.getUint16(0,true); let offset=2; const parsed={};
+      const sr=data.getUint8(offset)/2.0; offset+=1; currentSpm = Math.round(sr); 
+      updateText('stroke-rate', currentSpm); parsed.spm = currentSpm; checkRowingStatus(currentSpm); if(inIntervalMode) updateIntervalUI();
+      const strokes=data.getUint16(offset,true); offset+=2; updateText('total-strokes', strokes); parsed.strokes=strokes;
+      if(flags&0x0002) offset+=1; 
+      if(flags&0x0004){ const dist=(data.getUint32(offset,true)&0x00FFFFFF); offset+=3; updateText('distance', (dist/1000).toFixed(2)); parsed.dist_m=dist; }
+      if(flags&0x0008){ const pace=data.getUint16(offset,true); offset+=2; lastPaceSeconds = pace; updateText('pace', formatMMSS(pace)); parsed.pace_s=pace; }
+      if(flags&0x0010) offset+=2; 
+      if(flags&0x0020){ const p=data.getInt16(offset,true); offset+=2; lastPowerBle = p; parsed.power_ble=p; }
+      if(flags&0x0080) offset+=2; 
+      if(flags&0x0100){ const kcal=data.getUint16(offset,true); offset+=5; updateText('calories', kcal); parsed.kcal=kcal; }
+      parsed.power_display = applyPowerDisplay(); if(sessionActive && isRowing){ rawEvents.push({ts:nowTs(), parsed}); }
     }
     
-    document.getElementById('btn-end').onclick = finishSession;
+    function applyPowerDisplay(){
+      const mode=dom.powerMode.value, fact=dom.corrFactor.value;
+      const pC2 = (lastPaceSeconds>0) ? 2.8/Math.pow(lastPaceSeconds/500,3) : 0; const pCorr=Math.max(0, (lastPowerBle||0)*fact);
+      let val=0; if(mode==='equiv'){ val=pC2||pCorr||lastPowerBle||0; } else if(mode==='ble'){ val=lastPowerBle||0; } else { val=pCorr||pC2||0; }
+      updateText('power', Math.round(val)); return Math.round(val);
+    }
+    dom.powerMode.addEventListener('change', applyPowerDisplay); dom.corrFactor.addEventListener('input', applyPowerDisplay);
 
-    /* =========================================
-       6. UTILIDADES CSV & ERROR
-       ========================================= */
-    function showError(msg) {
-        dom.error.textContent = msg;
-        dom.error.style.display = 'block';
-        setTimeout(() => dom.error.style.display = 'none', 4000);
+    function startTimer(){ 
+        if(sessionTimer) return; 
+        sessionActive = true; syncWakeLock(); dom.exportBtn.disabled=false; 
+        sessionTimer = setInterval(()=>{ 
+            if(isRowing) { 
+                elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); 
+                if(inIntervalMode) { 
+                    stepTimeRemaining--; updateIntervalUI(); 
+                    if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); 
+                } 
+            } 
+        }, 1000); 
     }
 
-    window.downloadCSV = function() {
-        let csv = "Time,SPM,Watts,HR\n";
-        session.events.forEach(e => {
-            csv += `${e.t},${e.spm},${e.w},${e.hr}\n`;
-        });
-        const blob = new Blob([csv], {type: 'text/csv'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'remo_session.csv';
-        a.click();
-    };
+    function stopTimer(){ 
+        clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); 
+        sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
+        dom.intervalDashboard.style.display = 'none'; syncWakeLock();
+        setUIFocusMode(false); // Mostrar botones al parar
+    }
 
+    function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
+    
+    dom.endSessionBtn.addEventListener('click', ()=>{ 
+        if(!rawEvents.length && !sessionActive && elapsedSeconds === 0) return alert("Sin datos"); 
+        stopTimer(); 
+        dom.mainScreen.style.display='none'; dom.resultsScreen.style.display='flex'; 
+        updateText('res-duration', formatMMSS(elapsedSeconds)); updateText('res-distance', document.getElementById('distance').textContent + " km"); 
+        updateText('res-calories', document.getElementById('calories').textContent + " kcal"); updateText('res-strokes', document.getElementById('total-strokes').textContent); 
+        const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM");
+        document.getElementById('download-report-btn').disabled = false;
+    });
+
+    document.getElementById('new-session-btn').addEventListener('click', ()=>{ 
+        dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); syncWakeLock();
+    });
+
+    function resetUI(){ 
+        elapsedSeconds=0; rawEvents=[]; ['duration','distance','calories','total-strokes','stroke-rate','power'].forEach(id=>updateText(id, '0')); updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; 
+        document.getElementById('download-report-btn').disabled = true;
+    }
+    
+    const exportData = () => {
+        if(!rawEvents.length) return alert("Sin datos");
+        let csv = "Timestamp,SPM,Watts,Pace,Strokes,Dist\n";
+        rawEvents.forEach(e => { csv += `${e.ts},${e.parsed.spm},${e.parsed.power_display},${e.parsed.pace_s||0},${e.parsed.strokes},${e.parsed.dist_m||0}\n`; });
+        const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `remo_sesion_${Date.now()}.csv`; a.click();
+    };
+    dom.exportBtn.addEventListener('click', exportData); document.getElementById('download-report-btn').addEventListener('click', exportData);
+    
+    // Inicialización visual
+    drawRower(0, true); initGauge();
   </script>
 </body>
 </html>
