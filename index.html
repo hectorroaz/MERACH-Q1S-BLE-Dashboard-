@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo PRO - V6 Report & HR</title>
+  <title>Panel Remo PRO - V7 Eje X Tiempo</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -86,12 +86,11 @@
     .int-phase-name { font-size: 1.1rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1.1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
     .int-step-count { background: #0f1724; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; color: #aaa; font-weight: bold; margin-top: 4px; width: fit-content; }
     
-    /* ESTILO NUEVO: Texto de motivación */
     .int-motivation {
         font-size: 0.85rem; font-weight: 800; 
         margin-top: 5px; letter-spacing: 0.5px;
         text-shadow: 0 1px 2px black;
-        min-height: 1.2em; /* Reserva espacio para evitar saltos */
+        min-height: 1.2em;
         transition: color 0.3s;
     }
     
@@ -107,7 +106,6 @@
     .int-target-val { font-size: 1.4rem; font-weight: 900; color: var(--target-color); line-height: 1; }
     .int-target-lbl { font-size: 0.6rem; color: #aaa; text-transform: uppercase; font-weight: bold; }
 
-    /* ESTILO NUEVO: Tiempo total restante */
     .int-total-remain {
         font-size: 0.75rem; color: #bbb; margin-top: 4px; 
         font-family: monospace; background: rgba(0,0,0,0.3);
@@ -249,7 +247,6 @@
         .int-timer-big { font-size: 3.5rem; }
         .int-target-val { font-size: 2rem; }
         .int-phase-name { font-size: 1.8rem; }
-        /* Ajuste para nuevos elementos en landscape */
         .int-motivation { font-size: 1.2rem; margin-top: 10px; }
         .int-total-remain { font-size: 1rem; margin-top: 10px; }
 
@@ -451,7 +448,6 @@
       canvas: document.getElementById('rower-canvas'), gaugeBar: document.getElementById('gauge-bar'),
       mainControls: document.getElementById('main-controls'), fab: document.getElementById('toggle-ui-fab'),
       fsToggle: document.getElementById('fs-toggle'),
-      // Elementos nuevos
       intMotivation: document.getElementById('int-motivation'),
       totalSessionTime: document.getElementById('total-session-time')
     };
@@ -462,7 +458,6 @@
     let lastPaceSeconds=null, lastPowerBle=null;
     let rawEvents = [];
     let uiHidden = false;
-    // Nueva variable global para HR
     let currentHeartRate = 0;
 
     // --- FULLSCREEN & UI ---
@@ -602,7 +597,6 @@
       animFrame = requestAnimationFrame(loop);
     }
 
-    /* --- AUDIO & RUTINAS --- */
     let audioCtx = null;
     function initAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     
@@ -631,7 +625,6 @@
       div.querySelector('.del-row-btn').onclick = () => div.remove(); dom.intervalsContainer.appendChild(div);
     }
 
-    // --- IMPORTAR / EXPORTAR JSON ---
     const btnImport = document.getElementById('btn-import-json');
     const btnExport = document.getElementById('btn-export-json');
     const fileInput = document.getElementById('import-file');
@@ -670,7 +663,6 @@
         };
         reader.readAsText(file); fileInput.value = '';
     });
-    // ---------------------------------------------
 
     function loadRoutineForm() {
       dom.intervalsContainer.innerHTML = ''; const saved = localStorage.getItem('lastRoutine');
@@ -766,7 +758,6 @@
 
     const FTMS_UUID=0x1826; const ROWER_CHAR_UUID=0x2AD1; const HR_SERVICE_UUID=0x180D; const HR_CHAR_UUID=0x2A37;
     
-    // --- CONEXIÓN REMO ---
     dom.connectRowerBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth API Off"); 
         const dev = await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_UUID]}], optionalServices:[FTMS_UUID]});
@@ -786,7 +777,6 @@
         alert("El remo se ha desconectado."); stopTimer(); syncWakeLock();
     }
 
-    // --- CONEXIÓN HR ---
     const USER_AGE = 33; const MAX_HR = 220 - USER_AGE;
     dom.connectHrBtn.addEventListener('click', async ()=>{
       try{ if(!navigator.bluetooth) throw new Error("Bluetooth Off");
@@ -803,10 +793,7 @@
     function handleHrData(e) {
         const v = e.target.value; const val = (v.getUint8(0) & 1) ? v.getUint16(1, true) : v.getUint8(1);
         updateText('heart-rate', val); const hrEl = document.getElementById('heart-rate');
-        
-        // ACTUALIZAMOS VARIABLE GLOBAL
         currentHeartRate = val;
-
         const pct = val / MAX_HR; hrEl.className = 'value';
         if (pct < 0.6) hrEl.classList.add('hr-z1'); else if (pct < 0.7) hrEl.classList.add('hr-z2');
         else if (pct < 0.8) hrEl.classList.add('hr-z3'); else if (pct < 0.9) hrEl.classList.add('hr-z4');
@@ -831,11 +818,8 @@
       if(flags&0x0020){ const p=data.getInt16(offset,true); offset+=2; lastPowerBle = p; parsed.power_ble=p; }
       if(flags&0x0080) offset+=2; 
       if(flags&0x0100){ const kcal=data.getUint16(offset,true); offset+=5; updateText('calories', kcal); parsed.kcal=kcal; }
-      
       parsed.power_display = applyPowerDisplay();
-      // Incluimos el HR actual en el evento parseado
       parsed.hr = currentHeartRate;
-      
       if(sessionActive && isRowing){ rawEvents.push({ts:nowTs(), parsed}); }
     }
     
@@ -883,7 +867,6 @@
         currentHeartRate = 0;
     }
     
-    // Export CSV Simple
     const exportData = () => {
         if(!rawEvents.length) return alert("Sin datos");
         let csv = "Timestamp,SPM,Watts,Pace,Strokes,Dist,HeartRate\n";
@@ -897,25 +880,54 @@
         buildAndDownloadReport(rawEvents, elapsedSeconds);
     });
 
-    // Helpers de reporte
     const isNum=(x)=> typeof x==='number' && !Number.isNaN(x);
     const mmss=(sec)=>{if(!isNum(sec)) return '--:--'; sec=Math.round(sec); const m=Math.floor(sec/60),s=sec%60; return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;};
     const avg=(arr)=>{if(!arr||!arr.length) return null; const v=arr.filter(isNum); return v.length? v.reduce((a,b)=>a+b,0)/v.length : null;};
     const maxVal=(arr)=>{const v=arr.filter(isNum);return v.length? Math.max(...v):null;};
     
+    // Lógica para graficar con Eje X
     function lineChartSVG(t,y,label,color='#03dac6'){
-      const w=900,h=220,pad=28;
+      const w=900,h=220,pad=30; // Aumentado pad ligeramente para el texto
       const tValid=t.filter((_,i)=>isNum(y[i]));
       const yValid=y.filter(isNum);
       const tMin=tValid.length? Math.min(...tValid):0, tMax=tValid.length? Math.max(...tValid):1;
       const yMin=yValid.length? Math.min(...yValid):0, yMax=yValid.length? Math.max(...yValid):1;
+      
       const sx=(x)=> pad + ((x - tMin) / (tMax - tMin || 1)) * (w-2*pad);
       const sy=(v)=> (h-pad) - ((v - yMin) / (yMax - yMin || 1)) * (h-2*pad);
+      
       let d=""; for(let i=0;i<t.length;i++){ if(!isNum(y[i])) continue; const X=sx(t[i]),Y=sy(y[i]); d+=(d?" L":"M")+`${X.toFixed(1)} ${Y.toFixed(1)}`; }
+      
+      // Grilla Eje Y Horizontal
       const yGrid=[]; for(let k=0;k<5;k++){ yGrid.push(yMin+(yMax-yMin)*k/4); }
-      const gridLines=yGrid.map(v=>`<line x1="${pad}" y1="${sy(v).toFixed(1)}" x2="${(w-pad)}" y2="${sy(v).toFixed(1)}" stroke="#222" stroke-width="1"/>`).join('');
+      const gridLinesY=yGrid.map(v=>`<line x1="${pad}" y1="${sy(v).toFixed(1)}" x2="${(w-pad)}" y2="${sy(v).toFixed(1)}" stroke="#222" stroke-width="1"/>`).join('');
       const yLabels=yGrid.map(v=>`<text x="${pad-6}" y="${sy(v)+4}" fill="#888" font-size="10" text-anchor="end">${Math.round(v)}</text>`).join('');
-      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}"><rect x="0" y="0" width="${w}" height="${h}" fill="#0f0f0f" rx="10"></rect>${gridLines}<path d="${d}" fill="none" stroke="${color}" stroke-width="2.2" /><text x="${pad}" y="18" fill="#bbb" font-size="12">${label}</text>${yLabels}</svg>`;
+
+      // Grilla Eje X Vertical y Texto
+      const xGrid = [];
+      const totalDuration = tMax - tMin;
+      // Determinamos el salto para tener aprox 6-8 etiquetas
+      let step = totalDuration / 6;
+      if (step < 60) step = 30;         // cada 30s para sesiones muy cortas
+      else if (step < 120) step = 60;   // cada 1m
+      else if (step < 300) step = 120;  // cada 2m
+      else if (step < 600) step = 300;  // cada 5m
+      else step = 600;                  // cada 10m
+
+      for(let v = tMin; v <= tMax; v += step) { xGrid.push(v); }
+      
+      const gridLinesX = xGrid.map(v => `<line x1="${sx(v).toFixed(1)}" y1="${pad}" x2="${sx(v).toFixed(1)}" y2="${h-pad}" stroke="#222" stroke-width="1"/>`).join('');
+      const xLabels = xGrid.map(v => `<text x="${sx(v).toFixed(1)}" y="${h-10}" fill="#888" font-size="10" text-anchor="middle">${mmss(v)}</text>`).join('');
+
+      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">
+        <rect x="0" y="0" width="${w}" height="${h}" fill="#0f0f0f" rx="10"></rect>
+        ${gridLinesY}
+        ${gridLinesX}
+        <path d="${d}" fill="none" stroke="${color}" stroke-width="2.2" />
+        <text x="${pad}" y="18" fill="#bbb" font-size="12">${label}</text>
+        ${yLabels}
+        ${xLabels}
+      </svg>`;
     }
     
     function smooth(arr,w=5){const out=[]; for(let i=0;i<arr.length;i++){ let s=0,c=0; for(let k=i-Math.floor(w/2);k<=i+Math.floor(w/2);k++){ if(k>=0&&k<arr.length&&isNum(arr[k])){s+=arr[k];c++;}} out.push(c? s/c : null); } return out; }
@@ -923,12 +935,8 @@
     function buildAndDownloadReport(events, totalSec) {
         if(!events || !events.length) return alert('No hay datos suficientes.');
         
-        // Preparar Datos
         const parseTS=(s)=>{const [h,m,rest]=s.split(':'),[sec,ms]=rest.split('.'); const d=new Date(); d.setHours(+h,+m,+sec,+ms||0); return d;};
         
-        // Reconstruimos el array para facilitar graficos
-        // Usamos el índice como base de tiempo aproximada si los timestamps son complejos, 
-        // pero idealmente parseamos timestamp o usamos el acumulado.
         const t0 = parseTS(events[0].ts);
         const rows = events.map(e => {
             const date = parseTS(e.ts);
@@ -943,29 +951,25 @@
             };
         });
 
-        // Métricas Globales
         const totalDist = rows[rows.length-1].dist / 1000;
         const totalStrokes = rows[rows.length-1].strokes;
         const avgSpm = avg(rows.map(r=>r.spm));
         const avgWatts = avg(rows.map(r=>r.watts));
         const maxWatts = maxVal(rows.map(r=>r.watts));
         
-        // HR Métricas
         const hrValid = rows.filter(r => r.hr > 0).map(r => r.hr);
         const avgHr = avg(hrValid);
         const maxHr = maxVal(hrValid);
 
-        // Gráficos
         const t = rows.map(r => r.t_sec);
         const pSmooth = smooth(rows.map(r => r.watts));
         const hrSmooth = smooth(rows.map(r => r.hr > 0 ? r.hr : null));
-        const paceData = rows.map(r => r.pace > 0 && r.pace < 300 ? r.pace : null); // filtrar pace raros
+        const paceData = rows.map(r => r.pace > 0 && r.pace < 300 ? r.pace : null);
 
         const powerSvg = lineChartSVG(t, pSmooth, 'Potencia (W)', '#03dac6');
         const hrSvg = lineChartSVG(t, hrSmooth, 'Frecuencia Cardíaca (BPM)', '#ff4545');
         const paceSvg = lineChartSVG(t, paceData, 'Ritmo (s/500m)', '#2196f3');
 
-        // Plantilla HTML
         const html = `
 <!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Informe de Sesión</title>
 <style>
@@ -1019,7 +1023,6 @@ svg{width:100%;height:auto;background:#0f0f0f;border-radius:8px;margin-top:10px}
         const a = document.createElement('a'); a.href = url; a.download = `informe_remo_${Date.now()}.html`; document.body.appendChild(a); a.click(); URL.revokeObjectURL(url);
     }
     
-    // Inicialización visual
     drawRower(0, true); initGauge();
   </script>
 </body>
