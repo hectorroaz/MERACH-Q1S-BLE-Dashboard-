@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo PRO - V4 Flex Labels</title>
+  <title>Panel Remo PRO - V5 Motivation & Audio</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -86,6 +86,15 @@
     .int-phase-name { font-size: 1.1rem; font-weight: 900; color: white; font-style: italic; text-transform: uppercase; line-height: 1.1; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
     .int-step-count { background: #0f1724; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; color: #aaa; font-weight: bold; margin-top: 4px; width: fit-content; }
     
+    /* ESTILO NUEVO: Texto de motivación */
+    .int-motivation {
+        font-size: 0.85rem; font-weight: 800; 
+        margin-top: 5px; letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px black;
+        min-height: 1.2em; /* Reserva espacio para evitar saltos */
+        transition: color 0.3s;
+    }
+    
     .int-right-block { 
         display: flex; flex-direction: column; align-items: flex-end; 
         background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px;
@@ -97,6 +106,13 @@
     }
     .int-target-val { font-size: 1.4rem; font-weight: 900; color: var(--target-color); line-height: 1; }
     .int-target-lbl { font-size: 0.6rem; color: #aaa; text-transform: uppercase; font-weight: bold; }
+
+    /* ESTILO NUEVO: Tiempo total restante */
+    .int-total-remain {
+        font-size: 0.75rem; color: #bbb; margin-top: 4px; 
+        font-family: monospace; background: rgba(0,0,0,0.3);
+        padding: 1px 5px; border-radius: 4px;
+    }
 
     .int-main-visual { 
         display: grid; grid-template-columns: 1fr; gap: 5px;
@@ -232,6 +248,10 @@
         .int-timer-big { font-size: 3.5rem; }
         .int-target-val { font-size: 2rem; }
         .int-phase-name { font-size: 1.8rem; }
+        /* Ajuste para nuevos elementos en landscape */
+        .int-motivation { font-size: 1.2rem; margin-top: 10px; }
+        .int-total-remain { font-size: 1rem; margin-top: 10px; }
+
         .int-main-visual { display: flex; flex-direction: column; justify-content: center; height: 100%; }
         canvas#rower-canvas { max-width: 100%; max-height: 60vh; width: auto !important; height: auto !important; }
         
@@ -293,12 +313,16 @@
         <div class="int-phase-info">
           <div class="int-phase-name" id="int-phase-name">CALENTAMIENTO</div>
           <span class="int-step-count" id="int-step-count">1 / 4</span>
+          <div class="int-motivation" id="int-motivation">¡PREPÁRATE!</div>
         </div>
         <div class="int-right-block">
           <div class="int-timer-big" id="int-timer">00:00</div>
           <div class="int-target-wrapper">
              <span class="int-target-val" id="int-target-spm">20</span>
              <span class="int-target-lbl">SPM OBJ</span>
+          </div>
+          <div class="int-total-remain">
+              TOTAL: <span id="total-session-time">00:00</span>
           </div>
         </div>
       </div>
@@ -425,7 +449,10 @@
       startRoutineBtn: document.getElementById('start-routine-btn'), cancelRoutineBtn: document.getElementById('cancel-routine-btn'), 
       canvas: document.getElementById('rower-canvas'), gaugeBar: document.getElementById('gauge-bar'),
       mainControls: document.getElementById('main-controls'), fab: document.getElementById('toggle-ui-fab'),
-      fsToggle: document.getElementById('fs-toggle')
+      fsToggle: document.getElementById('fs-toggle'),
+      // Elementos nuevos
+      intMotivation: document.getElementById('int-motivation'),
+      totalSessionTime: document.getElementById('total-session-time')
     };
 
     let sessionTimer=null, elapsedSeconds=0, sessionActive=false, currentSpm=0;
@@ -499,6 +526,9 @@
     }
 
     const ctx = dom.canvas.getContext('2d'); let animFrame = null; let lastBeepTime = 0;
+    // Nueva variable para controlar el segundo beep
+    let secondBeepPlayed = false;
+
     function lerpColor(a, b, amount) {
         const ar = a >> 16, ag = a >> 8 & 0xff, ab = a & 0xff;
         const br = b >> 16, bg = b >> 8 & 0xff, bb = b & 0xff;
@@ -536,6 +566,7 @@
         ctx.beginPath(); ctx.lineWidth = 5; ctx.strokeStyle = '#e0e0e0'; ctx.moveTo(hand.x, hand.y); ctx.lineTo(cx - 200 * scale, hand.y); ctx.stroke();
         ctx.restore();
     }
+    
     function startMetronomeLoop() {
       if(animFrame) cancelAnimationFrame(animFrame);
       const loop = () => {
@@ -545,8 +576,24 @@
             const targetSpm = step.spm > 0 ? step.spm : 20; 
             const cycleMs = (60 / targetSpm) * 1000;
             const now = Date.now();
-            if(now - lastBeepTime > cycleMs) { lastBeepTime = now; playBeep(880, 0.1); }
+            
+            // Lógica de Audio Doble
+            // 1. Pitido de Inicio (Verde/Ataque) - Tono Agudo
+            if(now - lastBeepTime > cycleMs) { 
+                lastBeepTime = now; 
+                playBeep(880, 0.15); // Aumentado volumen y frecuencia alta
+                secondBeepPlayed = false; // Resetear bandera del segundo beep
+            }
+            
             const progress = (now - lastBeepTime) / cycleMs; 
+            
+            // 2. Pitido de Final (Rojo/Retorno) - Tono Grave
+            // Se dispara aproximadamente a mitad del ciclo (o donde termine el drive visual)
+            if (!secondBeepPlayed && progress >= 0.45) {
+                playBeep(440, 0.15); // Frecuencia más baja para distinguir
+                secondBeepPlayed = true;
+            }
+
             let drivePhase = 0; let isDrive = true;
             if (progress < 0.35) { drivePhase = progress / 0.35; isDrive = true; } 
             else { const recovProgress = (progress - 0.35) / 0.65; drivePhase = 1.0 - recovProgress; isDrive = false; }
@@ -560,11 +607,14 @@
     /* --- AUDIO & RUTINAS --- */
     let audioCtx = null;
     function initAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    
     function playBeep(freq=880, dur=0.1) {
       if(!audioCtx) return; if(audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
       osc.type = 'sine'; osc.frequency.value = freq; osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      osc.start(); 
+      // VOLUMEN AUMENTADO: de 0.1 a 0.3 (el triple de amplitud para asegurar doble potencia perceptible)
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur); osc.stop(audioCtx.currentTime + dur);
     }
 
@@ -575,7 +625,6 @@
 
     function addIntervalRow(data = {sec: 60, spm: 20, label: 'Trabajo'}) {
       const div = document.createElement('div'); div.className = 'interval-row';
-      // CAMBIO PRINCIPAL: Ahora usa input text con datalist en lugar de select
       div.innerHTML = `
         <input type="number" class="int-dur" value="${data.sec}">
         <input type="number" class="int-spm" value="${data.spm}">
@@ -598,7 +647,7 @@
         const steps = rows.map(r => ({
             sec: parseInt(r.querySelector('.int-dur').value)||60,
             spm: parseInt(r.querySelector('.int-spm').value)||20,
-            label: r.querySelector('.int-lbl').value || 'Trabajo' // Captura el texto libre
+            label: r.querySelector('.int-lbl').value || 'Trabajo' 
         }));
 
         const data = { name, description:"Generada con Panel Remo PRO", steps };
@@ -660,22 +709,54 @@
       updateIntervalUI();
     }
 
+    // Calcula el tiempo total restante sumando paso actual + pasos futuros
+    function calculateTotalRemaining() {
+        if (!activeRoutine) return 0;
+        let total = stepTimeRemaining; 
+        for (let i = currentStepIndex + 1; i < activeRoutine.steps.length; i++) {
+            total += activeRoutine.steps[i].sec;
+        }
+        return total;
+    }
+
     function updateIntervalUI() {
       if(!activeRoutine) return;
       const step = activeRoutine.steps[currentStepIndex];
       updateText('int-timer', formatMMSS(stepTimeRemaining));
+      // Actualiza Tiempo Total
+      updateText('total-session-time', formatMMSS(calculateTotalRemaining()));
+      
       if(dom.intProgressBar) dom.intProgressBar.style.width = `${((step.sec - stepTimeRemaining) / step.sec) * 100}%`;
       updateText('int-current-spm', currentSpm);
       
       const dash = dom.intervalDashboard; const arrow = dom.intArrow; 
       if(dash) dash.className = ''; if(arrow) arrow.className = 'int-arrow';
       
-      if (!isRowing) { updateText('int-arrow', "−"); updateText('int-msg', "REMA"); if(arrow) arrow.style.color = "#888"; if(dash) dash.style.borderColor = "#444"; }
+      const motEl = dom.intMotivation;
+
+      if (!isRowing) { 
+          updateText('int-arrow', "−"); updateText('int-msg', "REMA"); 
+          if(arrow) arrow.style.color = "#888"; if(dash) dash.style.borderColor = "#444"; 
+          if(motEl) { motEl.textContent = "¡EMPIEZA!"; motEl.style.color = "#aaa"; }
+      }
       else {
         const diff = currentSpm - step.spm;
-        if (diff < -2) { updateText('int-arrow', "▲"); updateText('int-msg', "SUBE"); arrow.classList.add('guide-up'); dash.classList.add('dash-slow'); }
-        else if (diff > 2) { updateText('int-arrow', "▼"); updateText('int-msg', "BAJA"); arrow.classList.add('guide-down'); dash.classList.add('dash-fast'); }
-        else { updateText('int-arrow', "●"); updateText('int-msg', "BIEN"); arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); }
+        // LOGICA DE MOTIVACION
+        if (diff < -2) { 
+            updateText('int-arrow', "▲"); updateText('int-msg', "SUBE"); 
+            arrow.classList.add('guide-up'); dash.classList.add('dash-slow'); 
+            if(motEl) { motEl.textContent = "¡ACELERA! ⚡"; motEl.style.color = "var(--guide-slow)"; }
+        }
+        else if (diff > 2) { 
+            updateText('int-arrow', "▼"); updateText('int-msg', "BAJA"); 
+            arrow.classList.add('guide-down'); dash.classList.add('dash-fast'); 
+            if(motEl) { motEl.textContent = "¡CONTROLA! 🐢"; motEl.style.color = "var(--guide-fast)"; }
+        }
+        else { 
+            updateText('int-arrow', "●"); updateText('int-msg', "BIEN"); 
+            arrow.classList.add('guide-ok'); dash.classList.add('dash-good'); 
+            if(motEl) { motEl.textContent = "¡EXCELENTE! 🔥"; motEl.style.color = "var(--guide-good)"; }
+        }
       }
     }
 
@@ -767,7 +848,11 @@
         if(sessionTimer) return; sessionActive = true; syncWakeLock(); dom.exportBtn.disabled=false; 
         sessionTimer = setInterval(()=>{ 
             if(isRowing) { elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); 
-                if(inIntervalMode) { stepTimeRemaining--; updateIntervalUI(); if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); } 
+                if(inIntervalMode) { 
+                    stepTimeRemaining--; 
+                    updateIntervalUI(); 
+                    if(stepTimeRemaining <= 0) loadStep(currentStepIndex + 1); 
+                } 
             } 
         }, 1000); 
     }
