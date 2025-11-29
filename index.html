@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo PRO - V3 JSON</title>
+  <title>Panel Remo PRO - V4 Flex Labels</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -256,7 +256,7 @@
     .modal-header { padding: 10px 15px; background: #16213e; display: flex; justify-content: space-between; align-items: center; }
     .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
     .interval-row { display: grid; grid-template-columns: 0.8fr 0.8fr 2fr 30px; gap: 5px; align-items: center; background: #222; padding: 8px; border-radius: 4px; margin-bottom: 5px;}
-    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; }
+    .interval-row input, .interval-row select { width: 100%; background: #333; border: none; color: white; padding: 8px; border-radius: 4px; font-family: inherit; box-sizing: border-box;}
 
     #results-screen{display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-color); width:100%; min-height:100vh; position:absolute; top:0; left:0; z-index:200}
     .results-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px; margin-bottom:20px}
@@ -268,6 +268,14 @@
 <body>
   <div id="err-banner"></div>
   <div id="toggle-ui-fab">☰</div>
+
+  <datalist id="preset-labels">
+      <option value="Calentar">
+      <option value="Trabajo">
+      <option value="Sprint">
+      <option value="Descanso">
+      <option value="Enfriamiento">
+  </datalist>
 
   <div class="container" id="main-screen">
     <header>
@@ -567,11 +575,17 @@
 
     function addIntervalRow(data = {sec: 60, spm: 20, label: 'Trabajo'}) {
       const div = document.createElement('div'); div.className = 'interval-row';
-      div.innerHTML = `<input type="number" class="int-dur" value="${data.sec}"><input type="number" class="int-spm" value="${data.spm}"><select class="int-lbl"><option value="Calentar" ${data.label==='Calentar'?'selected':''}>Calentar</option><option value="Trabajo" ${data.label==='Trabajo'?'selected':''}>Trabajo</option><option value="Sprint" ${data.label==='Sprint'?'selected':''}>Sprint</option><option value="Descanso" ${data.label==='Descanso'?'selected':''}>Descanso</option></select><button class="del-row-btn" style="background:#ff4545;color:white;border:none;border-radius:4px">&times;</button>`;
+      // CAMBIO PRINCIPAL: Ahora usa input text con datalist en lugar de select
+      div.innerHTML = `
+        <input type="number" class="int-dur" value="${data.sec}">
+        <input type="number" class="int-spm" value="${data.spm}">
+        <input type="text" class="int-lbl" list="preset-labels" value="${data.label}" placeholder="Etiqueta">
+        <button class="del-row-btn" style="background:#ff4545;color:white;border:none;border-radius:4px">&times;</button>
+      `;
       div.querySelector('.del-row-btn').onclick = () => div.remove(); dom.intervalsContainer.appendChild(div);
     }
 
-    // --- NUEVA LÓGICA IMPORTAR / EXPORTAR JSON ---
+    // --- IMPORTAR / EXPORTAR JSON ---
     const btnImport = document.getElementById('btn-import-json');
     const btnExport = document.getElementById('btn-export-json');
     const fileInput = document.getElementById('import-file');
@@ -584,7 +598,7 @@
         const steps = rows.map(r => ({
             sec: parseInt(r.querySelector('.int-dur').value)||60,
             spm: parseInt(r.querySelector('.int-spm').value)||20,
-            label: r.querySelector('.int-lbl').value
+            label: r.querySelector('.int-lbl').value || 'Trabajo' // Captura el texto libre
         }));
 
         const data = { name, description:"Generada con Panel Remo PRO", steps };
