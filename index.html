@@ -481,20 +481,15 @@
         else dom.mainControls.classList.add('buttons-hidden');
     });
 
-    // --- WAKE LOCK ---
-    let wakeLock = null; let connectedRower=false; let connectedHr=false; let isFullscreen=false;
-    function shouldHoldWakeLock() { return connectedRower || connectedHr || sessionActive || isFullscreen; }
-    async function acquireWakeLockOnce() {
-      if (!('wakeLock' in navigator) || wakeLock) return;
-      try { wakeLock = await navigator.wakeLock.request('screen');
-        wakeLock.addEventListener('release', () => { wakeLock = null; if (document.visibilityState === 'visible' && shouldHoldWakeLock()) acquireWakeLockOnce().catch(() => {}); });
-      } catch (e) { console.warn("WakeLock fail:", e); }
-    }
-    async function releaseWakeLockIfHeld() { if (!wakeLock) return; try { await wakeLock.release(); } catch (e) {} wakeLock = null; }
-    async function syncWakeLock() { if (document.visibilityState !== 'visible') return; if (shouldHoldWakeLock()) await acquireWakeLockOnce(); else await releaseWakeLockIfHeld(); }
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncWakeLock(); });
-    document.addEventListener('fullscreenchange', () => { isFullscreen = !!document.fullscreenElement; syncWakeLock(); });
-    document.addEventListener('touchstart', async () => { if(shouldHoldWakeLock() && !wakeLock) await syncWakeLock(); }, {passive: true});
+    // --- WAKE LOCK (Implementación robusta de la referencia) ---
+    let wakeLock=null, connectedRower=false, connectedHr=false, isFullscreen=false;
+    
+    function shouldHoldWakeLock(){return connectedRower||connectedHr||sessionActive||isFullscreen;}
+    async function acquireWakeLockOnce(){if(!('wakeLock'in navigator)||wakeLock) return; try{wakeLock=await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release',()=>{wakeLock=null;if(document.visibilityState==='visible'&&shouldHoldWakeLock()) acquireWakeLockOnce().catch(()=>{});});}catch{}}
+    async function releaseWakeLockIfHeld(){if(!wakeLock) return; try{await wakeLock.release();}catch{} wakeLock=null;}
+    async function syncWakeLock(){if(document.visibilityState!=='visible') return; if(shouldHoldWakeLock()) await acquireWakeLockOnce(); else await releaseWakeLockIfHeld();}
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncWakeLock();});
+    document.addEventListener('fullscreenchange',()=>{isFullscreen=!!document.fullscreenElement; syncWakeLock();});
 
     // --- VISUALS ---
     const SEGMENT_COUNT = 20;
@@ -685,6 +680,7 @@
       dom.intervalDashboard.style.display = 'flex'; 
       loadStep(0); startTimer(); startMetronomeLoop();
       setUIFocusMode(true); 
+      syncWakeLock();
     }
 
     function loadStep(idx) {
