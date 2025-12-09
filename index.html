@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo PRO - V7.1 Fixed</title>
+  <title>Panel Remo PRO - V7.2 WakeLock Aggressive</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -452,55 +452,52 @@
       totalSessionTime: document.getElementById('total-session-time')
     };
 
-    let sessionTimer=null, elapsedSeconds=0, sessionActive=false, currentSpm=0;
+    let sessionTimer=null, elapsedSeconds=0, currentSpm=0;
     let isRowing=false, rowingTimeout=null;
     let activeRoutine=null, currentStepIndex=0, stepTimeRemaining=0, inIntervalMode=false;
     let lastPaceSeconds=null, lastPowerBle=null;
     let rawEvents = [];
     let uiHidden = false;
     let currentHeartRate = 0;
-    let currentDistanceMeters = 0; // NUEVO: Para persistir distancia
-
-    // --- WAKE LOCK MANAGER ROBUSTO ---
+    let currentDistanceMeters = 0; 
+    
+    // VARIABLES GLOBALES PARA WAKE LOCK
     let wakeLock = null;
-    const wlState = {
-      connected: false,     
-      sessionActive: false, 
-      fullscreen: false     
-    };
+    let connectedRower = false;
+    let connectedHr = false;
+    let sessionActive = false;
+    let isFullscreen = false;
 
-    function shouldHoldWakeLock() {
-      return wlState.connected || wlState.sessionActive || wlState.fullscreen;
+    // --- WAKE LOCK AGRESIVO ---
+    function shouldHoldWakeLock(){ return connectedRower || connectedHr || sessionActive || isFullscreen; }
+    
+    async function acquireWakeLockOnce(){
+        if(!('wakeLock'in navigator)||wakeLock) return; 
+        try{
+            wakeLock = await navigator.wakeLock.request('screen'); 
+            console.log('💡 Wake Lock ACTIVADO');
+            wakeLock.addEventListener('release', ()=>{
+                wakeLock=null;
+                console.log('💤 Wake Lock liberado por sistema');
+                if(document.visibilityState==='visible'&&shouldHoldWakeLock()) acquireWakeLockOnce().catch(()=>{});
+            });
+        }catch(e){console.warn(e);}
     }
-
-    async function acquireWakeLockOnce() {
-      if (!('wakeLock' in navigator) || wakeLock) return;
-      try {
-        wakeLock = await navigator.wakeLock.request('screen');
-        console.log('💡 Pantalla bloqueada (Wake Lock activo)');
-        wakeLock.addEventListener('release', () => {
-          wakeLock = null;
-          console.log('💤 Wake Lock liberado por sistema');
-          if (document.visibilityState === 'visible' && shouldHoldWakeLock()) {
-            acquireWakeLockOnce().catch(() => {});
-          }
-        });
-      } catch (err) { console.warn('⚠️ No se pudo activar Wake Lock:', err); }
+    
+    async function releaseWakeLockIfHeld(){
+        if(!wakeLock) return; 
+        try{await wakeLock.release();}catch{} 
+        wakeLock=null;
     }
-
-    async function releaseWakeLockIfHeld() {
-      if (!wakeLock) return;
-      try { await wakeLock.release(); console.log('💤 Wake Lock liberado manualmente'); } catch(e) { console.error(e); }
-      wakeLock = null;
+    
+    async function syncWakeLock(){
+        if(document.visibilityState!=='visible') return; 
+        if(shouldHoldWakeLock()) await acquireWakeLockOnce(); 
+        else await releaseWakeLockIfHeld();
     }
-
-    async function syncWakeLock() {
-      if (document.visibilityState !== 'visible') return; 
-      if (shouldHoldWakeLock()) { await acquireWakeLockOnce(); } else { await releaseWakeLockIfHeld(); }
-    }
-
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncWakeLock(); });
-    document.addEventListener('fullscreenchange', () => { wlState.fullscreen = !!document.fullscreenElement; syncWakeLock(); });
+    
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') syncWakeLock();});
+    document.addEventListener('fullscreenchange',()=>{isFullscreen=!!document.fullscreenElement; syncWakeLock();});
     // ---------------------------------
 
     // --- FULLSCREEN & UI ---
@@ -508,6 +505,7 @@
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(e => console.log(e));
             dom.fsToggle.textContent = '✖'; 
+            // La variable isFullscreen se actualiza en el listener 'fullscreenchange'
         } else {
             if (document.exitFullscreen) { document.exitFullscreen(); dom.fsToggle.textContent = '⛶'; }
         }
@@ -795,7 +793,6 @@
         const server = await dev.gatt.connect(); 
         
         connectedRower=true; 
-        wlState.connected = true; // Actualiza estado WakeLock
         
         updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
         const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
@@ -806,7 +803,6 @@
 
     function onRowerDisconnected() {
         connectedRower = false; 
-        wlState.connected = connectedHr; // Si HR sigue, mantén true, sino false
         updateText('rower-status', 'Remo: Desconectado');
         if(dom.rowerStatus) dom.rowerStatus.className = 'status disconnected';
         alert("El remo se ha desconectado."); stopTimer(); syncWakeLock();
@@ -821,7 +817,6 @@
         const server = await dev.gatt.connect(); 
         
         connectedHr=true; 
-        wlState.connected = true; // WakeLock
         
         updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
         const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
@@ -842,7 +837,6 @@
     }
     function onHrDisconnected() {
         connectedHr = false; 
-        wlState.connected = connectedRower; // Check si el remo sigue
         updateText('hr-status', 'HR: --'); if(dom.hrStatus) dom.hrStatus.className = 'status disconnected';
         updateText('heart-rate', '--'); currentHeartRate = 0; syncWakeLock();
     }
@@ -886,7 +880,6 @@
     function startTimer(){ 
         if(sessionTimer) return; 
         sessionActive = true; 
-        wlState.sessionActive = true; // WakeLock State
         syncWakeLock(); 
         dom.exportBtn.disabled=false; 
         sessionTimer = setInterval(()=>{ 
@@ -902,7 +895,6 @@
     function stopTimer(){ 
         clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); 
         sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
-        wlState.sessionActive = false; // WakeLock State
         dom.intervalDashboard.style.display = 'none'; syncWakeLock(); setUIFocusMode(false); 
     }
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
@@ -963,11 +955,11 @@
       const xGrid = [];
       const totalDuration = tMax - tMin;
       let step = totalDuration / 6;
-      if (step < 60) step = 30;         
-      else if (step < 120) step = 60;   
-      else if (step < 300) step = 120;  
-      else if (step < 600) step = 300;  
-      else step = 600;                  
+      if (step < 60) step = 30;          
+      else if (step < 120) step = 60;    
+      else if (step < 300) step = 120;   
+      else if (step < 600) step = 300;   
+      else step = 600;                   
 
       for(let v = tMin; v <= tMax; v += step) { xGrid.push(v); }
       
