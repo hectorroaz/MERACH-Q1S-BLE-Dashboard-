@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Panel Remo PRO - V7.3 Ultra Robust WakeLock</title>
+  <title>Panel Remo PRO - V7.4 Standard WakeLock</title>
   <style>
     :root{
       --bg-color:#121212; --card-color:#1e1e1e; --text-color:#e0e0e0;
@@ -462,83 +462,29 @@
     let currentDistanceMeters = 0; 
     
     // =========================================================
-    // === WAKE LOCK ULTRA ROBUSTO (API + VIDEO FALLBACK) ===
+    // === WAKE LOCK CLEAN (STANDARD API - DESDE APP EJEMPLO) ===
     // =========================================================
     
     let wakeLock = null;
-    let wakeLockEnabled = false;
 
-    // 1. Elemento de Video Invisible ("NoSleep" hack para iOS/Android robusto)
-    const noSleepVideo = document.createElement('video');
-    noSleepVideo.setAttribute('playsinline', '');
-    noSleepVideo.setAttribute('muted', '');
-    noSleepVideo.setAttribute('loop', '');
-    noSleepVideo.style.position = 'absolute';
-    noSleepVideo.style.zIndex = '-9999';
-    noSleepVideo.style.top = '0';
-    noSleepVideo.style.left = '0';
-    noSleepVideo.style.width = '1px';
-    noSleepVideo.style.height = '1px';
-    noSleepVideo.style.opacity = '0.001'; // No 0 total a veces ayuda
-    // Video MP4 diminuto y silencioso en base64
-    noSleepVideo.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAALZXJlZgAAAAAozmozAAACW21vb3YAAABsbXZoAAAAAAAAAAACAAAAAAQAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAIVdHJhawAAAFx0a2hkAAAAAdnQAAAAAAQAAAAAAQAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbmdtYWQAAAAAAAAAI21kdGEAAAAAAAAAAWQAAAAIQZSBAAAAAAxhdmMxcQAAAAAAZWR0cwAAABxlbHN0AAAAAAAAAAEAAAEAAABAAAAAAAAAI21kdGEAAAAAAAAAAWQAAAAIQZSBAAAAAAxhdmMxcQAAAAAA';
-    document.body.appendChild(noSleepVideo);
-
-    // 2. Función Principal para Activar/Reactivar
-    async function activateAggressiveWakeLock() {
-        if(wakeLockEnabled && wakeLock && !noSleepVideo.paused) return; // Ya está todo activo
-
-        // Intentar API Nativa
-        try {
-            if ('wakeLock' in navigator) {
-                // Si ya tenemos uno, no pedimos otro, salvo que se haya soltado
-                if(!wakeLock) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('💡 Wake Lock API: ACTIVADO');
-                    wakeLock.addEventListener('release', () => {
-                        console.log('⚠️ Wake Lock API: Soltado. Reintentando...');
-                        wakeLock = null;
-                        if(document.visibilityState === 'visible') activateAggressiveWakeLock();
-                    });
-                }
+    // Función de solicitud basada en la app de ejemplo
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock active');
+            } catch(e) {
+                console.warn("Wake Lock failed:", e);
             }
-        } catch(e) { console.warn("Fallo API WakeLock:", e); }
-
-        // Intentar Video Fallback (Siempre)
-        try {
-            if(noSleepVideo.paused) {
-                await noSleepVideo.play();
-                console.log('🎥 Video Fallback: REPRODUCIENDO');
-            }
-        } catch(e) {
-            // El video falla si no hay gesto de usuario primero, se reintentará en el próximo click
-            console.warn("Fallo Video Autoplay (esperando interacción):", e);
         }
-        wakeLockEnabled = true;
     }
 
-    // 3. Listeners Globales para Reactivación Constante
-    const triggerReactivation = () => {
-        if (document.visibilityState === 'visible') {
-            activateAggressiveWakeLock();
-        }
-    };
-
-    // Reactivar en cualquier cambio de estado relevante
-    document.addEventListener('visibilitychange', triggerReactivation);
-    document.addEventListener('fullscreenchange', triggerReactivation);
-    
-    // Reactivar en CUALQUIER interacción del usuario (Toque, Click, Tecla)
-    // Esto asegura que si el navegador durmió la app, despierte inmediatamente al tocar.
-    ['click', 'touchstart', 'mousemove', 'keydown', 'scroll'].forEach(evt => {
-        window.addEventListener(evt, () => {
-            // Solo intentar si parece inactivo para no saturar
-            if (!wakeLock || noSleepVideo.paused) activateAggressiveWakeLock();
-        }, { passive: true });
+    // Re-adquirir Wake Lock al volver a la app (Listener de App Ejemplo)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && 'wakeLock' in navigator) {
+        requestWakeLock();
+      }
     });
-
-    // Llamada inicial segura
-    setTimeout(activateAggressiveWakeLock, 1000);
 
     // =========================================================
 
@@ -550,7 +496,7 @@
         } else {
             if (document.exitFullscreen) { document.exitFullscreen(); dom.fsToggle.textContent = '⛶'; }
         }
-        activateAggressiveWakeLock(); // Reforzar al cambiar pantalla
+        requestWakeLock(); // Solicitar al cambiar pantalla
     }
     dom.fsToggle.addEventListener('click', toggleFullscreen);
 
@@ -562,7 +508,7 @@
     dom.fab.addEventListener('click', () => {
         if(dom.mainControls.classList.contains('buttons-hidden')) dom.mainControls.classList.remove('buttons-hidden');
         else dom.mainControls.classList.add('buttons-hidden');
-        activateAggressiveWakeLock(); // Reforzar
+        requestWakeLock();
     });
 
     // --- VISUALS ---
@@ -745,7 +691,7 @@
       const steps = rows.map(r => ({ sec: parseInt(r.querySelector('.int-dur').value)||60, spm: parseInt(r.querySelector('.int-spm').value)||20, label: r.querySelector('.int-lbl').value }));
       localStorage.setItem('lastRoutine', JSON.stringify({ name, steps }));
       startIntervalSession({ name, steps }); dom.modal.style.display = 'none';
-      activateAggressiveWakeLock(); // Reforzar al iniciar rutina
+      requestWakeLock(); // Solicitar al iniciar rutina
     });
 
     function startIntervalSession(routine) {
@@ -754,7 +700,7 @@
       dom.intervalDashboard.style.display = 'flex'; 
       loadStep(0); startTimer(); startMetronomeLoop();
       setUIFocusMode(true); 
-      activateAggressiveWakeLock(); // Reforzar
+      requestWakeLock(); 
     }
 
     function loadStep(idx) {
@@ -838,15 +784,14 @@
         updateText('rower-status', dev.name); if(dom.rowerStatus) dom.rowerStatus.className='status connected';
         const svc = await server.getPrimaryService(FTMS_UUID); const ch = await svc.getCharacteristic(ROWER_CHAR_UUID);
         await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleRowerData); 
-        activateAggressiveWakeLock(); // Reforzar al conectar
-      }catch(e){ showError("Err Remo: " + e.message); activateAggressiveWakeLock(); }
+        requestWakeLock(); // Solicitar al conectar
+      }catch(e){ showError("Err Remo: " + e.message); }
     });
 
     function onRowerDisconnected() {
         updateText('rower-status', 'Remo: Desconectado');
         if(dom.rowerStatus) dom.rowerStatus.className = 'status disconnected';
         alert("El remo se ha desconectado."); stopTimer(); 
-        activateAggressiveWakeLock(); // Reforzar
     }
 
     // Conexión HR
@@ -860,8 +805,8 @@
         updateText('hr-status', dev.name); if(dom.hrStatus) dom.hrStatus.className='status connected';
         const svc = await server.getPrimaryService(HR_SERVICE_UUID); const ch = await svc.getCharacteristic(HR_CHAR_UUID);
         await ch.startNotifications(); ch.addEventListener('characteristicvaluechanged', handleHrData); 
-        activateAggressiveWakeLock(); // Reforzar
-      }catch(e){ showError("Err HR: " + e.message); activateAggressiveWakeLock(); }
+        requestWakeLock(); // Solicitar al conectar
+      }catch(e){ showError("Err HR: " + e.message); }
     });
 
     function handleHrData(e) {
@@ -877,7 +822,6 @@
     function onHrDisconnected() {
         updateText('hr-status', 'HR: --'); if(dom.hrStatus) dom.hrStatus.className = 'status disconnected';
         updateText('heart-rate', '--'); currentHeartRate = 0; 
-        activateAggressiveWakeLock(); // Reforzar
     }
 
     function handleRowerData(e){ if(!sessionTimer && !inIntervalMode) startTimer(); parseRowerData(e.target.value); }
@@ -919,7 +863,7 @@
     function startTimer(){ 
         if(sessionTimer) return; 
         sessionActive = true; 
-        activateAggressiveWakeLock(); // Reforzar al iniciar tiempo
+        requestWakeLock(); // Solicitar al iniciar tiempo
         dom.exportBtn.disabled=false; 
         sessionTimer = setInterval(()=>{ 
             if(isRowing) { elapsedSeconds++; updateText('duration', formatMMSS(elapsedSeconds)); 
@@ -935,7 +879,6 @@
         clearInterval(sessionTimer); if(animFrame) cancelAnimationFrame(animFrame); 
         sessionTimer = null; sessionActive = false; inIntervalMode = false; isRowing = false; 
         dom.intervalDashboard.style.display = 'none'; 
-        activateAggressiveWakeLock(); // Reforzar al parar
         setUIFocusMode(false); 
     }
     function finishRoutine() { inIntervalMode = false; activeRoutine = null; alert("¡Rutina completada!"); dom.endSessionBtn.click(); }
@@ -947,10 +890,10 @@
         updateText('res-calories', document.getElementById('calories').textContent + " kcal"); updateText('res-strokes', document.getElementById('total-strokes').textContent); 
         const spms = rawEvents.map(e=>e.parsed.spm).filter(x=>x>0); updateText('res-avg-spm', (spms.length ? Math.round(spms.reduce((a,b)=>a+b,0)/spms.length) : 0) + " SPM");
         document.getElementById('download-report-btn').disabled = false;
-        activateAggressiveWakeLock(); // Reforzar
+        requestWakeLock();
     });
 
-    document.getElementById('new-session-btn').addEventListener('click', ()=>{ dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); activateAggressiveWakeLock(); });
+    document.getElementById('new-session-btn').addEventListener('click', ()=>{ dom.resultsScreen.style.display='none'; dom.mainScreen.style.display='flex'; resetUI(); requestWakeLock(); });
 
     function resetUI(){ 
         elapsedSeconds=0; rawEvents=[]; ['duration','distance','calories','total-strokes','stroke-rate','power','heart-rate'].forEach(id=>updateText(id, id==='heart-rate'?'--':'0')); updateText('pace', '--:--'); dom.exportBtn.disabled=true; lastPaceSeconds=null; lastPowerBle=null; 
@@ -997,11 +940,11 @@
       const xGrid = [];
       const totalDuration = tMax - tMin;
       let step = totalDuration / 6;
-      if (step < 60) step = 30;          
-      else if (step < 120) step = 60;    
+      if (step < 60) step = 30;           
+      else if (step < 120) step = 60;     
       else if (step < 300) step = 120;   
       else if (step < 600) step = 300;   
-      else step = 600;                   
+      else step = 600;                    
 
       for(let v = tMin; v <= tMax; v += step) { xGrid.push(v); }
       
